@@ -1,0 +1,103 @@
+Open Watcom Linker Version 1.9
+Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
+Created on:       10/05/10 01:09:48
+Executable Image: zetbios.rom
+creating a DOS executable
+
+
+                        +------------+
+                        |   Groups   |
+                        +------------+
+
+Group                           Address              Size
+=====                           =======              ====
+
+DGROUP                          f000:0000            00002826
+
+
+
+                        +--------------+
+                        |   Segments   |
+                        +--------------+
+
+Segment                Class          Group          Address         Size
+=======                =====          =====          =======         ====
+
+_DATA                  DATA           DGROUP         f000:0000       000003c4
+_TEXT                  CODE           DGROUP         f000:1000       00001826
+_BIOSSEG               CODE           AUTO           f000:c000       00003fff
+CONST                  DATA           DGROUP         f03c:0004       000002fe
+CONST2                 DATA           DGROUP         f06c:0002       00000000
+
+
+                        +----------------+
+                        |   Memory Map   |
+                        +----------------+
+
+* = unreferenced symbol
++ = symbol only referenced locally
+
+Address        Symbol
+=======        ======
+
+Module: zetbios_c.obj(C:\Dev1\DOS\Zet\rtl\src\ZetBios\zetbios_c.c)
+f000:1000+     _read_byte
+f000:1010+     _read_word
+f000:1020+     _write_byte
+f000:1034+     _write_word
+f000:1048+     _get_CS
+f000:1050+     _get_SS
+f000:1058+     _memsetb
+f000:1088+     _memcpyb
+f000:10c4+     _wrch
+f000:10de+     _send
+f000:1102+     _put_int
+f000:1168+     _put_uint
+f000:11d0+     _put_luint
+f000:123e+     _put_str
+f000:1264+     _bios_printf
+f000:1506      _print_bios_banner
+f000:1540      _init_boot_vectors
+f000:16a4+     _print_boot_device
+f000:174a+     _print_boot_failure
+f000:17a8      _int16_function
+f000:1976+     _dequeue_key
+f000:19fe      _int09_function
+f000:1e94+     _enqueue_key
+f000:1f2e      _int13_harddisk
+f000:2242+     _transf_sect_drive_a
+f000:2276+     _GetRamdiskSector
+f000:2296*     _MakeRamdisk
+f000:22cc      _int13_diskette_function
+f000:25ac+     _set_diskette_ret_status
+f000:25c4+     _set_diskette_current_cyl
+f000:25e8      _int19_function
+f000:2700      _boot_halt
+f000:2710      _int1a_function
+f000:03b6+     _diskette_param_table2
+Module: C:\WATCOM/lib286/dos\clibs.lib(i4d)
+f000:2740*     __I4D
+f000:2789      __U4D
+Module: C:\WATCOM/lib286/dos\clibs.lib(i4m)
+f000:280e*     __I4M
+f000:280e      __U4M
+Module: C:\WATCOM/lib286/dos\clibs.lib(cmodel)
+f000:2826      _small_code_
+f000:2826*     CodeModelMismatch
+
+
+                        +--------------------+
+                        |   Libraries Used   |
+                        +--------------------+
+
+C:\WATCOM/lib286/dos\clibs.lib
+
+
+                        +-----------------------+
+                        |   Linker Statistics   |
+                        +-----------------------+
+
+Stack size:  1000 (4096.)
+Memory size:  5eff (24319.)
+Entry point address: f000:c000
+Link time: 00:00.31
