@@ -6,10 +6,11 @@
 #  -ot  
 #  -zu  assume that SS != DS
 #  -oxs maximum size optimizations
+#  -ecc use __cedecl calls
 #
-CFLAGS = -0 -w0 -s -ot -d0 -ecd -ms 
+CFLAGS = -0 -w0 -s -ot -d0 -ecc -ms 
 
-AFLAGS = -zq -0
+AFLAGS = -zq -w0 -0
 
 .c.obj : .autodepend
 	wcc $(CFLAGS) $<
