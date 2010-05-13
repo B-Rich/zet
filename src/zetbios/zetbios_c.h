@@ -1,4 +1,5 @@
 //---------------------------------------------------------------------------
+// Zet Bios Header file
 //---------------------------------------------------------------------------
 #ifndef zetbios1H
 #define zetbios1H
@@ -91,9 +92,9 @@ typedef           int  BOOL;
 #define GET_ELDL() ( rELDX & 0x00ff )
 #define GET_ELDH() ( rELDX >> 8 )
 
+#define GET_CF()    (rFLAGS & 0x0001)
 #define SET_CF()     rFLAGS |= 0x0001
 #define CLEAR_CF()   rFLAGS &= 0xfffe
-#define GET_CF()    (rFLAGS & 0x0001)
 
 #define SET_ZF()     rFLAGS |= 0x0040
 #define CLEAR_ZF()   rFLAGS &= 0xffbf
@@ -262,7 +263,8 @@ static struct {
 //---------------------------------------------------------------------------
 // Compatibility Functions:
 //---------------------------------------------------------------------------
-#ifdef __WATCOMC__
+//#ifdef __WATCOMC__
+#if 0
 
 Bit8u inb(Bit16u port);
 #pragma aux inb = "in al,dx" parm [dx] value [al] modify [] nomemory;
@@ -323,6 +325,9 @@ void outw(Bit16u port, Bit16u  val)
 }
 #endif
 
+//#ifdef __WATCOMC__
+#if 0
+
 Bit8u read_byte(segment, soffset)
 Bit16u segment, soffset;
 {
@@ -344,6 +349,78 @@ void write_word(Bit16u segment, Bit16u soffset, Bit16u data)
 {
     *(Bit16u __far *)MK_FP(segment, soffset) = data;
 }
+
+#else
+
+Bit8u read_byte(s_segment, s_offset)
+Bit16u s_segment, s_offset;
+{
+    __asm {
+        push bx
+        push ds
+        mov  ax, s_segment   // segment 
+        mov  ds, ax
+        mov  bx, s_offset    // offset 
+        mov  al, ds:[bx]     // al = return value (byte) 
+        pop  ds
+        pop  bx
+    }
+}
+
+Bit16u read_word(s_segment, s_offset)
+Bit16u s_segment, s_offset;
+{
+    __asm {
+        push bx
+        push ds
+        mov  ax, s_segment // segment 
+        mov  ds, ax
+        mov  bx, s_offset  // offset 
+        mov  ax, ds:[bx]   // ax = return value (word) 
+        pop  ds
+        pop  bx
+    }
+}
+
+void write_byte(s_segment, s_offset, data)
+Bit16u s_segment, s_offset; Bit8u data;
+{
+    __asm {
+        push ax
+        push bx
+        push ds
+        mov  ax, s_segment  // segment  
+        mov  ds, ax
+        mov  bx, s_offset   // offset 
+        mov  al, data       // data byte 
+        mov  ds:[bx], al    // write data byte 
+        pop  ds
+        pop  bx
+        pop  ax
+    }
+}
+
+void write_word(s_segment, s_offset, data)
+Bit16u s_segment, s_offset, data;
+{
+    __asm {
+        push ax
+        push bx
+        push ds
+        mov  ax, s_segment   // segment 
+        mov  ds, ax
+        mov  bx, s_offset    //  offset 
+        mov  ax, data        //  data word 
+        mov  ds:[bx], ax     //  write data word 
+        pop  ds
+        pop  bx
+        pop  ax
+    }
+}
+
+#endif
+
+
 
 //---------------------------------------------------------------------------
 // End of Bios Rom C Helper Code section

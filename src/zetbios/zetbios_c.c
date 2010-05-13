@@ -21,7 +21,7 @@ Bit16u get_SS() { __asm { mov  ax, ss } }
 //--------------------------------------------------------------------------
 //  memset of count bytes
 //--------------------------------------------------------------------------
-void memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count)
+static void memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count)
 {
     __asm {
                     push ax
@@ -47,7 +47,7 @@ void memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count)
 //--------------------------------------------------------------------------
 //  memcpy of count bytes 
 //--------------------------------------------------------------------------
-void memcpyb(d_segment,d_offset,s_segment, s_offset, count)
+static void memcpyb(d_segment,d_offset,s_segment, s_offset, count)
 Bit16u d_segment, d_offset, s_segment, s_offset, count;
 {
     __asm {
@@ -84,19 +84,19 @@ Bit16u d_segment, d_offset, s_segment, s_offset, count;
 // Low level print functions
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void wrch(Bit8u character)
+static void wrch(Bit8u character)
 {
     __asm {
             push    bx
             mov     ah, 0x0e        // 0x0e command
             mov     al, character
-            xor     bx,bx
+            xor     bx, bx
             int     0x10            // 0x10 intereupt
             pop     bx
     }
 }
 //--------------------------------------------------------------------------
-void send(Bit16u action, Bit8u  c)
+static void send(Bit16u action, Bit8u  c)
 {
     if(action & BIOS_PRINTF_SCREEN) {
         if(c == '\n') wrch('\r');
@@ -104,7 +104,7 @@ void send(Bit16u action, Bit8u  c)
     }
 }
 //--------------------------------------------------------------------------
-void put_int(Bit16u action, short val, short width, bx_bool neg)
+static void put_int(Bit16u action, short val, short width, bx_bool neg)
 {
     short nval = val / 10;
     if(nval) put_int(action, nval, width - 1, neg);
@@ -115,7 +115,7 @@ void put_int(Bit16u action, short val, short width, bx_bool neg)
     send(action, val - (nval * 10) + '0');
 }
 //--------------------------------------------------------------------------
-void put_uint(Bit16u action, unsigned short val, short width, bx_bool neg)
+static void put_uint(Bit16u action, unsigned short val, short width, bx_bool neg)
 {
     unsigned short nval = val / 10;
     if(nval) put_uint(action, nval, width - 1, neg);
@@ -126,7 +126,7 @@ void put_uint(Bit16u action, unsigned short val, short width, bx_bool neg)
     send(action, val - (nval * 10) + '0');
 }
 //--------------------------------------------------------------------------
-void put_luint(Bit16u action, unsigned long val, short width, bx_bool neg)
+static void put_luint(Bit16u action, unsigned long val, short width, bx_bool neg)
 {
     unsigned long nval = val / 10;
     if(nval) put_luint(action, nval, width - 1, neg);
@@ -137,7 +137,7 @@ void put_luint(Bit16u action, unsigned long val, short width, bx_bool neg)
     send(action, val - (nval * 10) + '0');
 }
 //--------------------------------------------------------------------------
-void put_str(Bit16u action, Bit16u segment, Bit16u offset)
+static void put_str(Bit16u action, Bit16u segment, Bit16u offset)
 {
     Bit8u c;
     while(c = read_byte(segment, offset)) {
@@ -154,7 +154,7 @@ void put_str(Bit16u action, Bit16u segment, Bit16u offset)
 //   and the optional length modifier is l (ell)
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void bios_printf(action, s, ...)
+static void bios_printf(action, s, ...)
 Bit16u action; Bit8u *s;
 {
 
@@ -263,7 +263,7 @@ Bit16u action; Bit8u *s;
 #define BIOS_BUILD_DATE         "05/9/10\n"
 #define BIOS_DATE               ". Date: BIOS_DATE\n\n"
 #define BIOS_VERS               "Version: Special\n"
-void print_bios_banner(void)
+void __cdecl print_bios_banner(void)
 {
     bios_printf(BIOS_PRINTF_SCREEN,BIOS_BANNER);
     bios_printf(BIOS_PRINTF_SCREEN,BIOS_BUILD_DATE);
@@ -288,7 +288,7 @@ void print_bios_banner(void)
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 static char drivetypes[][20]={"", "Floppy flash image", "SD card" };
-void init_boot_vectors()
+void __cdecl init_boot_vectors()
 {
     ipl_entry_t e;
     Bit8u  sd_error, switches;
@@ -296,30 +296,32 @@ void init_boot_vectors()
     Bit16u hdi, fdi;
     Bit16u ss = get_SS();
 
+wrch('v');
+
     memsetb(IPL_SEG, IPL_TABLE_OFFSET, 0, IPL_SIZE);  // Clear out the IPL table. 
 
     write_word(IPL_SEG, IPL_BOOTFIRST_OFFSET, 0xFFFF);  // User selected device not set 
-    sd_error = read_byte (0x40, 0x8d);
+    sd_error = read_byte(0x40, 0x8d);
     if(sd_error) {
         bios_printf(BIOS_PRINTF_SCREEN,"Error initializing SD card controller (at stage %d)\n", sd_error);
 
         // Floppy drive 
         e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof (e), ss, &e, sizeof (e));
+        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof(e), ss, &e, sizeof(e));
         count++;
-        }
+    }
     else {            // Get the boot sequence from the switches
         switches = inb(0xf100);
         if(switches) { hdi = 1; fdi = 0; }
         else         { hdi = 0; fdi = 1; }
 
         e.type = IPL_TYPE_HARDDISK; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + hdi * sizeof (e), ss, &e, sizeof (e));
+        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + hdi * sizeof(e), ss, &e, sizeof(e));
 
         e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + fdi * sizeof (e), ss, &e, sizeof (e));
+        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + fdi * sizeof(e), ss, &e, sizeof(e));
         count = 2;
-        }
+    }
     write_word(IPL_SEG, IPL_COUNT_OFFSET, count);   // Remember how many devices we have 
     write_word(IPL_SEG, IPL_SEQUENCE_OFFSET, 1);    // Try to boot first boot device 
 }
@@ -334,27 +336,27 @@ Bit16u i; ipl_entry_t *e;
     Bit16u ss = get_SS();
   
     count = read_word(IPL_SEG, IPL_COUNT_OFFSET); // Get the count of boot devices, and refuse to overrun the array 
-    if(i >= count) return 0;    // OK to read this device 
+    if(i >= count) return(0);    // OK to read this device 
   
-    memcpyb(ss, e, IPL_SEG, IPL_TABLE_OFFSET + i * sizeof (*e), sizeof (*e));
-    return 1;
+    memcpyb(ss, e, IPL_SEG, IPL_TABLE_OFFSET + i * sizeof(*e), sizeof(*e));
+    return(1);
 }
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-// print_boot_device
-//   displays the boot device
+// print_boot_device - displays the boot device
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void print_boot_device(ipl_entry_t *e)
+static void print_boot_device(ipl_entry_t *e)
 {
     Bit16u type;
     char description[33];
     Bit16u ss = get_SS();
     type = e->type;
   
-    if(type == IPL_TYPE_BEV) type = 0x4; // NIC appears as type 0x80 
+    if(type == IPL_TYPE_BEV) type = 0x04; // NIC appears as type 0x80 
     if(type == 0 || type > 0x4) BX_PANIC("Bad drive type\n");
+
     bios_printf(BIOS_PRINTF_SCREEN, "Booting from %s", drivetypes[type]);
  
     if(type == 4 && e->description != 0) {    // print product string if BEV, first 32 bytes are significant 
@@ -371,14 +373,14 @@ void print_boot_device(ipl_entry_t *e)
 //   displays the reason why boot failed
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void print_boot_failure(type, reason)
+static void print_boot_failure(type, reason)
 Bit16u type; Bit8u reason;
 {
-    if(type == 0 || type > 0x3) BX_PANIC("Bad drive type\n");
+    if(type == 0 || type > 0x03) BX_PANIC("Bad drive type\n");
     printf("Boot failed");
     if(type < 4) {      // Report the reason too 
-        if(reason==0)   printf(": not a bootable disk");
-        else            printf(": could not read the boot disk");
+        if(reason == 0)   printf(": not a bootable disk");
+        else              printf(": could not read the boot disk");
     }
     printf("\n\n");
 }
@@ -388,16 +390,18 @@ Bit16u type; Bit8u reason;
 // INT16 Support function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void int16_function(rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS)
+void __cdecl int16_function(rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS)
 Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS;
 {
     Bit8u scan_code, ascii_code, shift_flags, led_flags, count;
     Bit16u kbd_code, max;
 
-    shift_flags = read_byte(0x0040, 0x17);
-    led_flags = read_byte(0x0040, 0x97);
+wrch('k');
 
-    switch (GET_AH()) {
+    shift_flags = read_byte(0x0040, 0x17);
+    led_flags   = read_byte(0x0040, 0x97);
+
+    switch(GET_AH()) {
         case 0x00:      // read keyboard input 
             if(!dequeue_key(&scan_code, &ascii_code, 1)) {
                 BX_PANIC("KBD: int16h: out of keyboard input\n");
@@ -489,7 +493,7 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS;
 //--------------------------------------------------------------------------
 // De-queue the key 
 //--------------------------------------------------------------------------
-BOOL dequeue_key(scan_code, ascii_code, incr)
+static BOOL dequeue_key(scan_code, ascii_code, incr)
 Bit8u *scan_code; Bit8u *ascii_code; unsigned int incr;
 {
     Bit16u buffer_start, buffer_end, buffer_head, buffer_tail;
@@ -527,13 +531,17 @@ Bit8u *scan_code; Bit8u *ascii_code; unsigned int incr;
 }
 
 //--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 // INT09 Support function
 //--------------------------------------------------------------------------
-void int09_function(rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX)
+//--------------------------------------------------------------------------
+void __cdecl int09_function(rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX)
 Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX;
 {
     Bit8u scancode, asciicode, shift_flags;
     Bit8u mf2_flags, mf2_state;
+
+wrch('s');
 
     scancode = GET_AL();    // DS has been set to F000 before call
     if(scancode == 0) {
@@ -542,9 +550,9 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX;
     }
 
     shift_flags = read_byte(0x0040, 0x17);
-    mf2_flags = read_byte(0x0040, 0x18);
-    mf2_state = read_byte(0x0040, 0x96);
-    asciicode = 0;
+    mf2_flags   = read_byte(0x0040, 0x18);
+    mf2_state   = read_byte(0x0040, 0x96);
+    asciicode   = 0;
 
     switch (scancode) {
         case 0x3a: // Caps Lock press 
@@ -583,7 +591,7 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX;
             if((mf2_state & 0x01) == 0) {
                 shift_flags |= 0x04;
                 write_byte(0x0040, 0x17, shift_flags);
-                if (mf2_state & 0x02) {
+                if(mf2_state & 0x02) {
                     mf2_state |= 0x04;
                     write_byte(0x0040, 0x96, mf2_state);
                 }
@@ -598,7 +606,7 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX;
             if((mf2_state & 0x01) == 0) {
                 shift_flags &= ~0x04;
                 write_byte(0x0040, 0x17, shift_flags);
-                if (mf2_state & 0x02) {
+                if(mf2_state & 0x02) {
                     mf2_state &= ~0x04;
                     write_byte(0x0040, 0x96, mf2_state);
                 }
@@ -720,7 +728,7 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX;
 //--------------------------------------------------------------------------
 // Enqueue Key
 //--------------------------------------------------------------------------
-BOOL enqueue_key(scan_code, ascii_code)
+static BOOL enqueue_key(scan_code, ascii_code)
 Bit8u scan_code, ascii_code;
 {
     Bit16u buffer_start, buffer_end, buffer_head, buffer_tail, temp_tail;
@@ -750,11 +758,13 @@ Bit8u scan_code, ascii_code;
 }
 
 //--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 // INT13 Interupt handler function
+//--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 #define SET_DISK_RET_STATUS(status) write_byte(0x0040, 0x0074, status)
 //--------------------------------------------------------------------------
-void int13_harddisk(rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
+void __cdecl int13_harddisk(rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
 Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 {
     Bit8u    drive, num_sectors, sector, head, status;
@@ -767,47 +777,49 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     Bit16u   tempbx;
     Bit16u   addr_l, addr_h;
     Bit32u   log_sector;
+    Bit32u   disksize;
 
     write_byte(0x0040, 0x008e, 0);  // clear completion flag
 
     // at this point, DL is >= 0x80 to be passed from the floppy int13h handler code 
     // check how many disks first (cmos reg 0x12), return an error if drive not present 
-    sd_error = read_byte (0x40, 0x8d);
+    sd_error = read_byte(0x40, 0x8d);
     if (sd_error) drive_map = 0;
     else          drive_map = 1;
 
     n_drives = 1;
 
-    if(!(drive_map & (1<<(GET_ELDL()&0x7f)))) { // allow 0, 1, or 2 disks 
+    if(!(drive_map & (1<<(GET_ELDL()&0x7f)))) { // allow 0, 1, or 2 disks
         SET_AH(0x01);
         SET_DISK_RET_STATUS(0x01);
-        SET_CF(); /* error occurred */
+        SET_CF(); // error occurred 
         return;
     }
 
-    switch(GET_AH()) {
+    switch(GET_AH()) {      // AH = Disk command
 
-        case 0x00: // disk controller reset 
+        case 0x00: // disk controller reset     
+wrch('0');
             SET_AH(0);
             SET_DISK_RET_STATUS(0);
             set_diskette_ret_status(0);
-            set_diskette_current_cyl(0, 0); // current cylinder, diskette 1 
-            set_diskette_current_cyl(1, 0); // current cylinder, diskette 2 
+            set_diskette_current_cyl(0, 0);     // current cylinder, diskette 1 
+            set_diskette_current_cyl(1, 0);     // current cylinder, diskette 2 
             CLEAR_CF(); // successful 
-            return;
             break;
 
-        case 0x01: /* read disk status */
+        case 0x01: // read disk status 
+wrch('1');
             status = read_byte(0x0040, 0x0074);
             SET_AH(status);
             SET_DISK_RET_STATUS(0);
             if (status) SET_CF();         // set CF if error status read 
             else        CLEAR_CF();
-            return;
             break;
 
         case 0x04: // verify disk sectors
         case 0x02: // read disk sectors
+wrch('2');
             drive = GET_ELDL();
 
             // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
@@ -816,15 +828,15 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             hd_heads     = HD_HEADS;
             hd_sectors   = HD_SECTORS;
 
-            num_sectors = GET_AL();
+            num_sectors =  GET_AL();
             cylinder    = (GET_CL() & 0x00c0) << 2 | GET_CH();
             sector      = (GET_CL() & 0x3f);
-            head        = GET_DH();
+            head        =  GET_DH();
 
-            if((cylinder >= hd_cylinders)||(sector > hd_sectors)||(head >= hd_heads)) {
+            if((cylinder >= hd_cylinders) || (sector > hd_sectors) || (head >= hd_heads)) {
                 SET_AH(1);
                 SET_DISK_RET_STATUS(1);
-                SET_CF(); /* error occurred */
+                SET_CF(); // error occurred 
                 return;
             }
             if(GET_AH() == 0x04 ) {
@@ -839,15 +851,16 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             sector_count = 0;
             tempbx = rBX;
 
-            __asm { sti } //;; enable higher priority interrupts
-
             while(1) {
                 addr_l = ((Bit16u) log_sector) << 9;
                 addr_h =  (Bit16u) (log_sector >> 7);
+
                 __asm {
-                    mov   di, tempbx            //;; store temp bx in real DI register
-                    cmp   di, 0xfe00            //;; adjust if there will be an overrun
-                    jbe   i13_f02_no_adjust
+                   mov   es, rES               //;; ES: destination segment
+                   mov   di, tempbx            //;; DI: destination offset from bx
+                   cmp   di, 0xfe00            //;; adjust if there will be an overrun
+                   jbe   i13_f02_no_adjust
+                   
                 i13_f02_adjust:
                     sub   di, 0x0200 //; sub 512 bytes from offset
                     mov   ax, es
@@ -855,49 +868,45 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                     mov   es, ax
 
                 i13_f02_no_adjust:
-                    //;; ES: destination segment
-                    //;; DI: destination offset
                     mov   bx, addr_l
                     mov   cx, addr_h
 
-                    //; SD card command CMD17
-                    mov   dx, 0x0100
-                    mov   ax, 0x51   //; CS = 0, CMD17
+                    mov   dx, 0x0100    //; SD card IO Port 
+                    mov   ax, 0x51      //; CS = 0, command CMD17
                     out   dx, ax
-                    mov   al, ch      //; addr[31:24]
+                    mov   al, ch        //; addr[31:24]
                     out   dx, al
-                    mov   al, cl      //; addr[23:16]
+                    mov   al, cl        //; addr[23:16]
                     out   dx, al
-                    mov   al, bh      //; addr[15:8]
+                    mov   al, bh        //; addr[15:8]
                     out   dx, al
-                    mov   al, bl      //; addr[7:0]
+                    mov   al, bl        //; addr[7:0]
                     out   dx, al
-                    mov   al, 0xff    //; CRC (not used)
+                    mov   al, 0x0ff     //; CRC (not used)
                     out   dx, al
-                    out   dx, al      //; wait
+                    out   dx, al        //; wait
 
                 i13_f02_read_res_cmd17:
-                    in    al, dx      //; card response
+                    in    al, dx        //; card response
                     cmp   al, 0
                     jne   i13_f02_read_res_cmd17
 
-                    //; read data token: 0xfe
-                i13_f02_read_tok_cmd17:
+                i13_f02_read_tok_cmd17: //; read data token: 0xfe
                     in    al, dx
-                    cmp   al, 0xfe
+                    cmp   al, 0x0fe
                     jne   i13_f02_read_tok_cmd17
                     mov   cx, 0x100
+                    
                 i13_f02_read_bytes:
-                    in    al, dx     //; low byte
+                    in    al, dx        //; low byte
                     mov   bl, al
-                    in    al, dx     //; high byte
+                    in    al, dx        //; high byte
                     mov   bh, al
-                    mov   es:[di], bx   // eseg
+                    mov   word ptr es:[di], bx   // eseg
                     add   di, 2
                     loop  i13_f02_read_bytes
 
-                    //; we are done, retrieve checksum
-                    mov   ax, 0xffff
+                    mov   ax, 0xffff //; we are done, retrieve checksum
                     out   dx, al     //; Checksum, 1st byte
                     out   dx, al     //; Checksum, 2nd byte
                     out   dx, al     //; wait
@@ -910,21 +919,19 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                 sector_count++;
                 log_sector++;
                 num_sectors--;
-                if (num_sectors) continue;
-                else break;
+                if(num_sectors) continue;
+                else            break;
             }
             SET_AH(0);
             SET_DISK_RET_STATUS(0);
             SET_AL(sector_count);
-            CLEAR_CF(); /* successful */
-            return;
+            CLEAR_CF(); // successful
             break;
 
         case 0x03: // write disk sectors 
-            drive = GET_ELDL ();
-            // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
-            // fixed geometry:
-            hd_cylinders = HD_CYLINDERS;
+wrch('3');
+            drive        = GET_ELDL ();     // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+            hd_cylinders = HD_CYLINDERS;    // fixed geometry:
             hd_heads     = HD_HEADS;
             hd_sectors   = HD_SECTORS;
 
@@ -949,39 +956,38 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             __asm { sti }  //;; enable higher priority interrupts
             while(1) {
                 addr_l = ((Bit16u) log_sector) << 9;
-                addr_h = (Bit16u) (log_sector >> 7);
+                addr_h = (Bit16u) (log_sector  >> 7);
 
                 __asm {
-                        mov   si, tempbx        //;; store temp bx in real SI register
+                        mov   es, rES           //;; ES: source segment
+                        mov   si, tempbx        //;; SI: source offset from temp bx 
                         cmp   si, 0xfe00        //;; adjust if there will be an overrun
                         jbe   i13_f03_no_adjust
+                        
                 i13_f03_adjust:
-                        sub   si, 0x0200 //; sub 512 bytes from offset
+                        sub   si, 0x0200    //; sub 512 bytes from offset
                         mov   ax, es
-                        add   ax, 0x0020 //; add 512 to segment
+                        add   ax, 0x0020    //; add 512 to segment
                         mov   es, ax
 
                 i13_f03_no_adjust:
-                        //;; ES: source segment
-                        //;; SI: source offset
                         mov   bx, addr_l
                         mov   cx, addr_h
 
-                        //; SD card command CMD24
-                        mov   dx, 0x0100
-                        mov   ax, 0x58    //; CS = 0, CMD24
+                        mov   dx, 0x0100    //; SD card Port
+                        mov   ax, 0x58      //; CS = 0, SD card command CMD24
                         out   dx, ax
-                        mov   al, ch      //; addr[31:24]
+                        mov   al, ch        //; addr[31:24]
                         out   dx, al
-                        mov   al, cl      //; addr[23:16]
+                        mov   al, cl        //; addr[23:16]
                         out   dx, al
-                        mov   al, bh      //; addr[15:8]
+                        mov   al, bh        //; addr[15:8]
                         out   dx, al
-                        mov   al, bl      //; addr[7:0]
+                        mov   al, bl        //; addr[7:0]
                         out   dx, al
-                        mov   al, 0xff    //; CRC (not used)
+                        mov   al, 0xff      //; CRC (not used)
                         out   dx, al
-                        out   dx, al      //; wait
+                        out   dx, al        //; wait
 
                 i13_f03_read_res_cmd24:
                         in    al, dx      //; command response
@@ -994,12 +1000,13 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                         mov   cx, 0x100
                         
                 i13_f03_write_bytes:
-                        mov   ax, es:[si]      // eseg
+                        mov   ax, word ptr es:[si]      // eseg
                         out   dx, al
                         mov   al, ah
                         out   dx, al
-                        add   si, 2
+                        add   es:si, 2
                         loop  i13_f03_write_bytes
+                        
                         //; send dummy checksum
                         mov   al, 0xff
                         out   dx, al
@@ -1037,15 +1044,13 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
         SET_AH(0);
         SET_DISK_RET_STATUS(0);
         SET_AL(sector_count);
-        CLEAR_CF(); /* successful */
-        return;
+        CLEAR_CF(); // successful
         break;
 
         case 0x08:
-            drive = GET_ELDL ();
-            // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
-            // fixed geometry:
-            hd_cylinders = HD_CYLINDERS;
+wrch('8');
+            drive        = GET_ELDL();    // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+            hd_cylinders = HD_CYLINDERS;  // fixed geometry:
             hd_heads     = HD_HEADS;
             hd_sectors   = HD_SECTORS;
             max_cylinder = hd_cylinders - 2; // 0 based 
@@ -1057,7 +1062,6 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             SET_AH(0);
             SET_DISK_RET_STATUS(0);
             CLEAR_CF();             // successful 
-            return;
             break;
 
         case 0x09: // initialize drive parameters 
@@ -1065,77 +1069,55 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
         case 0x0d: // alternate disk reset 
         case 0x10: // check drive ready 
         case 0x11: // recalibrate 
+wrch('9');
             SET_AH(0);
             SET_DISK_RET_STATUS(0);
             CLEAR_CF(); // successful 
-            return;
             break;
 
         case 0x14: // controller internal diagnostic 
+wrch('E');
             SET_AH(0);
             SET_DISK_RET_STATUS(0);
-            CLEAR_CF(); // successful 
+            CLEAR_CF(); // successful
             SET_AL(0);
-            return;
             break;
 
         case 0x15: // read disk drive size 
-            drive = GET_ELDL();
-            // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
-            // fixed geometry:
-            hd_cylinders = HD_CYLINDERS;
+wrch('F');
+            drive          = GET_ELDL();   // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+            hd_cylinders = HD_CYLINDERS;   // fixed geometry:
             hd_heads     = HD_HEADS;
             hd_sectors   = HD_SECTORS;
 
-            #if 1
-                rDX = HD_HEADS*HD_SECTORS;
-                rCX = rDX*(HD_CYLINDERS-1);
+            #if 0
+            disksize = (HD_CYLINDERS-1)*(HD_HEADS*HD_SECTORS);
+            rDX = disksize>>16;;
+            rCX = disksize&0xFFFF;
             #else
             
             __asm {
-                    mov  al, hd_heads
-                    mov  ah, hd_sectors
-                    mul  al, ah         //;; ax = heads * sectors
-                    mov  bx, hd_cylinders
-                    dec  bx         //;; use (cylinders - 1) ???
-                    mul  ax, bx     //;; dx:ax = (cylinders -1) * (heads * sectors)
-                    //;; now we need to move the 32bit result dx:ax to what the
-                    //;; BIOS wants which is cx:dx.
-                    //;; and then into CX:DX on the stack
-                    mov  rCX, dx
-                    mov  rDX, ax
+                    mov  al, hd_heads           //;; al = heads
+                    mov  bl, hd_sectors         //;; bl = sectors
+                    mul  bl                     //;; ax = al * bl = heads * sectors
+                    mov  bx, hd_cylinders       //;; bx = cylinders
+                    dec  bx                     //;; bx = cylinders - 1
+                    mul  bx                     //;; dx:ax = bx*ax = (cylinders -1) * (heads * sectors)
+                    mov  rCX, dx        //;; BIOS wants 32bit result in CX:DX
+                    mov  rDX, ax        //;; which will be returned on the stack
             }
             #endif
             SET_AH(3);  // hard disk accessible
             SET_DISK_RET_STATUS(0); // ??? should this be 0
             CLEAR_CF(); // successful
-            return;
             break;
 
         default:
+wrch('Z');
             BX_INFO("int13_harddisk: function %02xh unsupported, returns fail\n", GET_AH());
-            goto int13_fail;
+            SET_AH(0x01); // defaults to invalid function in AH or invalid parameter
             break;
     }
-    __asm {
-        _int13_fail:
-    }
-    int13_fail:
-        SET_AH(0x01); // defaults to invalid function in AH or invalid parameter
-        
-    int13_fail_noah:
-        SET_DISK_RET_STATUS(GET_AH());
-        
-    int13_fail_nostatus:
-        SET_CF();     // error occurred
-    return;
-
-    int13_success:
-        SET_AH(0x00); // no error
-        
-    int13_success_noah:
-        SET_DISK_RET_STATUS(0x00);
-        CLEAR_CF();   // no error
     return;
 }
 
@@ -1144,7 +1126,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 //  Transfer Sector drive
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void transf_sect_drive_a(s_segment, s_offset)
+static void transf_sect_drive_a(s_segment, s_offset)
 Bit16u s_segment; Bit16u s_offset;
 {
     __asm {
@@ -1181,7 +1163,7 @@ Bit16u s_segment; Bit16u s_offset;
 // The RAM Disk is stored at 0x110000 to 0x277FFF in the SDRAM
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-Bit16u GetRamdiskSector(Sector)
+static Bit16u GetRamdiskSector(Sector)
 Bit16u Sector;
 {
     Bit16u Page;
@@ -1197,7 +1179,7 @@ Bit16u Sector;
 // Make RAM disk
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void MakeRamdisk()
+static void MakeRamdisk()
 {
     Bit16u Sector;
     Bit16u base_count;
@@ -1245,7 +1227,7 @@ Bit8u diskette_param_table2[] = {
 // INT13 Diskette service function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void int13_diskette_function(rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
+void __cdecl int13_diskette_function(rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
 Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 {
     Bit8u  drive, num_sectors, track, sector, head, status;
@@ -1256,6 +1238,8 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     Bit16u es, last_addr;
     Bit16u log_sector, tmp, i, j;
     Bit16u RamAddress;
+
+wrch('t');
 
     ah = GET_AH();
 
@@ -1469,7 +1453,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                     return;
                 }
 
-                log_sector    = track * 36 + head * 18 + sector - 1;            // Calculate the first sector we are going to read
+                log_sector    = track * 36 + head * 18 + sector - 1;    // Calculate the first sector we are going to read
                 last_addr    = page << 12;                                            
 
                 // This is the SDRAM based drive
@@ -1499,13 +1483,13 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     }
 }
 //--------------------------------------------------------------------------
-void set_diskette_ret_status(value)
+static void set_diskette_ret_status(value)
 Bit8u value;
 {
     write_byte(0x0040, 0x0041, value);
 }
 //--------------------------------------------------------------------------
-void set_diskette_current_cyl(drive, cyl)
+static void set_diskette_current_cyl(drive, cyl)
 Bit8u drive;  Bit8u cyl;
 {
     if(drive > 1) drive = 1;    // Temporary hack: for MSDOS
@@ -1517,7 +1501,7 @@ Bit8u drive;  Bit8u cyl;
 // INT 19 Support Function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void int19_function(Bit16u seq_nr)
+void __cdecl int19_function(Bit16u seq_nr)
 {
     Bit16u ebda_seg=read_word(0x0040,0x000E);
     Bit16u bootdev;
@@ -1528,7 +1512,11 @@ void int19_function(Bit16u seq_nr)
     Bit16u status;
     Bit16u bootfirst;
 
+    Bit16u i;
     ipl_entry_t e;
+
+wrch('i');
+
 
     // Here we assume that BX_ELTORITO_BOOT is defined, so
     //   CMOS regs 0x3D and 0x38 contain the boot sequence:
@@ -1566,70 +1554,72 @@ void int19_function(Bit16u seq_nr)
             bootseg = 0x07c0;
             status = 0;
 
-            __asm {
-                push ax
-                push bx
+            __asm {                     // This little routine loads the DOS
+                push ax                 // boot sector from disk into the boot location
+                push bx                 // Save the working registers
                 push cx
                 push dx
-                mov  dl, bootdrv
-                mov  ax, bootseg
-                mov  es, ax         //;; segment
-                xor  bx, bx         //;; offset
-                mov  ah, 0x02       //;; function 2, read diskette sector
-                mov  al, 0x01       //;; read 1 sector
-                mov  ch, 0x00       //;; track 0
-                mov  cl, 0x01       //;; sector 1
-                mov  dh, 0x00       //;; head 0
-                int  0x13           //;; read sector
-                jnc  int19_load_done
-                mov  ax, 0x0001
-                mov  status, ax
-
-            int19_load_done:
-                pop  dx
+                mov  dl, bootdrv        // This is the boot drive
+                mov  ax, bootseg        // This is the boot segment
+                mov  es, ax             // Load segment into ES
+                xor  bx, bx             // Offset is zero
+                mov  ah, 0x02           // Disk function 2, read diskette sector
+                mov  al, 0x01           // Read 1 sector
+                mov  ch, 0x00           // From track 0
+                mov  cl, 0x01           // and sector 1
+                mov  dh, 0x00           // using head 0
+                int  0x13               // Call the read sector bios function
+                jnc  int19_load_done    // If Carry flag is clear, then status is good    
+                mov  ax, 0x0001         // If not then set status flag to bad
+                mov  status, ax         // Store it
+            int19_load_done:            // Exit the function
+                pop  dx                 // By popping our regs
                 pop  cx
                 pop  bx
                 pop  ax
             }
 
-            if(status != 0) {
-                print_boot_failure(e.type, 1);
-                return;
-            }
-            if(read_word (0x07c0, 0x1fe)!=0xaa55) {
-                print_boot_failure(e.type, 0);
+            if(status != 0) {                       // Indicates we had a disk error
+                print_boot_failure(e.type, 1);      // show "could not read the boot disk"
                 return;
             }
 
-            // Canonicalize bootseg:bootip 
-            bootip = (bootseg & 0x0fff) << 4;
-            bootseg &= 0xf000;
+            if(read_word(bootseg, 0x01fe)!= 0xaa55) {    // this is the magic number
+                print_boot_failure(e.type, 0);          // "not a bootable disk"
+                return;
+            }
+
+            bootip   = (bootseg & 0x0fff) << 4;         // Canonicalize bootseg:bootip 
+            bootseg &= 0xf000;                          // For the right place to jump to
             break;
 
-        default:
+        default:                                        // if here then the disk is no good
             return;
     }
 
-    // Debugging info 
-    BX_INFO("Booting from %x:%x\n", bootseg, bootip);
+//    for(i = 0; i < 0x0100; i++) printf("%x ",read_word(0x07c0, i));
 
-    // Jump to the boot vector 
-    __asm {
-        //;; Build an iret stack frame that will take us to the boot vector.
-        //;; iret pops ip, then cs, then flags, so push them in the opposite order.
-        pushf
-        mov  ax, bootseg
-        push ax
-        mov  ax, bootip
-        push ax
-        mov  ax, 0xaa55    //;; Set the magic number in ax and the boot drive in dl.
-        mov  dl, bootdrv
-        xor  bx, bx     //;; Zero some of the other registers.
-        mov  ds, bx
-        mov  es, bx
-        mov  bp, bx
-        iret            //;; Go!
+    printf("%x\n",read_word(bootseg, bootip+0x01fe));
+
+//    BX_INFO("Booting from %x:%x\n", bootseg, bootip);       // Debugging info 
+    printf("Booting from %x:%x\n", bootseg, bootip);
+
+
+    __asm {                 // This routine Jumps to the boot vector we just loaded 
+        pushf               // iret pops ip, then cs, then flags, so push them in the opposite order.
+        mov  ax, bootseg    // Here is the return segment to jump to 
+        push ax             // push it so it will get popped when we iret
+        mov  ax, bootip     // Jump to the start
+        push ax             // again push it for later
+        mov  ax, 0xaa55     // Set the magic number in ax and the boot drive in dl.
+        mov  dl, bootdrv    // Set the boot drive number
+        xor  bx, bx         // Clear BX register
+        mov  ds, bx         // Data segment  DS = 0
+        mov  es, bx         // Also set ES to 0
+        mov  bp, bx         // Base pointer = 0
+        iret                // Now Go!
     }
+    
 }
 
 //--------------------------------------------------------------------------
@@ -1637,8 +1627,10 @@ void int19_function(Bit16u seq_nr)
 // BOOT HALT
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void boot_halt ()
+void __cdecl boot_halt ()
 {
+    wrch('h');
+
     printf("No more devices to boot - System halted.\n");
 }
 
@@ -1647,12 +1639,13 @@ void boot_halt ()
 // INT 1A Support function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void int1a_function(regs, ds, iret_addr)
+void __cdecl int1a_function(regs, ds, iret_addr)
     pusha_regs_t regs;        // regs pushed from PUSHA instruction
     Bit16u ds;                // previous DS:, DS set to 0x0000 by asm wrapper
     iret_addr_t  iret_addr;   // CS,IP,Flags pushed from original INT call
 {
     Bit8u val8;
+wrch('_');
 
     __asm { sti }
 

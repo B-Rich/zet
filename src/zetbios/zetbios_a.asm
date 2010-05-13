@@ -2,6 +2,7 @@
 ;;--------------------------------------------------------------------------
 ;; Super Simple ROM BIOS compatability entry points:
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; $0000 ; Start of ROM Utilities
 ;; $e05b ; POST Entry Point
 ;; $e6f2 ; INT 19h Boot Load Service Entry Point
@@ -34,9 +35,9 @@ IPL_TYPE_BEV            equ     080h     ;
                         EXTRN  _int13_harddisk         :proc      ; Contained in C source module
                         EXTRN  _boot_halt              :proc      ; Contained in C source module
                         EXTRN  _int19_function         :proc      ; Contained in C source module
-                        EXTRN  _int1a_function         :proc      ; BIOS Interupt 1A
+                        EXTRN  _int1a_function         :proc      ; Time-of-day Service Entry Point
                         EXTRN  _int09_function         :proc      ; BIOS Interupt 09
-                        EXTRN  _int16_function         :proc      ; BIOS Interupt 16
+                        EXTRN  _int16_function         :proc      ; Keyboard Service Entry Point
                         EXTRN  _init_boot_vectors      :proc      ; Initialize Boot Vectors
 
 ;;--------------------------------------------------------------------------
@@ -50,7 +51,9 @@ SET_INT_VECTOR MACRO parm1, parm2, parm3
 ENDM
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 startofrom              equ     0c000h
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         .Model  Tiny    ;; this forces it to nears on code and data
                         .8086           ;; this forces it to use 80186 and lower
@@ -59,7 +62,9 @@ _BIOSSEG                SEGMENT 'CODE'
 biosrom:                org     0000h   ;; start of ROM, get placed at 0c0000h
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;;- INT18h - ;; Boot Failure recovery: try the next device.
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 int18_handler:          mov     ax, 0fffeh       ;; Reset SP and SS
                         mov     sp, ax
@@ -81,79 +86,82 @@ i18_next:               xor     ax, ax
                         jmp     int19_next_boot
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;- POST: HARD DRIVE - IRQ 14 = INT 76h, INT 76h calls INT 15h function ax=9100 
 ;;--------------------------------------------------------------------------
-hard_drive_post:        xor     ax , ax        ; relocated here because the primary POST area is not big enough.
-                        mov     ds, ax
-                        mov     ds:00474h, al    ; hard disk status of last operation
-                        mov     ds:00477h, al    ; hard disk port offset (XT only ???)
-                        mov     ds:0048ch, al    ; hard disk status register
-                        mov     ds:0048dh, al    ; hard disk error register
-                        mov     ds:0048eh, al    ; hard disk task complete flag
-                        mov     al, 01h
-                        mov     ds:00475h, al    ; hard disk number attached
-                        mov     al, 0c0h
-                        mov     ds:00476h, al    ; hard disk control byte
+;;--------------------------------------------------------------------------
+hard_drive_post:        xor     ax, ax           ; relocated here because the primary POST area is not big enough.
+                        mov     ds, ax           ; Data segment = 0, control table location
+                        mov     ds:0474h, al     ; hard disk status of last operation
+                        mov     ds:0477h, al     ; hard disk port offset (XT only ???)
+                        mov     ds:048ch, al     ; hard disk status register
+                        mov     ds:048dh, al     ; hard disk error register
+                        mov     ds:048eh, al     ; hard disk task complete flag
+                        mov     al, 01h          ; Drive #
+                        mov     ds:0475h, al     ; hard disk number attached
+                        mov     al, 0c0h         ; Control byte
+                        mov     ds:0476h, al     ; hard disk control byte
 
                         SET_INT_VECTOR 013h, 0F000h, int13_handler
                         SET_INT_VECTOR 076h, 0F000h, int76_handler
 
-                        mov     al, 0ffh         ;; Initialize the SD card controller
-                        mov     dx, 0100h
-                        mov     cx, 010
+                        mov     al, 0ffh         ; Initialize the SD card controller
+                        mov     dx, 0100h        ; Location of SD controller 
+                        mov     cx, 10           ; Number of times to repeat
   
-hd_post_init80:         out     dx, al          ; 80 cycles of initialization
-                        loop    hd_post_init80
-                        mov     ax, 040h     ; CS = 0, CMD0: reset the SD card
-                        out     dx, ax
-                        xor     al, al
-                        out     dx, al       ; 32-bit zero value
+hd_post_init80:         out     dx, al           ; 80 cycles of initialization
+                        loop    hd_post_init80   ; Looop 80 times
+                        mov     ax, 040h         ; CS = 0, CMD0: reset the SD card
+                        out     dx, ax           ; Reset the card 
+                        xor     al, al           ; Clear al
+                        out     dx, al           ; 32-bit zero value
                         out     dx, al
                         out     dx, al
                         out     dx, al
-                        mov     al, 095h
-                        out     dx, al       ; CRC fixed value
-                        mov     al, 0ffh
-                        out     dx, al       ; wait
-                        in      al, dx       ; status
+                        mov     al, 095h         ; Fixed value
+                        out     dx, al           ; load it
+                        mov     al, 0ffh         
+                        out     dx, al           ; wait
+                        in      al, dx           ; status
                         mov     cl, al
                         mov     ax, 0ffffh
-                        out     dx, ax       ; CS = 1
+                        out     dx, ax          ; CS = 1
                         cmp     cl, 1
                         je      hd_post_cmd1
-                        mov     al, 1        ; error 1
+                        mov     al, 1           ; error 1
                         mov     ds:0048dh, al
                         ret
 
-hd_post_cmd1:           mov     ax, 041h  ; CS = 0, CMD1: activate the init sequence
+hd_post_cmd1:           mov     ax, 041h        ; CS = 0, CMD1: activate the init sequence
                         out     dx, ax
                         xor     al, al
-                        out     dx, al     ; 32-bit zero value
+                        out     dx, al          ; 32-bit zero value
                         out     dx, al
                         out     dx, al
                         out     dx, al
                         mov     al, 0ffh
-                        out     dx, al     ; CRC (not used)
-                        out     dx, al     ; wait
-                        in      al, dx     ; status
+                        out     dx, al          ; CRC (not used)
+                        out     dx, al          ; wait
+                        in      al, dx          ; status
                         mov     cl, al
                         mov     ax, 0ffffh
-                        out     dx, ax     ; CS = 1
+                        out     dx, ax          ; CS = 1
                         test    cl, 0ffh
                         jnz     hd_post_cmd1
-                        mov     ax, 050h  ; CS = 0, CMD16: set block length
+                        
+                        mov     ax, 050h        ; CS = 0, CMD16: set block length
                         out     dx, ax
                         xor     al, al
-                        out     dx, al     ; 32-bit value
+                        out     dx, al          ; 32-bit value
                         out     dx, al
-                        mov     al, 2      ; 512 bytes
+                        mov     al, 2           ; 512 bytes
                         out     dx, al
                         xor     al, al
                         out     dx, al
                         mov     al, 0ffh
-                        out     dx, al     ; CRC (not used)
-                        out     dx, al     ; wait
-                        in      al, dx       ; status
+                        out     dx, al          ; CRC (not used)
+                        out     dx, al          ; wait
+                        in      al, dx          ; status
                         mov     cl, al
                         mov     ax, 0ffffh
                         out     dx, ax         ; CS = 1
@@ -162,10 +170,13 @@ hd_post_cmd1:           mov     ax, 041h  ; CS = 0, CMD1: activate the init sequ
                         mov     al, 2        ; error 2
                         mov     ds:0048dh, al
                         ret
+                        
 hd_post_success:        ret
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; record completion in BIOS task complete flag
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 int76_handler:          push    ax
                         push    ds
@@ -177,7 +188,9 @@ int76_handler:          push    ax
                         iret  
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;;  ROM Checksum calculation
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 rom_checksum:           push    ax
                         push    bx
@@ -205,6 +218,7 @@ checksum_loop:          add     al, BYTE PTR [bx]
 pnp_string:             DB      "$PnP"
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; Scan for existence of valid expansion ROMS.
 ;;   Video ROM:   from 0xC0000..0xC7FFF in 2k increments
 ;;   General ROM: from 0xC8000..0xDFFFF in 2k increments
@@ -216,6 +230,7 @@ pnp_string:             DB      "$PnP"
 ;;   1         0AAh
 ;;   2         ROM length in 512-byte blocks
 ;;   3         ROM initialization entry point (FAR CALL)
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 rom_scan:
 rom_scan_loop:          push    ax                      ;; Save AX
@@ -257,19 +272,19 @@ block_count_rounded:    xor     bx, bx              ;; Restore DS back to 0000:
                         mov     ax, 2[bx]
                         cmp     ax, 0506eh
                         jne     no_bev
-                        mov     ax, 01ah[bx]                ;; 0x1A is also the offset into the expansion header of...
-                        cmp     ax, 00000h                  ;; the Bootstrap Entry Vector, or zero if there is none.
-                        je      no_bev                              ;; Found a device that thinks it can boot the system.
+                        mov     ax, 01ah[bx]            ;; 0x1A is also the offset into the expansion header of...
+                        cmp     ax, 00000h              ;; the Bootstrap Entry Vector, or zero if there is none.
+                        je      no_bev                  ;; Found a device that thinks it can boot the system.
                                                         ;; Record its BEV and product name string.
                         mov     di, 010h[bx]            ;; Pointer to the product name string or zero if none
                         mov     bx, IPL_SEG             ;; Go to the segment where the IPL table lives
                         mov     ds, bx
                         mov     bx, WORD PTR ds:[IPL_COUNT_OFFSET]  ;; Read the number of entries so far
                         cmp     bx, IPL_TABLE_ENTRIES
-                        je      no_bev                                  ;; Get out if the table is full
+                        je      no_bev                           ;; Get out if the table is full
                         push    cx
-                        mov     cx, 04h                                 ;; Zet: Needed to be compatible with 8086
-                        shl     bx, cl                                  ;; Turn count into offset (entries are 16 bytes)
+                        mov     cx, 04h                          ;; Zet: Needed to be compatible with 8086
+                        shl     bx, cl                           ;; Turn count into offset (entries are 16 bytes)
                         pop     cx
                         mov     WORD PTR 0[bx], IPL_TYPE_BEV    ;; This entry is a BEV device
                         mov     6[bx], cx                               ;; Build a far pointer from the segment...
@@ -387,16 +402,17 @@ ebda_post:              xor ax, ax            ; mov EBDA seg into 40E
                         call rom_scan
                         call _print_bios_banner
 
-                        call hard_drive_post    ;; Hard Drive setup
-                        call _init_boot_vectors
+                        call hard_drive_post        ;; Hard Drive setup
+                        call _init_boot_vectors     ;; Initialize the boot vectors
 
-                        mov  cx, 0c800h      ;; init option roms
-                        mov  ax, 0e000h
-                        call rom_scan
+                        mov  cx, 0c800h             ;; Initialize option roms
+                        mov  ax, 0e000h             ;; Initialize option roms
+                        call rom_scan               ;; Call the rom scan again
 
-                        sti                                  ;; enable interrupts
-                        int  019h
-
+                        sti                         ;; enable interrupts
+                        int  019h                   ;; Now load dos boot sector and jump to it
+        
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;;- INT 13h Fixed Disk Services Entry Point -
 ;;--------------------------------------------------------------------------
@@ -407,33 +423,34 @@ ebda_post:              xor ax, ax            ; mov EBDA seg into 40E
 ;;   - make all called C function get the same parameters list
 ;;--------------------------------------------------------------------------
                         org     (0e3feh - startofrom)   ;; INT 13h Fixed Disk Services Entry Point
-int13_handler:          push    ax
+int13_handler:          push    ax      ;; Push all registers onto stack
                         push    cx
                         push    dx
                         push    bx
-int13_legacy:           push    dx        ;; push eltorito value of dx instead of sp
+                        push    dx      ;; push eltorito value of dx instead of sp
                         push    bp
                         push    si
                         push    di
                         push    es
-                        push    ds
-                        push    ss
-                        pop     ds      ;; now the 16-bit registers can be restored with:
-                                        ;; pop ds; pop es; popa; iret
-                                        ;; arguments passed to functions should be
-                        test    dl,80h  ;; DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS
-                        jnz     int13_notfloppy
-                        call    _int13_diskette_function
-                        jmp     int13_out
-int13_notfloppy:
-int13_disk:             call    _int13_harddisk     ;; int13_harddisk modifies high word of EAX
-int13_out:                                          ;; ZEUS HACK: put IF flag on.
-                                                    ;; Seems that MS-DOS does a 'cli' before calling this
-                        mov     bp, sp              ;; but after int13 it doesn't set the interrupts back
-                        mov     ax, 24[bp]          ; FLAGS location
-                        or      ax, 0200h           ; IF on
-                        mov     24[bp], ax
-                        pop     ds
+                        push    ds      ;; DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS
+                        
+                        push    ss                  ;; Get stack segment and put it
+                        pop     ds                  ;; on current data segment 
+                        test    dl,80h              ;; Test to see if current drive is HD
+                        jnz     int13_HardDisk      ;; If so, do that, otherwise do floppy
+
+                        mov     ax, int13_out
+                        push    ax                        
+                        jmp     _int13_diskette_function
+                        
+int13_HardDisk:         call    _int13_harddisk     ;; int13_harddisk modifies high word of EAX
+                                         
+int13_out:              mov     bp, sp              ;; ZEUS HACK: Turn IF flag on. MS-DOS does a 'cli' before calling this
+                        mov     ax, 24[bp]          ;; FLAGS location
+                        or      ax, 0200h           ;; Turn IF back on
+                        mov     24[bp], ax          ;; Store Flags back into correct stack location
+
+                        pop     ds                  ;; Restore all registers
                         pop     es
                         pop     di
                         pop     si
@@ -443,10 +460,12 @@ int13_out:                                          ;; ZEUS HACK: put IF flag on
                         pop     dx
                         pop     cx
                         pop     ax
-                        iret
+                        iret                        ;; return from interupt
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; - INT19h -
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e6f2h - startofrom)  ;; INT 19h Boot Load Service Entry Point
 int19_handler:          push    bp              ;; int19 was beginning to be really complex, so now it
@@ -460,14 +479,17 @@ int19_next_boot:        call    _int19_function     ;; Call the C code for the n
                         int     018h                ;; Boot failed: invoke the boot recovery function
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; - INT1Ch -
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 int1c_handler:                                      ;; User Timer Tick
                         iret
   
-
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; - INT 16h Keyboard Service Entry Point -
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e82eh - startofrom)
 int16_handler:          sti
@@ -479,8 +501,8 @@ int16_handler:          sti
                         push    bx
                         push    sp
                         mov     bx, sp
-                        add     BYTE PTR [bx], 10            ;sseg add  [bx], 10
-                        mov     bx, [bx+2]                   ;sseg mov  bx, [bx+2]
+                        add     BYTE PTR ss:[bx], 10        ; sseg add  [bx], 10
+                        mov     bx, ss:[bx+2]               ; sseg mov  bx, [bx+2]
                         push    bp
                         push    si
                         push    di
@@ -540,7 +562,9 @@ int16_key_found:        mov     bx, 0f000h
                         iret
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; - INT09h : Keyboard Hardware Service Entry Point -
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e987h - startofrom)
 int09_handler:          cli
@@ -554,8 +578,8 @@ int09_handler:          cli
                         push    bx
                         push    sp
                         mov     bx, sp
-                        add     WORD PTR [bx], 10         ;sseg add  [bx], 10
-                        mov     bx, [bx+2]                ;sseg mov  bx, [bx+2]
+                        add     WORD PTR ss:[bx], 10      ;; sseg add  [bx], 10
+                        mov     bx, ss:[bx+2]             ;; sseg mov  bx, [bx+2]
                         push    bp
                         push    si
                         push    di
@@ -563,18 +587,18 @@ int09_handler:          cli
                         jne     int09_check_pause
                         xor     ax, ax
                         mov     ds, ax
-                        mov     al, BYTE PTR [ds:0496h]     ;; mf2_state |= 0x02
+                        mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x02
                         or      al, 002h
-                        mov     BYTE PTR [ds:0496h], al
+                        mov     BYTE PTR ds:[0496h], al
                         jmp     int09_done
 
 int09_check_pause:      cmp     al, 0e1h         ;; check for pause key
                         jne     int09_process_key
                         xor     ax, ax
                         mov     ds, ax
-                        mov     al, BYTE PTR [ds:0496h]     ;; mf2_state |= 0x01
+                        mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x01
                         or      al, 001h
-                        mov     BYTE PTR [ds:0496h], al
+                        mov     BYTE PTR ds:[0496h], al
                         jmp     int09_done
 
 int09_process_key:      mov     bx, 0f000h
@@ -582,6 +606,7 @@ int09_process_key:      mov     bx, 0f000h
                         call    _int09_function
 int09_done:             pop     di
                         pop     si
+                        
                         pop     bp
                         add     sp, 2
                         pop     bx
@@ -593,20 +618,27 @@ int09_done:             pop     di
                         pop     ax
                         iret
 
+;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
 ;; - INT10h -
+;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
                         org     (0f065h - startofrom)   ; INT 10h Video Support Service Entry Point
-int10_handler:          iret                            ; dont do anything, since the VGA BIOS handles int10h requests
+int10_handler:          
+                        iret                            ; dont do anything, since the VGA BIOS handles int10h requests
 
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; MDA/CGA Video Parameter Table (INT 1Dh)
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0f0a4h - startofrom)    
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; - INT12h - ; INT 12h Memory Size Service Entry Point
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0f841h - startofrom)   ; ??? different for Pentium (machine check)?
 int12_handler:          push    ds
@@ -617,7 +649,9 @@ int12_handler:          push    ds
                         iret
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;;- INT11h -  INT 11h Equipment List Service Entry Point
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0f84dh - startofrom)
 int11_handler:          push    ds
@@ -628,7 +662,9 @@ int11_handler:          push    ds
                         iret
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; - INT1Ah - INT 1Ah Time-of-day Service Entry Point
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0fe6eh - startofrom)     
 int1a_handler:          push    ds
@@ -638,27 +674,29 @@ int1a_handler:          push    ds
                         push    bx
                         push    sp
                         mov     bx, sp
-                        add     WORD PTR [bx], 10       ;sseg add  [bx], 10
-                        mov     bx, [bx+2]              ;sseg mov  bx, [bx+2]
+                        add     WORD PTR ss:[bx], 10    ;; sseg add  [bx], 10
+                        mov     bx, ss:[bx+2]           ;; sseg mov  bx, [bx+2]
                         push    bp
                         push    si
                         push    di
                         xor     ax, ax
                         mov     ds, ax
 int1a_callfunction:     call    _int1a_function
-                        pop di
-                        pop si
-                        pop bp
-                        add sp, 2
-                        pop bx
-                        pop dx
-                        pop cx
-                        pop ax
-                        pop  ds
+                        pop     di
+                        pop     si
+                        pop     bp
+                        add     sp, 2
+                        pop     bx
+                        pop     dx
+                        pop     cx
+                        pop     ax
+                        pop      ds
                         iret
 
 ;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; - INT08 -  System Timer ISR Entry Point
+;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0fea5h - startofrom)       ; INT 08h
 int08_handler:          sti
@@ -684,9 +722,9 @@ i08_linc_done:          push    bx
 i08_lcmp_b_and_lt:      dec     bx
 i08_lcmp_done:          pop     bx
                         jb      int08_store_ticks    ;; there has been a midnight rollover at this point
-                        xor     ax, ax              ; zero out counter
+                        xor     ax, ax               ;; zero out counter
                         xor     bx, bx
-                        inc     BYTE PTR [ds:0470h]     ; increment rollover flag
+                        inc     BYTE PTR ds:[0470h]     ;; increment rollover flag
 int08_store_ticks:      mov     ds:0046ch, ax           ;; store new ticks dword
                         mov     ds:0046eh, bx
                         int     01ch
@@ -696,24 +734,31 @@ int08_store_ticks:      mov     ds:0046ch, ax           ;; store new ticks dword
                         pop     ax
                         iret
 
+;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
 ;; Initial Interrupt Vector Offsets Loaded by POS
 ;;---------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
                         org     (0fef3h - startofrom)      
 
 ;;---------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 ;; IRET Instruction for Dummy Interrupt Handler -
 ;;---------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
                         org     (0ff53h - startofrom)
-dummy_iret_handler:     iret                                    ;; IRET Instruction for Dummy Interrupt Handler
+dummy_iret_handler:     
+                        iret                                    ;; IRET Instruction for Dummy Interrupt Handler
 
                         org     (0fff0h - startofrom)          ;; Power-up Entry Point
                         jmp     far ptr post
 
 
+;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
 ;; BIOS Strings
 ;;---------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 BIOS_COPYRIGHT_STRING   equ     "(c) 2009, 2010 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
 BIOS_BUILD_DATE         equ     "04/5/10\n"
                                 org     (0ff00h - startofrom)
@@ -722,9 +767,10 @@ MSG1:                   db      BIOS_COPYRIGHT_STRING
 ;;---------------------------------------------------------------------------
                                 org     (0fff5h - startofrom)     ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
 MSG2:                   db      BIOS_BUILD_DATE
-                                org     (0fffeh -startofrom)           ;; System Model ID
-SYS_MODEL_ID                    equ     0FCh
-                                db      SYS_MODEL_ID
+                                org     (0fffeh -startofrom)    ;; Put the 
+SYS_MODEL_ID                    equ     0FCh                    ;; System Model ID 
+                                db      SYS_MODEL_ID            ;; here
+                                db      0
 
 ;;--------------------------------------------------------------------------
 _BIOSSEG                ends
