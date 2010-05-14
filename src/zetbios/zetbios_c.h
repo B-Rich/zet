@@ -168,7 +168,8 @@ static struct {
   Bit16u control;
   Bit16u alt;
   Bit8u lock_flags;
-  } scan_to_scanascii[MAX_SCAN_CODE + 1] = {
+  }
+  scan_to_scanascii[MAX_SCAN_CODE + 1] = {
       {   none,   none,   none,   none, none },
       { 0x011b, 0x011b, 0x011b, 0x0100, none }, /* escape */
       { 0x0231, 0x0221,   none, 0x7800, none }, /* 1! */

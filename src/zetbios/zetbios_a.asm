@@ -57,6 +57,7 @@ startofrom              equ     0c000h
 ;;--------------------------------------------------------------------------
                         .Model  Tiny    ;; this forces it to nears on code and data
                         .8086           ;; this forces it to use 80186 and lower
+                        .listall
 _BIOSSEG                SEGMENT 'CODE'
                         assume  cs:_BIOSSEG
 biosrom:                org     0000h   ;; start of ROM, get placed at 0c0000h
@@ -72,15 +73,15 @@ int18_handler:          mov     ax, 0fffeh       ;; Reset SP and SS
                         mov     ss, ax
                         mov     bx, IPL_SEG          ;; Get the boot sequence number out of the IPL memory
                         mov     ds, bx                     ;; Set segment
-                        mov     bx, IPL_SEQUENCE_OFFSET    ;; BX is now the sequence number
+                        mov     bx, ds:[IPL_SEQUENCE_OFFSET]    ;; BX is now the sequence number
                         inc     bx                         ;; ++
-                        mov     ax, IPL_COUNT_OFFSET
+                        mov     ax, ds:[IPL_COUNT_OFFSET]
                         cmp     ax, bx
                         jg      i18_next
                         call    _boot_halt
                         hlt
 i18_next:               xor     ax, ax
-                        mov     ds:IPL_SEQUENCE_OFFSET, bx      ;; Write it back
+                        mov     ds:[IPL_SEQUENCE_OFFSET], bx      ;; Write it back
                         mov     ds, ax                       ;; and reset the segment to zero.
                         push    bx           ;; Carry on in the INT 19h handler, using the new sequence number
                         jmp     int19_next_boot
@@ -350,7 +351,7 @@ a:                      loop a
                         rep  stosw
                         xor  bx, bx         ;; set all interrupts to default handleroffset index
                         mov  cx, 0100h          ;; counter (256 interrupts)
-                        mov  ax, 0ff53h     ;; dummy_iret_handler
+                        mov  ax, dummy_iret_handler     ;; dummy_iret_handler
                         mov  dx, 0F000h
 
 post_default_ints:      mov  [bx], ax
@@ -371,31 +372,32 @@ post_default_ints:      mov  [bx], ax
 
 ebda_post:              xor ax, ax            ; mov EBDA seg into 40E
                         mov ds, ax
-                        mov word ptr [ds:040Eh], EBDA_SEG
+                        mov word ptr ds:[040Eh], EBDA_SEG
 
                         SET_INT_VECTOR 008h, 0F000h, int08_handler    ;; PIT setup - int 1C already points at dummy_iret_handler (above)
+                        
                         SET_INT_VECTOR 009h, 0F000h, int09_handler    ;; Keyboard Hardware Service Entry Point
                         SET_INT_VECTOR 016h, 0F000h, int16_handler    ;; Keyboard Service Entry Point
 
                         xor  ax, ax
                         mov  ds, ax
-                        mov  ds:00417h, al      ; keyboard shift flags, set 1
-                        mov  ds:00418h, al      ; keyboard shift flags, set 2
-                        mov  ds:00419h, al      ; keyboard alt-numpad work area
-                        mov  ds:00471h, al      ; keyboard ctrl-break flag
-                        mov  ds:00497h, al      ; keyboard status flags 4
+                        mov  BYTE PTR ds:00417h, al      ; keyboard shift flags, set 1
+                        mov  BYTE PTR ds:00418h, al      ; keyboard shift flags, set 2
+                        mov  BYTE PTR ds:00419h, al      ; keyboard alt-numpad work area
+                        mov  BYTE PTR ds:00471h, al      ; keyboard ctrl-break flag
+                        mov  BYTE PTR ds:00497h, al      ; keyboard status flags 4
                         mov  al, 010h
-                        mov  ds:00496h, al      ; keyboard status flags 3
-                        mov  bx, 0001Eh         ; keyboard head of buffer pointer
-                        mov  ds:0041Ah, bx
-                        mov  ds:0041Ch, bx      ; keyboard end of buffer pointer
-                        mov  bx, 0001Eh         ; keyboard pointer to start of buffer
-                        mov  ds:00480h, bx
-                        mov  bx, 0003Eh         ; keyboard pointer to end of buffer
-                        mov  ds:00482h, bx
+                        mov  BYTE PTR ds:00496h, al      ; keyboard status flags 3
+                        mov  bx, 001Eh         ; keyboard head of buffer pointer
+                        mov  WORD PTR ds:0041Ah, bx
+                        mov  WORD PTR ds:0041Ch, bx      ; keyboard end of buffer pointer
+                        mov  bx, 001Eh         ; keyboard pointer to start of buffer
+                        mov  WORD PTR ds:00480h, bx
+                        mov  bx, 003Eh         ; keyboard pointer to end of buffer
+                        mov  WORD PTR ds:00482h, bx
 
                         SET_INT_VECTOR 01Ah, 0F000h, int1a_handler    ;; CMOS RTC
-                        SET_INT_VECTOR 010h, 0F000h, 0F065h           ;; int10_handler - Video Support Service Entry Point
+                        SET_INT_VECTOR 010h, 0F000h, int10_handler    ;; int10_handler - Video Support Service Entry Point
                         mov  cx, 0c000h                               ;; init vga bios
                         mov  ax, 0c780h
 
@@ -501,12 +503,12 @@ int16_handler:          sti
                         push    bx
                         push    sp
                         mov     bx, sp
-                        add     BYTE PTR ss:[bx], 10        ; sseg add  [bx], 10
+                        add     ss:[bx], 10        ; sseg add  [bx], 10
                         mov     bx, ss:[bx+2]               ; sseg mov  bx, [bx+2]
                         push    bp
                         push    si
                         push    di
-                        cmp     ah, 000h
+                        cmp     ah, 00h
                         je      int16_F00
                         cmp     ah, 010h
                         je      int16_F00
@@ -567,24 +569,24 @@ int16_key_found:        mov     bx, 0f000h
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e987h - startofrom)
-int09_handler:          cli
+int09_handler:      
+
+                        cli
                         push    ax
-                        in      al, 060h             ;;read key from keyboard controller
+                        in      al, 060h            ;; read key from keyboard controller
                         sti
-                        push    ds
-                        push    ax
+                        
+                        push    ds                  ;; nexy pushes 6 equivalent of pusha
                         push    cx
                         push    dx
                         push    bx
-                        push    sp
-                        mov     bx, sp
-                        add     WORD PTR ss:[bx], 10      ;; sseg add  [bx], 10
-                        mov     bx, ss:[bx+2]             ;; sseg mov  bx, [bx+2]
                         push    bp
                         push    si
                         push    di
+                        
                         cmp     al, 0e0h         ;; check for extended key
                         jne     int09_check_pause
+                        
                         xor     ax, ax
                         mov     ds, ax
                         mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x02
@@ -594,6 +596,7 @@ int09_handler:          cli
 
 int09_check_pause:      cmp     al, 0e1h         ;; check for pause key
                         jne     int09_process_key
+                        
                         xor     ax, ax
                         mov     ds, ax
                         mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x01
@@ -603,20 +606,23 @@ int09_check_pause:      cmp     al, 0e1h         ;; check for pause key
 
 int09_process_key:      mov     bx, 0f000h
                         mov     ds, bx
+                        push    ax
                         call    _int09_function
+                        pop     ax
+                        
 int09_done:             pop     di
                         pop     si
-                        
                         pop     bp
-                        add     sp, 2
                         pop     bx
                         pop     dx
                         pop     cx
-                        pop     ax
                         pop     ds
+
                         cli
                         pop     ax
+                        
                         iret
+
 
 ;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
@@ -644,7 +650,7 @@ int10_handler:
 int12_handler:          push    ds
                         mov     ax, 00040h
                         mov     ds, ax
-                        mov     ax, 00013h
+                        mov     ax, ds:[00013h]
                         pop     ds
                         iret
 
@@ -657,7 +663,7 @@ int12_handler:          push    ds
 int11_handler:          push    ds
                         mov     ax, 00040h
                         mov     ds, ax
-                        mov     ax, 00010h
+                        mov     ax, ds:[00010h]
                         pop     ds
                         iret
 
@@ -690,7 +696,7 @@ int1a_callfunction:     call    _int1a_function
                         pop     dx
                         pop     cx
                         pop     ax
-                        pop      ds
+                        pop     ds
                         iret
 
 ;;--------------------------------------------------------------------------

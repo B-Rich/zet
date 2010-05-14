@@ -1,6 +1,6 @@
 Open Watcom Linker Version 1.9
 Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
-Created on:       10/05/12 22:44:00
+Created on:       10/05/14 15:14:57
 Executable Image: zetbios.rom
 creating a DOS executable
 
@@ -12,7 +12,7 @@ creating a DOS executable
 Group                           Address              Size
 =====                           =======              ====
 
-DGROUP                          f000:0000            00002bde
+DGROUP                          f000:0000            00002b44
 
 
 
@@ -24,10 +24,10 @@ Segment                Class          Group          Address         Size
 =======                =====          =====          =======         ====
 
 _DATA                  DATA           DGROUP         f000:0000       000003c4
-_TEXT                  CODE           DGROUP         f000:1000       00001bde
+_TEXT                  CODE           DGROUP         f000:1000       00001b44
 _BIOSSEG               CODE           AUTO           f000:c000       00004000
-CONST                  DATA           DGROUP         f03c:0004       00000302
-CONST2                 DATA           DGROUP         f06c:0006       00000000
+CONST                  DATA           DGROUP         f03c:0004       000002fe
+CONST2                 DATA           DGROUP         f06c:0002       00000000
 
 
                         +----------------+
@@ -53,23 +53,23 @@ f000:10d0+     _get_CS
 f000:10d8+     _get_SS
 f000:15d8      _print_bios_banner
 f000:1612      _init_boot_vectors
-f000:189e      _int16_function
-f000:1b24      _int09_function
-f000:20b0      _int13_harddisk
-f000:2622      _int13_diskette_function
-f000:2954      _int19_function
-f000:2aa6      _boot_halt
-f000:2ac0      _int1a_function
+f000:189a      _int16_function
+f000:1b16      _int09_function
+f000:20ca      _int13_harddisk
+f000:25cc      _int13_diskette_function
+f000:28f8      _int19_function
+f000:2a20      _boot_halt
+f000:2a30      _int1a_function
 f000:03b6+     _diskette_param_table2
 Module: C:\WATCOM/lib286/dos\clibs.lib(i4d)
-f000:2af8*     __I4D
-f000:2b41      __U4D
+f000:2a5e*     __I4D
+f000:2aa7      __U4D
 Module: C:\WATCOM/lib286/dos\clibs.lib(i4m)
-f000:2bc6*     __I4M
-f000:2bc6      __U4M
+f000:2b2c*     __I4M
+f000:2b2c      __U4M
 Module: C:\WATCOM/lib286/dos\clibs.lib(cmodel)
-f000:2bde      _small_code_
-f000:2bde*     CodeModelMismatch
+f000:2b44      _small_code_
+f000:2b44*     CodeModelMismatch
 
 
                         +--------------------+
@@ -84,6 +84,6 @@ C:\WATCOM/lib286/dos\clibs.lib
                         +-----------------------+
 
 Stack size:  1000 (4096.)
-Memory size:  62b0 (25264.)
+Memory size:  6220 (25120.)
 Entry point address: f000:c000
-Link time: 00:00.00
+Link time: 00:00.16
