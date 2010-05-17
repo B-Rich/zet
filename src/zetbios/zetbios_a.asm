@@ -57,7 +57,6 @@ startofrom              equ     0c000h
 ;;--------------------------------------------------------------------------
                         .Model  Tiny    ;; this forces it to nears on code and data
                         .8086           ;; this forces it to use 80186 and lower
-                        .listall
 _BIOSSEG                SEGMENT 'CODE'
                         assume  cs:_BIOSSEG
 biosrom:                org     0000h   ;; start of ROM, get placed at 0c0000h
@@ -67,24 +66,24 @@ biosrom:                org     0000h   ;; start of ROM, get placed at 0c0000h
 ;;- INT18h - ;; Boot Failure recovery: try the next device.
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-int18_handler:          mov     ax, 0fffeh       ;; Reset SP and SS
-                        mov     sp, ax
-                        xor     ax, ax
-                        mov     ss, ax
-                        mov     bx, IPL_SEG          ;; Get the boot sequence number out of the IPL memory
-                        mov     ds, bx                     ;; Set segment
+int18_handler:          mov     ax, 0fffeh       
+                        mov     sp, ax              ;; Reset SP and SS
+                        xor     ax, ax              ;; Clear ax regiater
+                        mov     ss, ax              ;; Clears SS
+                        mov     bx, IPL_SEG         ;; Get the boot sequence number out of the IPL memory
+                        mov     ds, bx                          ;; Set segment
                         mov     bx, ds:[IPL_SEQUENCE_OFFSET]    ;; BX is now the sequence number
-                        inc     bx                         ;; ++
+                        inc     bx                              ;; Increment BX register
                         mov     ax, ds:[IPL_COUNT_OFFSET]
                         cmp     ax, bx
                         jg      i18_next
                         call    _boot_halt
-                        hlt
+                        hlt                                     ;; Halt the processor
 i18_next:               xor     ax, ax
-                        mov     ds:[IPL_SEQUENCE_OFFSET], bx      ;; Write it back
-                        mov     ds, ax                       ;; and reset the segment to zero.
-                        push    bx           ;; Carry on in the INT 19h handler, using the new sequence number
-                        jmp     int19_next_boot
+                        mov     ds:[IPL_SEQUENCE_OFFSET], bx    ;; Write it back
+                        mov     ds, ax                          ;; and reset the segment to zero.
+                        push    bx                              ;; Carry on in the INT 19h handler, 
+                        jmp     int19_next_boot                 ;; using the new sequence number
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -309,21 +308,21 @@ rom_scan_increment:     push    cx
                         add     cx, ax
                         pop     ax                          ;; Restore AX
                         cmp     cx, ax
-                        jbe     rom_scan_loop
+                        jbe     rom_scan_loop       ;; This is a far jump
                         xor     ax, ax                      ;; Restore DS back to 0000:
                         mov     ds, ax
                         ret
 
 ;;---------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
-;;  - POST -
+;;  - POST -  POST Entry Point
 ;;---------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
-                        org     (0e05bh - startofrom)           ;; POST Entry Point
+                        org     (0e05bh - startofrom)   
 post:                   xor     ax, ax
-normal_post:            cli                                     ;; case 0: normal startup
-                        mov dx, 0f200h          ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
-                        mov ax, 7               ; Bring CKE high
+normal_post:            cli                 ;; case 0: normal startup
+                        mov dx, 0f200h      ; CSR_HPDMC_SYSTEM = HPDMC_SYSTEM_BYPASS|HPDMC_SYSTEM_RESET|HPDMC_SYSTEM_CKE;
+                        mov ax, 7           ; Bring CKE high
                         out dx, ax          ; Initialize the SDRAM controller
                         mov dx, 0f202h      ; Precharge All
                         mov ax, 0400bh      ; CSR_HPDMC_BYPASS = 0x400B;
@@ -398,9 +397,9 @@ ebda_post:              xor ax, ax            ; mov EBDA seg into 40E
 
                         SET_INT_VECTOR 01Ah, 0F000h, int1a_handler    ;; CMOS RTC
                         SET_INT_VECTOR 010h, 0F000h, int10_handler    ;; int10_handler - Video Support Service Entry Point
+
                         mov  cx, 0c000h                               ;; init vga bios
                         mov  ax, 0c780h
-
                         call rom_scan
                         call _print_bios_banner
 
@@ -466,10 +465,10 @@ int13_out:              mov     bp, sp              ;; ZEUS HACK: Turn IF flag o
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-;; - INT19h -
+;; - INT19h - INT 19h Boot Load Service Entry Point
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-                        org     (0e6f2h - startofrom)  ;; INT 19h Boot Load Service Entry Point
+                        org     (0e6f2h - startofrom) 
 int19_handler:          push    bp              ;; int19 was beginning to be really complex, so now it
                         mov     bp, sp          ;; just calls a C function that does the work
                         mov     ax, 0fffeh      ;; Reset SS and SP
@@ -482,86 +481,90 @@ int19_next_boot:        call    _int19_function     ;; Call the C code for the n
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-;; - INT1Ch -
+;; - INT1Ch - User Timer Tick
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-int1c_handler:                                      ;; User Timer Tick
+int1c_handler:                  ;; Stub for later
                         iret
-  
+
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; - INT 16h Keyboard Service Entry Point -
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e82eh - startofrom)
-int16_handler:          sti
-                        push    ds
-                        pushf
-                        push    ax
-                        push    cx
-                        push    dx
-                        push    bx
-                        push    sp
-                        mov     bx, sp
-                        add     ss:[bx], 10        ; sseg add  [bx], 10
-                        mov     bx, ss:[bx+2]               ; sseg mov  bx, [bx+2]
-                        push    bp
-                        push    si
-                        push    di
-                        cmp     ah, 00h
-                        je      int16_F00
-                        cmp     ah, 010h
-                        je      int16_F00
-                        mov     bx, 0f000h
-                        mov     ds, bx
-                        call    _int16_function
-                        pop     di
-                        pop     si
-                        pop     bp
-                        add     sp, 2
-                        pop     bx
-                        pop     dx
-                        pop     cx
-                        pop     ax
-                        popf
-                        pop     ds
-                        jz      int16_zero_set
+int16_handler:          sti                             ;; Enable interupts
+                        push    ds                      ;; Save all registers that
+                        push    dx                      ;; are not supposed to change
+                        push    bx                      ;; on return
+                        push    bp                      ;;
+                        push    si                      ;;
+                        push    di                      ;;
 
-int16_zero_clear:       push    bp
-                        mov     bp, sp       ;; SEG SS
-                        and     BYTE PTR [bp + 006h], 0bfh
-                        pop     bp
-                        iret
+                        cmp     ah, 00h                 ;; Check to see what command
+                        je      int16_F00               ;; was issued with the call
+                        
+                        cmp     ah, 010h                ;; If either 0x00 or 0x10
+                        je      int16_F00               ;; then it is a wait for key loop command
+                        
+                        mov     bx, 0f000h              ;; Otherwise, just check for a key
+                        mov     ds, bx                  ;; First set the data seg to the bios
+                        pushf                           ;; Push the parms on the stack
+                        push    cx                      ;; for the C program to receive
+                        push    ax                      ;; Pass the user command
+                        call    _int16_function         ;; Now call the function
+                        pop     ax                      ;; Now restor the stack
+                        pop     cx                      ;;
+                        popf                            ;; Flags should have ZF set correctly
 
-int16_zero_set:         push    bp
-                        mov     bp, sp                   ;; SEG SS
-                        or      BYTE PTR [bp + 006h], 040h
-                        pop     bp
-                        iret
+                        pop     di                      ;; Now restore all the saved
+                        pop     si                      ;; registers from above
+                        pop     bp                      ;; 
+                        pop     bx                      ;;
+                        pop     dx                      ;;
+                        pop     ds                      ;;
+                        
+                        jz      int16_zero_set          ;; Check the ZF flag set
 
-int16_F00:              mov     bx, 0040h
-                        mov     ds, bx
-int16_wait_for_key:     cli
-                        mov     bx, 0001ah
-                        cmp     bx, 0001ch
-                        jne     int16_key_found
-                        sti
-                        nop
-                        jmp     int16_wait_for_key
-int16_key_found:        mov     bx, 0f000h
-                        mov     ds, bx
-                        call    _int16_function
-                        pop     di
-                        pop     si
-                        pop     bp
-                        add     sp, 2
-                        pop     bx
-                        pop     dx
-                        pop     cx
-                        pop     ax
-                        popf
-                        pop     ds
-                        iret
+int16_zero_clear:       push    bp                              ;; This section of code
+                        mov     bp, sp                          ;; Sets the ZF flag
+                        and     BYTE PTR ss:[bp + 06h], 0bfh    ;; while it is sitting on the stack
+                        pop     bp                              ;; The iret will popf 
+                        iret                                    ;; return from interupt
+
+int16_zero_set:         push    bp                              ;; Save the base pointer
+                        mov     bp, sp                          ;; load it with the stack pointer
+                        or      BYTE PTR ss:[bp + 06h], 040h    ;; locate the flags register on the stack
+                        pop     bp                              ;; Restore the BP register
+                        iret                                    ;; return from interupt
+
+int16_F00:              mov     bx, 0040h               ;; Point to the correct data seg
+                        mov     ds, bx                  ;; Set up the DS
+int16_wait_for_key:     cli                             ;; Loop and Wait for the key
+                        mov     bx, ds:001ah            ;; The head and tail of the buffer
+                        cmp     bx, ds:001ch            ;; If they are not equal a key was put on the buffer
+                        jne     int16_key_found         ;; Found the key, lets go process it
+                        sti                             ;; Enable interupts agains
+                        nop                             ;; No operation
+                        jmp     int16_wait_for_key      ;; Continue looping until key is received
+                        
+int16_key_found:        mov     bx, 0f000h              ;; Otherwise, just check for a key
+                        mov     ds, bx                  ;; First set the data seg to the bios
+                        pushf                           ;; Push the parms on the stack
+                        push    cx                      ;; for the C program to receive
+                        push    ax                      ;; Pass the user command
+                        call    _int16_function         ;; Now call the function
+                        pop     ax                      ;; Now restor the stack
+                        pop     cx                      ;;
+                        popf                            ;; Flags should have ZF set correctly
+
+                        pop     di                      ;; Now restore all the saved
+                        pop     si                      ;; registers from above
+                        pop     bp                      ;; 
+                        pop     bx                      ;;
+                        pop     dx                      ;;
+                        pop     ds                      ;;
+                        iret                            ;; return from interupt
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -569,69 +572,66 @@ int16_key_found:        mov     bx, 0f000h
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e987h - startofrom)
-int09_handler:      
-
-                        cli
-                        push    ax
+int09_handler:          cli                         ;; Clear interupt enable flag
+                        push    ax                  ;; Save the AX register      
+                        
                         in      al, 060h            ;; read key from keyboard controller
-                        sti
+                        sti                         ;; Enable interupts again
                         
-                        push    ds                  ;; nexy pushes 6 equivalent of pusha
-                        push    cx
-                        push    dx
-                        push    bx
-                        push    bp
-                        push    si
-                        push    di
+                        push    ds                  ;; next pushes 6 equivalent of pusha
+                        push    cx                  ;; Save all register contents
+                        push    dx                  ;; Onto the stack
+                        push    bx                  ;;
+                        push    bp                  ;;
+                        push    si                  ;;
+                        push    di                  ;;
                         
-                        cmp     al, 0e0h         ;; check for extended key
-                        jne     int09_check_pause
+                        cmp     al, 0e0h            ;; check for extended key
+                        jne     int09_check_pause   ;; check if the pause key pressed
                         
-                        xor     ax, ax
-                        mov     ds, ax
+                        xor     ax, ax                      ;; Clear the ax register
+                        mov     ds, ax                      ;; Load the data segment reg with 0
                         mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x02
-                        or      al, 002h
-                        mov     BYTE PTR ds:[0496h], al
-                        jmp     int09_done
+                        or      al, 002h                    ;; set bit 2
+                        mov     BYTE PTR ds:[0496h], al     ;; Store in correct key buf location
+                        jmp     int09_done                  ;; Leave this routine
 
-int09_check_pause:      cmp     al, 0e1h         ;; check for pause key
-                        jne     int09_process_key
+int09_check_pause:      cmp     al, 0e1h                    ;; check for pause key
+                        jne     int09_process_key           ;; Pause was not pressed
                         
-                        xor     ax, ax
-                        mov     ds, ax
+                        xor     ax, ax                      ;; Pause was pressed
+                        mov     ds, ax                      ;; Load the data segment reg with 0
                         mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x01
-                        or      al, 001h
-                        mov     BYTE PTR ds:[0496h], al
-                        jmp     int09_done
+                        or      al, 001h                    ;; Set bit 1
+                        mov     BYTE PTR ds:[0496h], al     ;; Store in correct key buf location
+                        jmp     int09_done                  ;; Leave this routine
 
-int09_process_key:      mov     bx, 0f000h
-                        mov     ds, bx
-                        push    ax
-                        call    _int09_function
-                        pop     ax
-                        
-int09_done:             pop     di
-                        pop     si
-                        pop     bp
-                        pop     bx
-                        pop     dx
-                        pop     cx
-                        pop     ds
-
-                        cli
-                        pop     ax
-                        
-                        iret
+int09_process_key:      mov     bx, 0f000h                  ;; Load the Data seg register with
+                        mov     ds, bx                      ;; The bios segment location
+                        push    ax                          ;; Push AX onto stack to pass that parameter 
+                        call    _int09_function             ;; To the C program on the stack
+                        pop     ax                          ;; Restore the stack
+                            
+int09_done:             pop     di                  ;; Retore all the saved registers
+                        pop     si                  ;; That were saved on entry
+                        pop     bp                  ;;
+                        pop     bx                  ;;
+                        pop     dx                  ;;
+                        pop     cx                  ;;
+                        pop     ds                  ;;
+                        pop     ax                  ;;  
+                        cli                         ;; Clear interupt enable flag
+                        iret                        ;; Return from interupt
 
 
 ;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
-;; - INT10h -
+;; - INT10h - Video Support Service Entry Point
 ;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
-                        org     (0f065h - startofrom)   ; INT 10h Video Support Service Entry Point
-int10_handler:          
-                        iret                            ; dont do anything, since the VGA BIOS handles int10h requests
+                        org     (0f065h - startofrom)    
+int10_handler:                  ; dont do anything, since 
+                        iret    ; the VGA BIOS handles int10h requests
 
 
 ;;--------------------------------------------------------------------------
@@ -640,6 +640,7 @@ int10_handler:
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0f0a4h - startofrom)    
+                        iret
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -704,7 +705,7 @@ int1a_callfunction:     call    _int1a_function
 ;; - INT08 -  System Timer ISR Entry Point
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-                        org     (0fea5h - startofrom)       ; INT 08h
+                        org     (0fea5h - startofrom)     
 int08_handler:          sti
                         push    ax
                         push    bx
@@ -742,10 +743,11 @@ int08_store_ticks:      mov     ds:0046ch, ax           ;; store new ticks dword
 
 ;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
-;; Initial Interrupt Vector Offsets Loaded by POS
+;; Initial Interrupt Vector Offsets Loaded by POST
 ;;---------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0fef3h - startofrom)      
+                        iret
 
 ;;---------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------

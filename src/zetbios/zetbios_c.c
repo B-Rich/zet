@@ -15,8 +15,8 @@
 //--------------------------------------------------------------------------
 // Low level assembly functions
 //--------------------------------------------------------------------------
-Bit16u get_CS() { __asm { mov  ax, cs } }
-Bit16u get_SS() { __asm { mov  ax, ss } }
+Bit16u get_CS(void) { __asm { mov  ax, cs } }
+Bit16u get_SS(void) { __asm { mov  ax, ss } }
 
 //--------------------------------------------------------------------------
 //  memset of count bytes
@@ -47,8 +47,7 @@ static void memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count
 //--------------------------------------------------------------------------
 //  memcpy of count bytes 
 //--------------------------------------------------------------------------
-static void memcpyb(d_segment,d_offset,s_segment, s_offset, count)
-Bit16u d_segment, d_offset, s_segment, s_offset, count;
+static void memcpyb(Bit16u d_segment, Bit16u d_offset, Bit16u s_segment, Bit16u s_offset, Bit16u count)
 {
     __asm {
                     push ax
@@ -154,15 +153,13 @@ static void put_str(Bit16u action, Bit16u segment, Bit16u offset)
 //   and the optional length modifier is l (ell)
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-static void bios_printf(action, s, ...)
-Bit16u action; Bit8u *s;
+static void bios_printf(Bit16u action, Bit8u *s, ...)
 {
-
-    Bit8u c, format_char;
+    Bit8u    c;
     bx_bool  in_format;
-    short i;
+    short    i;
     Bit16u  *arg_ptr;
-    Bit16u   arg_seg, arg, nibble, hibyte, shift_count, format_width, hexadd;
+    Bit16u   arg_seg, arg, nibble, hibyte, format_width, hexadd;
 
     arg_ptr = (Bit16u  *)&s;
     arg_seg = get_SS();
@@ -173,25 +170,25 @@ Bit16u action; Bit8u *s;
     if((action & BIOS_PRINTF_DEBHALT) == BIOS_PRINTF_DEBHALT)
         bios_printf(BIOS_PRINTF_SCREEN, "FATAL: ");
 
-    while(c = read_byte(get_CS(), s)) {
+        while(c = read_byte(get_CS(), (Bit16u)s)) {
         if( c == '%' ) {
             in_format = 1;
             format_width = 0;
         }
         else if(in_format) {
-            if( (c>='0') && (c<='9') ) {
+            if( (c >= '0') && (c <= '9') ) {
                 format_width = (format_width * 10) + (c - '0');
             }
             else {
                 arg_ptr++;              // increment to next arg
-                arg = read_word(arg_seg, arg_ptr);
+                arg = read_word(arg_seg, (Bit16u)arg_ptr);
                 if(c == 'x' || c == 'X') {
                     if(format_width == 0) format_width = 4;
                     if(c == 'x') hexadd = 'a';
                     else         hexadd = 'A';
                     for(i = format_width-1; i >= 0; i--) {
                         nibble = (arg >> (4 * i)) & 0x000f;
-                        send (action, (nibble<=9)? (nibble+'0') : (nibble-10+hexadd));
+                        send(action, (nibble<=9)? (nibble+'0') : (nibble-10+hexadd));
                     }
                 }
                 else if(c == 'u') {
@@ -199,9 +196,9 @@ Bit16u action; Bit8u *s;
                 }
                 else if(c == 'l') {
                     s++;
-                    c = read_byte(get_CS(), s);                     // is it ld,lx,lu? 
-                    arg_ptr++;                                                              // increment to next arg
-                    hibyte = read_word(arg_seg, arg_ptr);
+                    c = read_byte(get_CS(), (Bit16u)s);       // is it ld,lx,lu? 
+                    arg_ptr++;                                // increment to next arg
+                    hibyte = read_word(arg_seg, (Bit16u)arg_ptr);
                     if(c == 'd') {
                         if(hibyte & 0x8000) put_luint(action, 0L-(((Bit32u) hibyte << 16) | arg), format_width-1, 1);
                         else                put_luint(action, ((Bit32u) hibyte << 16) | arg, format_width, 0);
@@ -215,7 +212,7 @@ Bit16u action; Bit8u *s;
                         else          hexadd = 'A';
                         for(i=format_width-1; i>=0; i--) {
                             nibble = ((((Bit32u) hibyte <<16) | arg) >> (4 * i)) & 0x000f;
-                            send (action, (nibble<=9)? (nibble+'0') : (nibble-10+hexadd));
+                            send(action, (nibble<=9)? (nibble+'0') : (nibble-10+hexadd));
                         }
                     }
                 }
@@ -229,7 +226,7 @@ Bit16u action; Bit8u *s;
                 else if(c == 'S') {
                     hibyte = arg;
                     arg_ptr++;
-                    arg = read_word(arg_seg, arg_ptr);
+                    arg = read_word(arg_seg, (Bit16u)arg_ptr);
                     put_str(action, hibyte, arg);
                 }
                 else if(c == 'c') {
@@ -288,13 +285,13 @@ void __cdecl print_bios_banner(void)
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 static char drivetypes[][20]={"", "Floppy flash image", "SD card" };
-void __cdecl init_boot_vectors()
+void __cdecl init_boot_vectors(void)
 {
     ipl_entry_t e;
-    Bit8u  sd_error, switches;
-    Bit16u count = 0;
-    Bit16u hdi, fdi;
-    Bit16u ss = get_SS();
+    Bit8u       sd_error, switches;
+    Bit16u      count = 0;
+    Bit16u      hdi, fdi;
+    Bit16u      ss = get_SS();
 
     memsetb(IPL_SEG, IPL_TABLE_OFFSET, 0, IPL_SIZE);  // Clear out the IPL table. 
 
@@ -305,7 +302,7 @@ void __cdecl init_boot_vectors()
 
         // Floppy drive 
         e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof(e), ss, &e, sizeof(e));
+        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + count * sizeof(e), ss, (Bit16u)&e, sizeof(e));
         count++;
     }
     else {            // Get the boot sequence from the switches
@@ -314,55 +311,14 @@ void __cdecl init_boot_vectors()
         else         { hdi = 0; fdi = 1; }
 
         e.type = IPL_TYPE_HARDDISK; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + hdi * sizeof(e), ss, &e, sizeof(e));
+        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + hdi * sizeof(e), ss, (Bit16u)&e, sizeof(e));
 
         e.type = IPL_TYPE_FLOPPY; e.flags = 0; e.vector = 0; e.description = 0; e.reserved = 0;
-        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + fdi * sizeof(e), ss, &e, sizeof(e));
+        memcpyb(IPL_SEG, IPL_TABLE_OFFSET + fdi * sizeof(e), ss, (Bit16u)&e, sizeof(e));
         count = 2;
     }
     write_word(IPL_SEG, IPL_COUNT_OFFSET, count);   // Remember how many devices we have 
     write_word(IPL_SEG, IPL_SEQUENCE_OFFSET, 1);    // Try to boot first boot device 
-}
-
-//--------------------------------------------------------------------------
-// get boot vector 
-//--------------------------------------------------------------------------
-static Bit8u get_boot_vector(i, e)
-Bit16u i; ipl_entry_t *e;
-{
-    Bit16u count;
-    Bit16u ss = get_SS();
-  
-    count = read_word(IPL_SEG, IPL_COUNT_OFFSET); // Get the count of boot devices, and refuse to overrun the array 
-    if(i >= count) return(0);    // OK to read this device 
-  
-    memcpyb(ss, e, IPL_SEG, IPL_TABLE_OFFSET + i * sizeof(*e), sizeof(*e));
-    return(1);
-}
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-// print_boot_device - displays the boot device
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-static void print_boot_device(ipl_entry_t *e)
-{
-    Bit16u type;
-    char description[33];
-    Bit16u ss = get_SS();
-    type = e->type;
-  
-    if(type == IPL_TYPE_BEV) type = 0x04; // NIC appears as type 0x80 
-    if(type == 0 || type > 0x4) BX_PANIC("Bad drive type\n");
-
-    bios_printf(BIOS_PRINTF_SCREEN, "Booting from %s", drivetypes[type]);
- 
-    if(type == 4 && e->description != 0) {    // print product string if BEV, first 32 bytes are significant 
-        memcpyb(ss, &description, (Bit16u)(e->description >> 16), (Bit16u)(e->description & 0xffff), 32);
-        description[32] = 0; // terminate string 
-        bios_printf(BIOS_PRINTF_SCREEN, " [%S]", ss, description);
-    }
-    bios_printf(BIOS_PRINTF_SCREEN, "...\n\n");
 }
 
 //--------------------------------------------------------------------------
@@ -371,8 +327,7 @@ static void print_boot_device(ipl_entry_t *e)
 //   displays the reason why boot failed
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-static void print_boot_failure(type, reason)
-Bit16u type; Bit8u reason;
+static void print_boot_failure(Bit16u type, Bit8u reason)
 {
     if(type == 0 || type > 0x03) BX_PANIC("Bad drive type\n");
     printf("Boot failed");
@@ -385,37 +340,72 @@ Bit16u type; Bit8u reason;
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-// INT16 Support function - Keyboard 
+// De-queue the key - Called only by INT16 Key stroke function:
+// Takes a key stroke out of the keyboard buffere and returns the value
+// If incr is 0, then it just checks for a key in the buffer but does not
+// alter the buffer pointers.
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void __cdecl int16_function(rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS)
-Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS;
+static BOOL __cdecl dequeue_key(Bit8u BASESTK *scan_code, Bit8u BASESTK *ascii_code, int incr)
 {
-    Bit8u scan_code, ascii_code, shift_flags, led_flags, count;
-    Bit16u kbd_code, max;
+    Bit16u buffer_start, buffer_end, buffer_head, buffer_tail;
 
-    shift_flags = read_byte(0x0040, 0x17);
-    led_flags   = read_byte(0x0040, 0x97);
+    buffer_start = read_word(0x0040, 0x0080);
+    buffer_end   = read_word(0x0040, 0x0082);
+    buffer_head  = read_word(0x0040, 0x001a);
+    buffer_tail  = read_word(0x0040, 0x001c);
+
+    if(buffer_head != buffer_tail) {
+        *ascii_code  = read_byte(0x0040, buffer_head);
+        *scan_code   = read_byte(0x0040, buffer_head+1);
+        if(incr) {
+            buffer_head += 2;
+            if(buffer_head >= buffer_end) buffer_head = buffer_start;
+            write_word(0x0040, 0x001a, buffer_head);
+        }
+        return(1);
+    }
+    return(0);
+}
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// INT16 Support function - Keyboard support routine
+// This function checks for if a key has been pressed and is waiting in the
+// buffer for processing and returns the appropriate values.
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+void __cdecl int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS)
+{
+    Bit8u   scan_code, ascii_code;
+    Bit8u   shift_flags, led_flags;
+    Bit16u  kbd_code, Flags;
+
+    shift_flags = read_byte(0x0040, 0x0017);
+    led_flags   = read_byte(0x0040, 0x0097);
 
     switch(GET_AH()) {
         case 0x00:      // read keyboard input 
-            if(!dequeue_key(&scan_code, &ascii_code, 1)) {
-                BX_PANIC("KBD: int16h: out of keyboard input\n");
+            if(!dequeue_key(&scan_code, &ascii_code, 1)) {          // if retirns a 0
+                BX_PANIC("KBD: int16h: out of keyboard input\n");   // that means no key strokes waiting
             }
             if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
             else if(ascii_code == 0xE0)             ascii_code = 0;
-            rAX = (scan_code << 8) | ascii_code;
+            kbd_code = (scan_code << 8) | ascii_code;
+            SET_PARM(rAX, kbd_code);
             break;
 
         case 0x01:      // check keyboard status 
-            if(!dequeue_key(&scan_code, &ascii_code, 0)) {
-                SET_ZF();
-                return;
+            if(dequeue_key(&scan_code, &ascii_code, 0)) {   // We have received a key
+                if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
+                else if(ascii_code == 0xE0)             ascii_code = 0;
+                kbd_code = (scan_code << 8) | ascii_code;
+                SET_PARM(rAX, kbd_code);
+                CLEAR_ZF();
             }
-            if (scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
-            else if (ascii_code == 0xE0) ascii_code = 0;
-            rAX = (scan_code << 8) | ascii_code;
-            CLEAR_ZF();
+            else {              // if dequeue returns 0 then no key is waiting
+                SET_ZF();       // Setting the zero flag means no key strokes waiting
+            }
             break;
 
         case 0x02:     // get shift flag status 
@@ -446,8 +436,10 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS;
                 BX_PANIC("KBD: int16h: out of keyboard input\n");
             }
             if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
-            rAX = (scan_code << 8) | ascii_code;
+            kbd_code = (scan_code << 8) | ascii_code;
+            SET_PARM(rAX, kbd_code);
             break;
+
 
         case 0x11:  // check MF-II keyboard status 
             if(!dequeue_key(&scan_code, &ascii_code, 0) ) {
@@ -455,7 +447,14 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS;
                 return;
             }
             if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
-            rAX = (scan_code << 8) | ascii_code;
+            kbd_code = (scan_code << 8) | ascii_code;
+            SET_PARM(rAX, kbd_code);
+
+/*            __asm { 
+                   mov  ax, data      //  The data word 
+                   mov  ss:rAX, kbd_code    //  write data word to parm
+             }
+*/
             CLEAR_ZF();
             break;
 
@@ -465,9 +464,6 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS;
             shift_flags = read_byte(0x0040, 0x18) & 0x73;
             shift_flags |= read_byte(0x0040, 0x96) & 0x0c;
             SET_AH(shift_flags);
-            #if DEBUG_INT16
-                #define BX_DEBUG_INT16(a...) BX_DEBUG(a)
-            #endif
             break;
 
         case 0x92:        // keyboard capability check called by DOS 5.0+ keyb *
@@ -486,44 +482,28 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rFLAGS;
     }
 }
 
+
 //--------------------------------------------------------------------------
-// De-queue the key 
+// Enqueue Key
 //--------------------------------------------------------------------------
-static BOOL dequeue_key(scan_code, ascii_code, incr)
-Bit8u *scan_code; Bit8u *ascii_code; unsigned int incr;
+static BOOL enqueue_key(Bit8u scan_code, Bit8u ascii_code)
 {
-    Bit16u buffer_start, buffer_end, buffer_head, buffer_tail;
-    Bit16u ss;
-    Bit8u  acode, scode;
+    Bit16u buffer_start, buffer_end, buffer_head, buffer_tail, temp_tail;
 
-    #if 1
-        buffer_start = 0x001E;
-        buffer_end   = 0x003E;
-    #else
-        buffer_start = read_word(0x0040, 0x0080);
-        buffer_end   = read_word(0x0040, 0x0082);
-    #endif
+    buffer_start = read_word(0x0040, 0x0080);
+    buffer_end   = read_word(0x0040, 0x0082);
+    buffer_head  = read_word(0x0040, 0x001A);
+    buffer_tail  = read_word(0x0040, 0x001C);
 
-    buffer_head = read_word(0x0040, 0x001a);
-    buffer_tail = read_word(0x0040, 0x001c);
+    temp_tail = buffer_tail;
+    buffer_tail += 2;
+    if(buffer_tail >= buffer_end) buffer_tail = buffer_start;
+    if(buffer_tail == buffer_head) return(0);   // Buffer over run
 
-    if(buffer_head != buffer_tail) {
-        ss = get_SS();
-        acode = read_byte(0x0040, buffer_head);
-        scode = read_byte(0x0040, buffer_head+1);
-        write_byte(ss, ascii_code, acode);
-        write_byte(ss, scan_code, scode);
-        if(incr) {
-            buffer_head += 2;
-            if(buffer_head >= buffer_end) buffer_head = buffer_start;
-            write_word(0x0040, 0x001a, buffer_head);
-        }
-        return(1);
-    }
-    else {
-        return(0);
-    }
-    return(0);
+    write_byte(0x0040, temp_tail, ascii_code);
+    write_byte(0x0040, temp_tail+1, scan_code);
+    write_word(0x0040, 0x001C, buffer_tail);
+    return(1);
 }
 
 //--------------------------------------------------------------------------
@@ -531,10 +511,7 @@ Bit8u *scan_code; Bit8u *ascii_code; unsigned int incr;
 // INT09 Support function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-//void __cdecl int09_function(rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX)
-//Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX;
-void __cdecl int09_function(rAX)
-Bit16u rAX;
+void __cdecl int09_function(Bit16u rAX)
 {
     Bit8u scancode, asciicode, shift_flags;
     Bit8u mf2_flags, mf2_state;
@@ -719,43 +696,6 @@ Bit16u rAX;
     write_byte(0x0040, 0x96, mf2_state);
 }
 
-
-//--------------------------------------------------------------------------
-// Enqueue Key
-//--------------------------------------------------------------------------
-static BOOL enqueue_key(scan_code, ascii_code)
-Bit8u scan_code, ascii_code;
-{
-    Bit16u buffer_start, buffer_end, buffer_head, buffer_tail, temp_tail;
-
-    #if 1
-        buffer_start = 0x001E;
-        buffer_end   = 0x003E;
-    #else
-        buffer_start = read_word(0x0040, 0x0080);
-        buffer_end   = read_word(0x0040, 0x0082);
-    #endif
-
-
-    buffer_head = read_word(0x0040, 0x001A);
-    buffer_tail = read_word(0x0040, 0x001C);
-
-__asm { sti }
-wrch('='); wrch(ascii_code); wrch(' '); 
-
-
-    temp_tail = buffer_tail;
-    buffer_tail += 2;
-    if(buffer_tail >= buffer_end) buffer_tail = buffer_start;
-
-    if(buffer_tail == buffer_head) return(0);   // Buffer over run
-
-    write_byte(0x0040, temp_tail, ascii_code);
-    write_byte(0x0040, temp_tail+1, scan_code);
-    write_word(0x0040, 0x001C, buffer_tail);
-    return(1);
-}
-
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 // INT13 Interupt handler function
@@ -776,7 +716,6 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     Bit16u   tempbx;
     Bit16u   addr_l, addr_h;
     Bit32u   log_sector;
-    Bit32u   disksize;
 
     write_byte(0x0040, 0x008e, 0);  // clear completion flag
 
@@ -1116,8 +1055,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 //  Transfer Sector drive
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-static void transf_sect_drive_a(s_segment, s_offset)
-Bit16u s_segment; Bit16u s_offset;
+static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
 {
     __asm {
                 push ax
@@ -1153,8 +1091,7 @@ Bit16u s_segment; Bit16u s_offset;
 // The RAM Disk is stored at 0x110000 to 0x277FFF in the SDRAM
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-static Bit16u GetRamdiskSector(Sector)
-Bit16u Sector;
+static Bit16u GetRamdiskSector(Bit16u Sector)
 {
     Bit16u Page;
     // The bits above the upper five bits tells us which memory location
@@ -1162,29 +1099,6 @@ Bit16u Sector;
     Page = RAM_DISK_BASE + (Sector >> 5);
     outb(EMS_PAGE1_REG, Page);       // Set the first 16K
     return ((Sector & 0x001F) << 9); // Return the memory location within the sector
-}
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-// Make RAM disk
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-static void MakeRamdisk()
-{
-    Bit16u Sector;
-    Bit16u base_count;
-
-    // The principle of this routine is to copy directly from flash to the ram disk
-    // Using the same call that is used to read the flash disk
-
-    outb(EMS_ENABLE_REG, EMS_ENABLE_VAL);      // Turn on EMS from 0xB0000 - 0xBFFFF
-
-    // Configure the sector address
-    for (Sector = 0; Sector < SECTOR_COUNT; Sector++) {
-        outw(FLASH_PAGE_REG, Sector);              // Select the Flash Disk Sector
-        base_count = GetRamdiskSector(Sector);               // Select the Flash Page and get the address within the page of the Sector
-        transf_sect_drive_a(EMS_SECTOR_OFFSET, base_count);    // We now have the correct page of flash selected and the sector is always in the same place so just pass the place to copy it too
-    }
 }
 
 //--------------------------------------------------------------------------
@@ -1220,13 +1134,12 @@ Bit8u diskette_param_table2[] = {
 void __cdecl int13_diskette_function(rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
 Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 {
-    Bit8u  drive, num_sectors, track, sector, head, status;
+    Bit8u  drive, num_sectors, track, sector, head;
     Bit16u base_address, base_count, base_es;
-    Bit8u  page, mode_register, val8, dor;
-    Bit8u  return_status[7];
+    Bit8u  page;
     Bit8u  drive_type, num_floppies, cmd;
-    Bit16u es, last_addr;
-    Bit16u log_sector, tmp, i, j;
+    Bit16u last_addr;
+    Bit16u log_sector, j;
     Bit16u RamAddress;
 
     cmd = GET_AH();
@@ -1466,14 +1379,12 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     }
 }
 //--------------------------------------------------------------------------
-static void set_diskette_ret_status(value)
-Bit8u value;
+static void set_diskette_ret_status(Bit8u value)
 {
     write_byte(0x0040, 0x0041, value);
 }
 //--------------------------------------------------------------------------
-static void set_diskette_current_cyl(drive, cyl)
-Bit8u drive;  Bit8u cyl;
+static void set_diskette_current_cyl(Bit8u drive, Bit8u cyl)
 {
     if(drive > 1) drive = 1;    // Temporary hack: for MSDOS
     write_byte(0x0040, 0x0094 + drive, cyl);
@@ -1481,19 +1392,56 @@ Bit8u drive;  Bit8u cyl;
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-// INT 19 Support Function
+// Get boot vector - only called by INT19 Support Function
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+static Bit8u get_boot_vector(Bit16u i, ipl_entry_t BASESTK *e)
+{
+    Bit16u count;
+    Bit16u ss = get_SS();
+    count = read_word(IPL_SEG, IPL_COUNT_OFFSET); // Get the count of boot devices, and refuse to overrun the array 
+    if(i >= count) return(0);                     // OK to read this device 
+    memcpyb(ss, (Bit16u)e, IPL_SEG, IPL_TABLE_OFFSET + i * sizeof(*e), sizeof(*e));
+    return(1);
+}
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// print_boot_device - displays the boot device  - only called by INT19 Support Function
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+static void print_boot_device(ipl_entry_t BASESTK *e)
+{
+    Bit16u type;
+    char description[33];
+    Bit16u ss = get_SS();
+    type = e->type;
+  
+    if(type == IPL_TYPE_BEV) type = 0x04; // NIC appears as type 0x80 
+    if(type == 0 || type > 0x4) BX_PANIC("Bad drive type\n");
+
+    bios_printf(BIOS_PRINTF_SCREEN, "Booting from %s", drivetypes[type]);
+ 
+    if(type == 4 && e->description != 0) {    // print product string if BEV, first 32 bytes are significant 
+        memcpyb(ss, (Bit16u)&description, (Bit16u)(e->description >> 16), (Bit16u)(e->description & 0xffff), 32);
+        description[32] = 0; // terminate string 
+        bios_printf(BIOS_PRINTF_SCREEN, " [%S]", ss, description);
+    }
+    bios_printf(BIOS_PRINTF_SCREEN, "...\n\n");
+}
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// INT19 Support Function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 void __cdecl int19_function(Bit16u seq_nr)
 {
-    Bit16u ebda_seg=read_word(0x0040,0x000E);
     Bit16u bootdev;
-    Bit8u  bootdrv, sd_error;
-    Bit8u  bootchk;
+    Bit8u  bootdrv;
     Bit16u bootseg;
     Bit16u bootip;
     Bit16u status;
-    Bit16u bootfirst;
     ipl_entry_t e;
 
     // Here we assume that BX_ELTORITO_BOOT is defined, so
@@ -1512,7 +1460,7 @@ void __cdecl int19_function(Bit16u seq_nr)
     bootdev  = read_word(IPL_SEG, IPL_SEQUENCE_OFFSET);   // Read user selected device 
     bootdev -= 1;       // Translate from CMOS runes to an IPL table offset by subtracting 1 
 
-    if(get_boot_vector(bootdev, &e) == 0) { // Read the boot device from the IPL table 
+    if(get_boot_vector(bootdev, &e) == 0) {     // Read the boot device from the IPL table 
         printf("Invalid boot device (0x%x)\n", bootdev);
         return;
     }
@@ -1570,9 +1518,7 @@ void __cdecl int19_function(Bit16u seq_nr)
             return;
     }
 
-//    printf("%x\n",read_word(bootseg, bootip+0x01fe));
-//    BX_INFO("Booting from %x:%x\n", bootseg, bootip);       // Debugging info 
-    printf("Booting from %x:%x\n", bootseg, bootip);
+    printf("Booting from %x:%x\n", bootseg, bootip);        // Debugging info 
 
     __asm {                 // This routine Jumps to the boot vector we just loaded 
         pushf               // iret pops ip, then cs, then flags, so push them in the opposite order.
@@ -1596,23 +1542,21 @@ void __cdecl int19_function(Bit16u seq_nr)
 // BOOT HALT
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void __cdecl boot_halt ()
+void __cdecl boot_halt(void)
 {
     printf("No more devices to boot - System halted.\n");
 }
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-// INT 1A Support function
+// INT 1A Support function - Time-of-day Service Entry Point
+//      regs pushed from PUSHA instruction
+//      previous DS:, DS set to 0x0000 by asm wrapper
+//      CS,IP,Flags pushed from original INT call
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void __cdecl int1a_function(regs, ds, iret_addr)
-    pusha_regs_t regs;        // regs pushed from PUSHA instruction
-    Bit16u ds;                // previous DS:, DS set to 0x0000 by asm wrapper
-    iret_addr_t  iret_addr;   // CS,IP,Flags pushed from original INT call
+void __cdecl int1a_function(pusha_regs_t regs, Bit16u ds, iret_addr_t iret_addr)
 {
-    Bit8u val8;
-
     __asm { sti }
 
     switch(regs.u.r8.ah) {
@@ -1623,8 +1567,7 @@ void __cdecl int1a_function(regs, ds, iret_addr)
             regs.u.r8.al  = BiosData->midnight_flag;
             BiosData->midnight_flag = 0; // reset flag
             __asm { sti }
-            // AH already 0
-            ClearCF(iret_addr.flags); // OK
+            ClearCF(iret_addr.flags); // OK  AH already 0
             break;
 
         default:

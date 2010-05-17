@@ -1,16 +1,14 @@
 # Compiler flags:
 #  -0   generate 8086 code
 #  -ms  forces small model
-#  -w0  no warnings
 #  -s   remove runtime stack checks
-#  -ot  
+#  -ot  Optimize for time of execution rather than size
 #  -zu  assume that SS != DS
-#  -oxs maximum size optimizations
-#  -ecc use __cedecl calls
+#  -ecc force use of __cedecl calls
 #
-CFLAGS = -0 -w0 -s -ot -d0 -ecc -ms 
+CFLAGS = -0 -wx -zu -s -ot -d0 -ecc -ms 
 
-AFLAGS = -zq -w0 -0
+AFLAGS = -0 -wx 
 
 .c.obj : .autodepend
 	wcc $(CFLAGS) $<

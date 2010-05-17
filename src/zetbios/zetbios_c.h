@@ -71,6 +71,9 @@ typedef           int  BOOL;
 #define ClearZF(x) x.u.r8.flagsl &= 0xbf
 #define GetCF(x)   (x.u.r8.flagsl & 0x01)
 
+
+#define SET_PARM(parm, data) __asm { mov ax, data}; __asm { mov ss:parm, ax  };
+
 #define SET_AL(val8) rAX = ((rAX & 0xff00) | (val8))
 #define SET_BL(val8) rBX = ((rBX & 0xff00) | (val8))
 #define SET_CL(val8) rCX = ((rCX & 0xff00) | (val8))
@@ -96,9 +99,12 @@ typedef           int  BOOL;
 #define SET_CF()     rFLAGS |= 0x0001
 #define CLEAR_CF()   rFLAGS &= 0xfffe
 
-#define SET_ZF()     rFLAGS |= 0x0040
-#define CLEAR_ZF()   rFLAGS &= 0xffbf
-#define GET_ZF()    (rFLAGS & 0x0040)
+//#define SET_ZF()     rFLAGS |= 0x0040
+//#define CLEAR_ZF()   rFLAGS &= 0xffbf
+//#define GET_ZF()    (rFLAGS & 0x0040)
+
+#define SET_ZF()    Flags = rFLAGS | 0x0040; __asm{ mov ax, Flags }; __asm{ mov ss:rFLAGS, ax }; 
+#define CLEAR_ZF()  Flags = rFLAGS & 0xffbf; __asm{ mov ax, Flags }; __asm{ mov ss:rFLAGS, ax };
 
 #define MK_FP(seg,off)  (((__segment)(seg)):>((void __near *)(off)))
 
@@ -326,26 +332,20 @@ void outw(Bit16u port, Bit16u  val)
 }
 #endif
 
-//#ifdef __WATCOMC__
-#if 0
 
-Bit8u read_byte(segment, soffset)
-Bit16u segment, soffset;
+#if 0
+Bit8u read_byte(Bit16u segment, Bit16u soffset)
 {
     return( *(Bit8u __far *)MK_FP(segment, soffset) );
 }
-
-Bit16u read_word(segment, soffset)
-Bit16u segment, soffset;
+Bit16u read_word(Bit16u segment, Bit16u soffset)
 {
     return( *(Bit16u __far *)MK_FP(segment, soffset) );
 }
-
 void write_byte(Bit16u segment, Bit16u soffset, Bit8u data)
 {
     *(Bit8u __far *)MK_FP(segment, soffset) = data;
 }
-
 void write_word(Bit16u segment, Bit16u soffset, Bit16u data)
 {
     *(Bit16u __far *)MK_FP(segment, soffset) = data;
@@ -353,8 +353,7 @@ void write_word(Bit16u segment, Bit16u soffset, Bit16u data)
 
 #else
 
-Bit8u read_byte(s_segment, s_offset)
-Bit16u s_segment, s_offset;
+Bit8u read_byte(Bit16u s_segment, Bit16u s_offset)
 {
     __asm {
         push bx
@@ -368,8 +367,7 @@ Bit16u s_segment, s_offset;
     }
 }
 
-Bit16u read_word(s_segment, s_offset)
-Bit16u s_segment, s_offset;
+Bit16u read_word(Bit16u s_segment, Bit16u s_offset)
 {
     __asm {
         push bx
@@ -383,8 +381,7 @@ Bit16u s_segment, s_offset;
     }
 }
 
-void write_byte(s_segment, s_offset, data)
-Bit16u s_segment, s_offset; Bit8u data;
+void write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data)
 {
     __asm {
         push ax
@@ -401,8 +398,7 @@ Bit16u s_segment, s_offset; Bit8u data;
     }
 }
 
-void write_word(s_segment, s_offset, data)
-Bit16u s_segment, s_offset, data;
+void write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data)
 {
     __asm {
         push ax
@@ -421,12 +417,44 @@ Bit16u s_segment, s_offset, data;
 
 #endif
 
-
-
 //---------------------------------------------------------------------------
-// End of Bios Rom C Helper Code section
 //---------------------------------------------------------------------------
-extern void print_bios_banner(void);
+// Function prototypes:
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+#define BASESTK __based(__segname("_STACK"))
+
+static Bit16u   get_CS(void);
+static Bit16u   get_SS(void);
+static void     memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count);
+static void     memcpyb(Bit16u d_segment, Bit16u d_offset, Bit16u s_segment, Bit16u s_offset, Bit16u count);
+static void     wrch(Bit8u character);
+static void     send(Bit16u action, Bit8u  c);
+static void     put_int(Bit16u action, short val, short width, bx_bool neg);
+static void     put_uint(Bit16u action, unsigned short val, short width, bx_bool neg);
+static void     put_luint(Bit16u action, unsigned long val, short width, bx_bool neg);
+static void     put_str(Bit16u action, Bit16u segment, Bit16u offset);
+static void     bios_printf(Bit16u action, Bit8u *s, ...);
+static Bit8u    get_boot_vector(Bit16u i, ipl_entry_t BASESTK *e);
+static void     print_boot_device(ipl_entry_t BASESTK *e);
+static void     print_boot_failure(Bit16u type, Bit8u reason);
+static BOOL     dequeue_key(Bit8u BASESTK *scan_code, Bit8u BASESTK *ascii_code, int incr);
+static BOOL     enqueue_key(Bit8u scan_code, Bit8u ascii_code);
+static void     transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset);
+static Bit16u   GetRamdiskSector(Bit16u Sector);
+static void     set_diskette_ret_status(Bit8u value);
+static void     set_diskette_current_cyl(Bit8u drive, Bit8u cyl);
+
+void __cdecl    print_bios_banner(void);
+void __cdecl    int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS);
+void __cdecl    int09_function(Bit16u rAX);
+void __cdecl    int13_harddisk(Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u);
+void __cdecl    int13_diskette_function(Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u);
+
+void __cdecl    init_boot_vectors(void);
+void __cdecl    int19_function(Bit16u seq_nr);
+void __cdecl    boot_halt(void);
+void __cdecl    int1a_function(pusha_regs_t regs, Bit16u ds, iret_addr_t iret_addr);
 
 
 //---------------------------------------------------------------------------
