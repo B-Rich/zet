@@ -1,0 +1,6 @@
+zetbios_c.h(296): Warning! W107: Missing return value for function 'inb'
+zetbios_c.h(319): Warning! W107: Missing return value for function 'inw'
+zetbios_c.h(368): Warning! W107: Missing return value for function 'read_byte'
+zetbios_c.h(382): Warning! W107: Missing return value for function 'read_word'
+zetbios_c.c(18): Warning! W107: Missing return value for function 'get_CS'
+zetbios_c.c(19): Warning! W107: Missing return value for function 'get_SS'

@@ -1,0 +1,129 @@
+{\rtf1\ansi\ansicpg1252\deff0\deflang1033\deflangfe1033{\fonttbl{\f0\fmodern\fprq1\fcharset0 Courier New;}}
+{\*\generator Msftedit 5.41.15.1515;}\viewkind4\uc1\pard\nowidctlpar\f0\fs20 ZET SBC Rationale and Description:\par
+---------------------------------------------------------------------\par
+The ZET is a really fun little PC-XT SoC implemented on an FPGA demo board (Terasic DE1 educational board).\par
+\par
+I think it would be great fun to produce a Single Board Computer version of ZET that would run on an SBC specifically designed for that purpose. At the same time, the SBC should be general enough to run some other tiny OS (perhaps tiny linux or similar).\par
+\par
+The follow are what I think would be key aspects to he ZET SBC design:\par
+\par
+1) The target audience is the hobbyist, someone who has some level of expertise in soldering, computers and programming, but not necessarily a super-hero. For a hobbyist, cost is a major concern, this is just for fun so the total cost of the project; (assuming some limited scrounging for connectors and such) should be in the $100 price range.\par
+\par
+2) Based on this target, the system needs to fit into at most, a 144pin count QFP or TQPF package. Any larger than that and you start getting into BGA and UBGA\rquote s, which are difficult for most hobbyists to solder and the higher pin count devices cost more. I have successfully soldered 144Pin TQFP\rquote s before with a small tip soldering iron; the technique involves soldering the pins, then cleaning up the inevitable solder bridges with the solder wick. There are a number of web tutorials on this subject.\par
+\par
+3) The Altera chip that I think fits very well into the niche is the Cyclone III, there are 3 versions that are good candidates:\par
+\par
+Part #          User Pins      LE\rquote s      Cost (US)\par
+EP3C10E144C7           94    10,320            $23\par
+EP3C16E144C8           84    15,408            $27\par
+EP3C25E144I7N          82    24,624            $59\par
+\par
+3) The PCB needs to be inexpensive as well, it would be best to keep it down to a 2 layer board if possible to keep the cost of the board down. This is another reason to stay away fro the UBGA type packages because with that density you need at least a 4 layer board.\par
+\par
+4) The system should be such that someone can have fun with it without necessarily being a wiz at Quartus or better yet, not needing it at all.\par
+\par
+The block diagram I have posted here shows an SBC design that I believe can meet these requirements. \par
+\par
+System Description:\par
+---------------------------------------------------------------------\par
+<Please refer to the posted block diagram for this discussion>\par
+\par
+BIOS BOOT LOADER:\par
+The key to keeping the design small and the pin count down (see above description) is the design of the BIOS boot loader and the Memory Map. The concept is that everything will run out of the SDRAM except for a 4K section of BIOS that will reside at 0xF000:0xE000 to 0x10000:0x0000. This section of bios will be mapped to ROM implemented using the M9K RAM on the FPGA. If you refer to my Zet fork called ZetBios, you will see that the bios is split into an assembly language portion and a C Language portion. The more complicated functions are passed off to the C Module. This frees up a significant amount of space in the ASM module. The idea is to place the ASM portion into the 4K block of ROM, a routine in boot up section of the BIOS will then enable the SDRAM and then read in the rest of the BIOS from the C Module section from a serial FLASH chip into the correct BIOS RAM locations. \par
+\par
+The reason for doing this is that by eliminating the parallel flash and going to serial flash, it reduces the pin count to below 94, which allows us to use the less expensive QFP devices.\par
+\par
+FLASH RAM and FPGA Configuration:\par
+The second unique idea is to, instead of using a traditional configuration device, to use a standard serial flash chip such as the SST25VF080B 1Mx8 serial flash or similar (under $2 each). This device would contain both the loadable Bios as well as the configuration file (.rbf).  The  MCU will first access the flash to configure the FPGA, once the CPU is running on the FPGA, the MCU goes into a sort of pass-thru mode between the FPGA CPU and the serial flash. The Bios then access the flash via an I/O port. The MCU chip PCI18F2450 is also a very inexpensive chip (under $3)and most hobbyist have the ability to program them (PIC programmers are common and easy to get). This particular one has the USB interface built into it. This means the hobbyist can connect the board to his PC and down load new firmware, both FPGA configurations or BIOS without the use or knowledge of Quartus. But since this is an open project, if they wish to later tinker around with it, then that is easy to do as well.\par
+\par
+Another advantage of this approach is that the MCU has enough pins that a small set of DIP switches could be connected to the PIC MCU to tell it to boot up different versions of the CPU, BIOS, OS and you could also have a number of floppy images that could be switched in and out. It really just depends on the size of the flash chip you want to install.\par
+\par
+SD RAM:\par
+Same or similar SDRAM chip as is used in the DE1 (ISSI IS42S16400 8M x 16 SDRAM)\par
+\par
+VIDEO:\par
+The Video should stay pretty much the same as the DE1 implementation of ZET except that the video memory will reside in the SDRAM rather than using the SRAM. The DAC Resistor ladder can be increased to 6 bits to get better color.\par
+\par
+OPTIONAL LCD PANEL:\par
+A connector for an optional dedicated LCD panel can be provided. The panel should be fairly inexpensive, but optional so the user can start off using a spare VGA display and later add the LCD panel if they wish. Ideally the panel should be a 640x480 262K color panel. Such panels are available for around $50 - $100 (example Microtips MTFT057ACSLN-LB). That blows our budget of course, but the idea is you can make the bare bones VGA Zet for under $100 and then add on the LCD panel for a few extra bucks. So I think we are still in line with the original project concept.\par
+\par
+AUDIO:\par
+To keep the parts down and the design simple, I think that PWM DAC is the way to go. The audio is generated on the FPGA but sent out in PWM format so you only burn 2 pins. A simple low pass filter using a simple LM358 OP-Amp cleans up the signal. An LM386 could be added to boost the signal up to drive small speakers or a headset. There are some SB16 cores that are ready to go for this type of approach.\par
+\par
+PS2 Keyboard and mouse:\par
+Same circuitry and software as the DE1 ZET\par
+\par
+RS232:\par
+Same circuitry and software as the DE1 ZET\par
+\par
+\par
+SD Based HARD DISK:\par
+Same circuitry and software as the DE1 ZET\par
+\par
+Floppy drive:\par
+Similar to the DE1 ZET but the floppy image resides on the serial flash ram. The serial flash ram I/O is very similar to the SD Card interface (some of the chips it is identical) hence, much of the SD Card code is re-used. The PIC MCU initialized the flash on bootstrapping so the code would be actually a simplified version of the SDIO.\par
+\par
+Other:\par
+Based on this design, there should be enough pins left over to implement a game controller or perhaps 1 or two other things.\par
+\par
+Below is an accounting of the pin assignments. Based on this count, any of the 3 QPF144 chips listed previously would work. Of course, the EP3C10E144C7 with 94 user pins would leave 16 pins for other purposes. A game port would take 8, leaving 8 for perhaps GPIO. It would be great to have a GPIO port that the user could access from BASIC or TurboC. That way they could add on and hook up other fun things.\par
+\par
+The cost of the SBC would be approximately:\par
+\par
+EP3C10E144C7          $22\par
+IS42S16400            $ 3\par
+PIC18F2450 USB        $ 3\par
+SST25VF080B 1Mx8      $ 2\par
+PCB (min 3 boards)    $51 (ExpressPCB miniboard pricing)\par
+-------------------------\par
+Subtotal:             $81 (+ tax & shipping)\par
+\par
+That leaves $20 for miscellaneous items and parts. Assuming you can scavenge some connectors and other pieces (an old PC motherboard would be a good source of connectors for example) I think the motivated hobbyist could build it for about $100 out of pocket. \par
+\par
+\par
+Pin Name/Usage         Pins         Dir.       I/O Standard\par
+-----------------------------------------------------------\par
+Clock                     1       input         3.3-V LVTTL\par
+Reset                     1       input         3.3-V LVTTL\par
+Test LED                  1      output         3.3-V LVTTL\par
+SDRAM_addr_[11:0]        12      output         3.3-V LVTTL\par
+SDRAM_ba_[1:0]            2      output         3.3-V LVTTL\par
+\lang1046 SDRAM_cas_n_              1      output         3.3-V LVTTL\par
+SDRAM_ce_                 1      output         3.3-V LVTTL\par
+SDRAM_clk_                1      output         3.3-V LVTTL\par
+SDRAM_cs_n_               1      output         3.3-V LVTTL\par
+SDRAM_data_[15:0]        16      bidir          3.3-V LVTTL\par
+SDRAM_dqm_[1:0]           2      output         3.3-V LVTTL\par
+SDRAM_ras_n_              1      output         3.3-V LVTTL\par
+\lang1033 SDRAM_we_n_               1      output         3.3-V LVTTL\par
+SD_Miso                   1      input          3.3-V LVTTL\par
+SD_Mosi                   1      output         3.3-V LVTTL\par
+SD_Sclk                   1      output         3.3-V LVTTL\par
+SD_Ss                     1      output         3.3-V LVTTL\par
+SPI In (Parellel w/SD)    0      input          3.3-V LVTTL\par
+SPI Out  (Parellel w/SD)  0      output         3.3-V LVTTL\par
+SPI Clk  (Parellel w/SD)  0      input          3.3-V LVTTL\par
+SPI Sel                   1      input          3.3-V LVTTL\par
+LCD_VSync                 1     output          3.3-V LVTTL\par
+LCD_XClk                  1     output          3.3-V LVTTL\par
+LCD_HSync                 1     output          3.3-V LVTTL\par
+LCD_Data [17:0]          18     output          3.3-V LVTTL\par
+LCD_Enbl                  1     output          3.3-V LVTTL\par
+VGA_Red [3:0] (parl/LCD)  0     output          3.3-V LVTTL\par
+VGA_RGreen [3:0] (/ LCD)  0     output          3.3-V LVTTL\par
+VGA_Blue [3:0]  (/ LCD)   0     output          3.3-V LVTTL\par
+VGA_hsync_                1     output          3.3-V LVTTL\par
+VGA_vsync_                1     output          3.3-V LVTTL\par
+PS2_clk_Kbd               1     bidir           3.3-V LVTTL\par
+\lang1046 PS2_data_Kbd              1     bidir           3.3-V LVTTL\par
+\lang1033 PS2_clk_ Mouse            1     bidir           3.3-V LVTTL\par
+PS2_data_Mouse            1     bidir           3.3-V LVTTL\par
+Audio PWM L               1     output          3.3-V LVTTL\par
+Audio PWM R               1     output          3.3-V LVTTL\par
+uart_rxd_                 1     input           3.3-V LVTTL\par
+uart_txd_                 1     output          3.3-V LVTTL\par
+Sub Total:\par
+   essential pins        78 \par
+\par
+}
+ 
