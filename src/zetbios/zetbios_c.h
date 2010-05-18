@@ -38,6 +38,10 @@
 #define HD_HEADS             16
 #define HD_SECTORS           63
 
+#define UNSUPPORTED_FUNCTION 0x86
+#define none                 0
+#define MAX_SCAN_CODE        0x58
+
 //---------------------------------------------------------------------------
 // Compatibility type definitions
 //---------------------------------------------------------------------------
@@ -65,92 +69,40 @@ typedef           int  BOOL;
 //---------------------------------------------------------------------------
 //  Macro definitions
 //---------------------------------------------------------------------------
-#define SetCF(x)   x.u.r8.flagsl |= 0x01
-#define SetZF(x)   x.u.r8.flagsl |= 0x40
-#define ClearCF(x) x.u.r8.flagsl &= 0xfe
-#define ClearZF(x) x.u.r8.flagsl &= 0xbf
-#define GetCF(x)   (x.u.r8.flagsl & 0x01)
+#define SET_WORD(parm, data) __asm { mov ax, data} __asm { mov ss:parm, ax } 
+#define SET_BYTL(parm, data) __asm { mov al, data} __asm { mov ss:parm, ax }
+#define SET_BYTH(parm, data) __asm { mov ah, data} __asm { mov ss:parm, ax } 
 
+#define SET_ZF()    __asm{ or  ss:rFLAGS, 0x0040 }; 
+#define CLEAR_ZF()  __asm{ and ss:rFLAGS, 0xffbf };
+#define SET_CF()    __asm{ or  ss:rFLAGS, 0x0001 };
+#define CLEAR_CF()  __asm{ and ss:rFLAGS, 0xfffe };
 
-#define SET_PARM(parm, data) __asm { mov ax, data}; __asm { mov ss:parm, ax  };
+#define SET_AL(val8) SET_BYTL(rAX , val8)
+#define SET_BL(val8) SET_BYTL(rBX , val8)
+#define SET_CL(val8) SET_BYTL(rCX , val8)
+#define SET_DL(val8) SET_BYTL(rDX , val8)
+#define SET_AH(val8) SET_BYTH(rAX , val8)
+#define SET_BH(val8) SET_BYTH(rBX , val8)
+#define SET_CH(val8) SET_BYTH(rCX , val8)
+#define SET_DH(val8) SET_BYTH(rDX , val8)
 
-#define SET_AL(val8) rAX = ((rAX & 0xff00) | (val8))
-#define SET_BL(val8) rBX = ((rBX & 0xff00) | (val8))
-#define SET_CL(val8) rCX = ((rCX & 0xff00) | (val8))
-#define SET_DL(val8) rDX = ((rDX & 0xff00) | (val8))
-#define SET_AH(val8) rAX = ((rAX & 0x00ff) | ((val8) << 8))
-#define SET_BH(val8) rBX = ((rBX & 0x00ff) | ((val8) << 8))
-#define SET_CH(val8) rCX = ((rCX & 0x00ff) | ((val8) << 8))
-#define SET_DH(val8) rDX = ((rDX & 0x00ff) | ((val8) << 8))
-
-#define GET_AL() ( rAX & 0x00ff )
-#define GET_BL() ( rBX & 0x00ff )
-#define GET_CL() ( rCX & 0x00ff )
-#define GET_DL() ( rDX & 0x00ff )
-#define GET_AH() ( rAX >> 8 )
-#define GET_BH() ( rBX >> 8 )
-#define GET_CH() ( rCX >> 8 )
-#define GET_DH() ( rDX >> 8 )
-
+#define GET_AL()   ( rAX & 0x00ff )
+#define GET_BL()   ( rBX & 0x00ff )
+#define GET_CL()   ( rCX & 0x00ff )
+#define GET_DL()   ( rDX & 0x00ff )
+#define GET_AH()   ( rAX >> 8 )
+#define GET_BH()   ( rBX >> 8 )
+#define GET_CH()   ( rCX >> 8 )
+#define GET_DH()   ( rDX >> 8 )
 #define GET_ELDL() ( rELDX & 0x00ff )
 #define GET_ELDH() ( rELDX >> 8 )
-
-#define GET_CF()    (rFLAGS & 0x0001)
-#define SET_CF()     rFLAGS |= 0x0001
-#define CLEAR_CF()   rFLAGS &= 0xfffe
-
-//#define SET_ZF()     rFLAGS |= 0x0040
-//#define CLEAR_ZF()   rFLAGS &= 0xffbf
-//#define GET_ZF()    (rFLAGS & 0x0040)
-
-#define SET_ZF()    Flags = rFLAGS | 0x0040; __asm{ mov ax, Flags }; __asm{ mov ss:rFLAGS, ax }; 
-#define CLEAR_ZF()  Flags = rFLAGS & 0xffbf; __asm{ mov ax, Flags }; __asm{ mov ss:rFLAGS, ax };
-
-#define MK_FP(seg,off)  (((__segment)(seg)):>((void __near *)(off)))
+#define GET_CF()   ( rFLAGS & 0x0001 )
+#define GET_ZF()   ( rFLAGS & 0x0040 )
 
 //---------------------------------------------------------------------------
-// for access to RAM area which is used by interrupt vectors and BIOS Data Area
+// IPL Structure for INT19 support function
 //---------------------------------------------------------------------------
-typedef struct {
-        unsigned char filler1[0x400];
-        unsigned char filler2[0x6c];
-        Bit16u ticks_low;
-        Bit16u ticks_high;
-        Bit8u  midnight_flag;
-} bios_data_t;
-
-#define BiosData ((bios_data_t  *) 0)
-typedef struct {
-        union {
-        struct {
-                Bit16u di, si, bp, sp;
-                Bit16u bx, dx, cx, ax;
-        } r16;
-        struct {
-                Bit16u filler[4];
-                Bit8u  bl, bh, dl, dh, cl, ch, al, ah;
-        } r8;
-    } u;
-} pusha_regs_t;
-
-typedef struct {
-        union {
-        struct {
-                Bit16u flags;
-        } r16;
-        struct {
-                Bit8u  flagsl;
-                Bit8u  flagsh;
-        } r8;
-    } u;
-} flags_t;
-
-typedef struct {
-        Bit16u ip;
-        Bit16u cs;
-        flags_t flags;
-} iret_addr_t;
-
 typedef struct {
         Bit16u type;
         Bit16u flags;
@@ -159,9 +111,6 @@ typedef struct {
         Bit32u reserved;
 } ipl_entry_t;
 
-#define UNSUPPORTED_FUNCTION 0x86
-#define none 0
-#define MAX_SCAN_CODE 0x58
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -268,7 +217,9 @@ static struct {
       };
 
 //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 // Compatibility Functions:
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //#ifdef __WATCOMC__
 #if 0
@@ -286,6 +237,7 @@ void outw(Bit16u port, Bit16u val);
 #pragma aux outw = "out dx,ax" parm [dx] [ax] modify [] nomemory;
 
 #else
+//---------------------------------------------------------------------------
 Bit8u inb(Bit16u port) {
     __asm {
         push dx
@@ -294,7 +246,7 @@ Bit8u inb(Bit16u port) {
         pop  dx
     }
 }
-
+//---------------------------------------------------------------------------
 void outb(Bit16u port, Bit8u  val)
 {
     __asm {
@@ -307,7 +259,7 @@ void outb(Bit16u port, Bit8u  val)
         pop  ax
     }   
 }
-
+//---------------------------------------------------------------------------
 Bit16u inw(Bit16u port)
 {
     __asm {
@@ -317,7 +269,7 @@ Bit16u inw(Bit16u port)
         pop  dx
     }
 }
-
+//---------------------------------------------------------------------------
 void outw(Bit16u port, Bit16u  val)
 {
     __asm {
@@ -332,27 +284,11 @@ void outw(Bit16u port, Bit16u  val)
 }
 #endif
 
-
-#if 0
-Bit8u read_byte(Bit16u segment, Bit16u soffset)
-{
-    return( *(Bit8u __far *)MK_FP(segment, soffset) );
-}
-Bit16u read_word(Bit16u segment, Bit16u soffset)
-{
-    return( *(Bit16u __far *)MK_FP(segment, soffset) );
-}
-void write_byte(Bit16u segment, Bit16u soffset, Bit8u data)
-{
-    *(Bit8u __far *)MK_FP(segment, soffset) = data;
-}
-void write_word(Bit16u segment, Bit16u soffset, Bit16u data)
-{
-    *(Bit16u __far *)MK_FP(segment, soffset) = data;
-}
-
-#else
-
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+// Assembly functions to access memory directly
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 Bit8u read_byte(Bit16u s_segment, Bit16u s_offset)
 {
     __asm {
@@ -366,7 +302,7 @@ Bit8u read_byte(Bit16u s_segment, Bit16u s_offset)
         pop  bx
     }
 }
-
+//---------------------------------------------------------------------------
 Bit16u read_word(Bit16u s_segment, Bit16u s_offset)
 {
     __asm {
@@ -380,7 +316,7 @@ Bit16u read_word(Bit16u s_segment, Bit16u s_offset)
         pop  bx
     }
 }
-
+//---------------------------------------------------------------------------
 void write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data)
 {
     __asm {
@@ -397,7 +333,7 @@ void write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data)
         pop  ax
     }
 }
-
+//---------------------------------------------------------------------------
 void write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data)
 {
     __asm {
@@ -414,8 +350,7 @@ void write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data)
         pop  ax
     }
 }
-
-#endif
+//---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -454,7 +389,7 @@ void __cdecl    int13_diskette_function(Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, 
 void __cdecl    init_boot_vectors(void);
 void __cdecl    int19_function(Bit16u seq_nr);
 void __cdecl    boot_halt(void);
-void __cdecl    int1a_function(pusha_regs_t regs, Bit16u ds, iret_addr_t iret_addr);
+void __cdecl    int1a_function(Bit16u rAX, Bit16u rCX, Bit16u rDX, Bit16u rFLAGS);
 
 
 //---------------------------------------------------------------------------

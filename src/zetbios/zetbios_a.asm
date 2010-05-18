@@ -387,12 +387,12 @@ ebda_post:              xor ax, ax            ; mov EBDA seg into 40E
                         mov  BYTE PTR ds:00497h, al      ; keyboard status flags 4
                         mov  al, 010h
                         mov  BYTE PTR ds:00496h, al      ; keyboard status flags 3
-                        mov  bx, 001Eh         ; keyboard head of buffer pointer
+                        mov  bx, 001Eh                   ; keyboard head of buffer pointer
                         mov  WORD PTR ds:0041Ah, bx
                         mov  WORD PTR ds:0041Ch, bx      ; keyboard end of buffer pointer
-                        mov  bx, 001Eh         ; keyboard pointer to start of buffer
+                        mov  bx, 001Eh                   ; keyboard pointer to start of buffer
                         mov  WORD PTR ds:00480h, bx
-                        mov  bx, 003Eh         ; keyboard pointer to end of buffer
+                        mov  bx, 003Eh                   ; keyboard pointer to end of buffer
                         mov  WORD PTR ds:00482h, bx
 
                         SET_INT_VECTOR 01Ah, 0F000h, int1a_handler    ;; CMOS RTC
@@ -435,8 +435,15 @@ int13_handler:          push    ax      ;; Push all registers onto stack
                         push    es
                         push    ds      ;; DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS
                         
-                        push    ss                  ;; Get stack segment and put it
-                        pop     ds                  ;; on current data segment 
+;;                        push    ss                  ;; Get stack segment and put it
+;;                        pop     ds                  ;; on current data segment 
+
+                        push    bx
+                        mov     bx, 0f000h              ;; Otherwise, just check for a key
+                        mov     ds, bx                  ;; First set the data seg to the bios
+                        pop     bx
+                        
+
                         test    dl,80h              ;; Test to see if current drive is HD
                         jnz     int13_HardDisk      ;; If so, do that, otherwise do floppy
 
@@ -673,32 +680,34 @@ int11_handler:          push    ds
 ;; - INT1Ah - INT 1Ah Time-of-day Service Entry Point
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
-                        org     (0fe6eh - startofrom)     
-int1a_handler:          push    ds
-                        push    ax
-                        push    cx
-                        push    dx
-                        push    bx
-                        push    sp
-                        mov     bx, sp
-                        add     WORD PTR ss:[bx], 10    ;; sseg add  [bx], 10
-                        mov     bx, ss:[bx+2]           ;; sseg mov  bx, [bx+2]
-                        push    bp
-                        push    si
-                        push    di
-                        xor     ax, ax
-                        mov     ds, ax
-int1a_callfunction:     call    _int1a_function
-                        pop     di
-                        pop     si
-                        pop     bp
-                        add     sp, 2
-                        pop     bx
-                        pop     dx
-                        pop     cx
-                        pop     ax
-                        pop     ds
+                        org     (0fe6eh - startofrom)    
+int1a_handler:          
+                        push    ds                      ;; Save all registers that
+                        push    bx                      ;; on return
+                        push    bp                      ;;
+                        push    si                      ;;
+                        push    di                      ;;
+                        
+                        mov     ax, 0f000h              ;; Bios data segment
+                        mov     ds, ax                  ;; set the data seg to the bios                        
+                        pushf                           ;; Push the parms on the stack
+                        push    dx                      ;; for the C program to receive
+                        push    cx                      ;; for the C program to receive
+                        push    ax                      ;; Pass the user command
+                        call    _int1a_function         ;; Now call the function
+                        pop     ax                      ;; Now restor the stack
+                        pop     cx                      ;;
+                        pop     dx                      ;;
+                        popf                            ;; Flags should have ZF set correctly
+                        
+                        pop     di                      ;; Now restore all the saved
+                        pop     si                      ;; registers from above
+                        pop     bp                      ;; 
+                        pop     bx                      ;;
+                        pop     ds                      ;;
+                        
                         iret
+
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
