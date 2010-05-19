@@ -396,7 +396,7 @@ void __cdecl int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS)
             if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
             else if(ascii_code == 0xE0)             ascii_code = 0;
             kbd_code = (scan_code << 8) | ascii_code;
-            SET_WORD(rAX, kbd_code);
+            SET_AX(kbd_code);
             break;
 
         case 0x01:      // check keyboard status 
@@ -404,7 +404,7 @@ void __cdecl int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS)
                 if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
                 else if(ascii_code == 0xE0)             ascii_code = 0;
                 kbd_code = (scan_code << 8) | ascii_code;
-                SET_WORD(rAX, kbd_code);
+                SET_AX(kbd_code);
                 CLEAR_ZF();
             }
             else {              // if dequeue returns 0 then no key is waiting
@@ -442,7 +442,7 @@ void __cdecl int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS)
             }
             if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
             kbd_code = (scan_code << 8) | ascii_code;
-            SET_WORD(rAX, kbd_code);
+            SET_AX(kbd_code);
             break;
 
 
@@ -453,7 +453,7 @@ void __cdecl int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS)
             }
             if(scan_code !=0 && ascii_code == 0xF0) ascii_code = 0;
             kbd_code = (scan_code << 8) | ascii_code;
-            SET_WORD(rAX, kbd_code);
+            SET_AX(kbd_code);
             CLEAR_ZF();
             break;
 
@@ -702,8 +702,8 @@ void __cdecl int09_function(Bit16u rAX)
 //--------------------------------------------------------------------------
 #define SET_DISK_RET_STATUS(status) write_byte(0x0040, 0x0074, status)
 //--------------------------------------------------------------------------
-void __cdecl int13_harddisk(rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
-Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
+void __cdecl int13_harddisk(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS)
+Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
 {
     Bit8u    drive, num_sectors, sector, head, status;
     Bit8u    drive_map, sd_error;
@@ -727,8 +727,8 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 
     n_drives = 1;
 
-    if(!(drive_map & (1<<(GET_ELDL()&0x7f)))) { // allow 0, 1, or 2 disks
-        SET_AL(0x01);                           // Set AL register while on the stack frame
+    if(!(drive_map & (1<<(GET_DL()&0x7f)))) {    // allow 0, 1, or 2 disks
+        SET_AL(0x01);                            // Set AL register while on the stack frame
         SET_DISK_RET_STATUS(0x01);
         SET_CF();                                // error occurred 
         return;
@@ -736,42 +736,42 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 
     switch(GET_AH()) {      // AH = Disk command
 
-        case 0x00: // disk controller reset
-            SET_AL(0x00);
-            SET_DISK_RET_STATUS(0);
+        case 0x00:                              // disk controller reset
+            SET_AH(0x00);                       // Success
+            SET_DISK_RET_STATUS(0);             // 
             set_diskette_ret_status(0);
             set_diskette_current_cyl(0, 0);     // current cylinder, diskette 1 
             set_diskette_current_cyl(1, 0);     // current cylinder, diskette 2 
             CLEAR_CF();                         // successful 
             break;
 
-        case 0x01: // read disk status 
-            status = read_byte(0x0040, 0x0074);
-            SET_AL(status);
-            SET_DISK_RET_STATUS(0);
-            if(status) { SET_CF();   }             // set CF if error status read 
-            else       { CLEAR_CF(); }
+        case 0x01:                              // read disk status 
+            status = read_byte(0x0040, 0x0074); // 
+            SET_AH(status);                     // Return last status
+            SET_DISK_RET_STATUS(0);             // 
+            if(status) { SET_CF();   }          // set CF if error status read 
+            else       { CLEAR_CF(); }          // 
             break;
 
         case 0x04:                              // verify disk sectors
         case 0x02:                              // read disk sectors
-            drive = GET_ELDL();
+            drive        = GET_DL();            // Get drive number
             hd_cylinders = HD_CYLINDERS;        // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
             hd_heads     = HD_HEADS;            // fixed geometry:
-            hd_sectors   = HD_SECTORS;
-            num_sectors =  GET_AL();
-            cylinder    = (GET_CL() & 0x00c0) << 2 | GET_CH();
-            sector      = (GET_CL() & 0x3f);
-            head        =  GET_DH();
+            hd_sectors   = HD_SECTORS;          // Hard drive sectors
+            num_sectors  =  GET_AL();           // Number of sectors requested
+            cylinder     = (GET_CL() & 0x00c0) << 2 | GET_CH();
+            sector       = (GET_CL() & 0x3f);
+            head         =  GET_DH();
 
             if((cylinder >= hd_cylinders) || (sector > hd_sectors) || (head >= hd_heads)) {
-                SET_AL(0x01);
+                SET_AH(0x01);
                 SET_DISK_RET_STATUS(1);
-                SET_CF();               // error occurred 
+                SET_CF();                   // error occurred 
                 return;
             }
             if(GET_AH() == 0x04 ) {
-                SET_AL(0x00);
+                SET_AH(0x00);
                 SET_DISK_RET_STATUS(0);
                 CLEAR_CF();
                 return;
@@ -782,6 +782,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             sector_count = 0;
             tempbx = rBX;
 
+            __asm { sti }  //;; enable higher priority interrupts
             while(1) {
                 addr_l = ((Bit16u) log_sector) << 9;
                 addr_h =  (Bit16u) (log_sector >> 7);
@@ -853,14 +854,14 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                 if(num_sectors) continue;
                 else            break;
             }
-            SET_AL(0x00);
-            SET_DISK_RET_STATUS(0);
-            SET_AL(sector_count);
+            SET_AH(0x00);                   // Indicate success
+            SET_DISK_RET_STATUS(0);         // Set status
+            SET_AL(sector_count);           // return sector count done
             CLEAR_CF();                     // successful
             break;
 
-        case 0x03: // write disk sectors 
-            drive        = GET_ELDL ();     // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+        case 0x03:                          // write disk sectors 
+            drive        = GET_DL();        // get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
             hd_cylinders = HD_CYLINDERS;    // fixed geometry:
             hd_heads     = HD_HEADS;
             hd_sectors   = HD_SECTORS;
@@ -872,7 +873,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             head        = GET_DH();
 
             if((cylinder >= hd_cylinders) || (sector > hd_sectors) || (head >= hd_heads)) {
-                SET_AL(0x01);
+                SET_AH(0x01);
                 SET_DISK_RET_STATUS(1);
                 SET_CF();                   // error occurred 
                 return;
@@ -885,8 +886,8 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 
             __asm { sti }  //;; enable higher priority interrupts
             while(1) {
-                addr_l = ((Bit16u) log_sector) << 9;
-                addr_h = (Bit16u)  (log_sector >> 7);
+                addr_l = ((Bit16u) log_sector)<< 9;
+                addr_h =  (Bit16u)(log_sector >> 7);
 
                 __asm {
                         mov   es, rES           //;; ES: source segment
@@ -934,7 +935,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                         out   dx, al
                         mov   al, ah
                         out   dx, al
-                        add   es:si, 2
+                        add   si, 2
                         loop  i13_f03_write_bytes
                         
                         mov   al, 0xff          //; send dummy checksum
@@ -942,8 +943,8 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                         out   dx, al
                         
                         in    al, dx            //; data response
-                        and   al, 0xf
-                        cmp   al, 0x5
+                        and   al, 0x0f
+                        cmp   al, 0x05
                         je    i13_f03_good_write
                         hlt                     //; problem writing
 
@@ -967,27 +968,27 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             if(num_sectors) continue;
             else            break;
         }
-        SET_AL(0x00);
-        SET_DISK_RET_STATUS(0);
-        SET_AL(sector_count);
+        SET_AH(0x00);               // Return success
+        SET_DISK_RET_STATUS(0);     // Set Status 
+        SET_AL(sector_count);       // Return sectors done
         CLEAR_CF();                 // successful
         break;
 
-        case 0x08:
-            drive        = GET_ELDL();    // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+        case 0x08:                        // Get Current Drive Parameters 
+            drive        = GET_DL();      // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
             hd_cylinders = HD_CYLINDERS;  // fixed geometry:
             hd_heads     = HD_HEADS;
             hd_sectors   = HD_SECTORS;
             max_cylinder = hd_cylinders - 2; // 0 based 
             SET_AL(0x00);
-            tmp = max_cylinder & 0xff;
+            tmp = (Bit8u)(max_cylinder & 0xff);
             SET_CH(tmp);
-            tmp = ((max_cylinder >> 2) & 0xc0) | (hd_sectors & 0x3f);
+            tmp = (Bit8u)(((max_cylinder >> 2) & 0xc0) | (hd_sectors & 0x3f));
             SET_CL(tmp);
-            tmp = hd_heads - 1;
+            tmp = (hd_heads - 1);
             SET_DH(tmp);
             SET_DL(n_drives);       // returns 0, 1, or 2 hard drives 
-            SET_AL(0x00);
+            SET_AH(0x00);
             SET_DISK_RET_STATUS(0);
             CLEAR_CF();             // successful 
             break;
@@ -997,20 +998,20 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
         case 0x0d:          // alternate disk reset 
         case 0x10:          // check drive ready 
         case 0x11:          // recalibrate 
-            SET_AL(0x00);
+            SET_AH(0x00);
             SET_DISK_RET_STATUS(0);
             CLEAR_CF();                 // successful 
             break;
 
-        case 0x14: // controller internal diagnostic 
-            SET_AL(0x00);
+        case 0x14:                      // controller internal diagnostic 
+            SET_AH(0x00);               // Status
             SET_DISK_RET_STATUS(0);
             CLEAR_CF();                 // successful
-            SET_AL(0x00);
+            SET_AL(0x00);               // Probably not needed
             break;
 
-        case 0x15: // read disk drive size 
-            drive        = GET_ELDL();     // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
+        case 0x15:                         // read disk drive size 
+            drive        = GET_DL();       // same as get_hd_geometry(drive, &hd_cylinders, &hd_heads, &hd_sectors);
             hd_cylinders = HD_CYLINDERS;   // fixed geometry:
             hd_heads     = HD_HEADS;
             hd_sectors   = HD_SECTORS;
@@ -1026,17 +1027,18 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                     mov  ss:rDX, ax             //;; which will be returned on the stack
             }
 
-            SET_AL(0x03);    // hard disk accessible
+            SET_AH(0x03);           // hard disk accessible
             SET_DISK_RET_STATUS(0); // ??? should this be 0
             CLEAR_CF();             // successful
             break;
 
         default:
             BX_INFO("int13_harddisk: function %02xh unsupported, returns fail\n", GET_AH());
-            SET_AL(0x01); // defaults to invalid function in AH or invalid parameter
+            SET_AH(0x01); // defaults to invalid function in AH or invalid parameter
+            SET_DISK_RET_STATUS(GET_AH());
+            SET_CF();     // error occurred
             break;
     }
-    return;
 }
 
 //--------------------------------------------------------------------------
@@ -1060,7 +1062,7 @@ static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
                 mov  cx, 256
                 xor  di, di
     one_sect:   in   ax, dx        //; read word from flash
-                mov  [bx+di], ax   //; write word
+                mov  ds:[bx+di], ax   //; write word
                 inc  dx
                 inc  dx
                 inc  di
@@ -1120,8 +1122,8 @@ Bit8u diskette_param_table2[] = {
 // INT13 Diskette service function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void __cdecl int13_diskette_function(rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
-Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
+void __cdecl int13_diskette_function(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS)
+Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
 {
     Bit8u  drive, num_sectors, track, sector, head;
     Bit16u base_address, base_count, base_es;
@@ -1131,12 +1133,11 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     Bit16u log_sector, j;
     Bit16u RamAddress;
 
-
     switch(GET_AH()) {
     
-        case 0x00:  // Disk controller reset
-            drive = GET_ELDL();  // Was here but that meant that drive was not set for other cases
-            SET_AL(0x00);
+        case 0x00:                // Disk controller reset
+            drive = GET_DL();     // Was here but that meant that drive was not set for other cases
+            SET_AH(0x00);
             set_diskette_ret_status(0);
             CLEAR_CF();                         // Successful
             set_diskette_current_cyl(drive, 0); // Current cylinder
@@ -1147,11 +1148,11 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             track       = GET_CH();
             sector      = GET_CL();
             head        = GET_DH();
-            drive       = GET_ELDL();                    // Was here but that meant that drive was not set for other cases
+            drive       = GET_DL();                    // Was here but that meant that drive was not set for other cases
 
             if((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) {
                 BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
-                SET_AL(0x01);
+                SET_AH(0x01);
                 set_diskette_ret_status(1);
                 SET_AL(0x00);    // No sectors have been read
                 SET_CF();        // An error occurred
@@ -1163,10 +1164,9 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             base_address    = base_es + rBX;    // The lower 16 bits of address
 
             // Contributed by ES:BX
-            if(base_address < base_es) {           // If the base_address is less than the base_es then there was an overflow above so we need to go to the next page
-                page++;                            // In case of carry, adjust page by 1
-            }
-            base_count = (num_sectors * 512) - 1;     // Work out the number of bytes to be transfered less one (last address to be transfered)
+            if(base_address < base_es) page++;       // If the base_address is less than the base_es then there was an overflow above so we need to go to the next page
+                                                     // In case of carry, adjust page by 1
+            base_count = (num_sectors * 512) - 1;    // Work out the number of bytes to be transfered less one (last address to be transfered)
 
             // Check for 64K boundary overrun
             last_addr = base_address + base_count;   // Add the base address to work out if the last address is in the same segment
@@ -1204,12 +1204,12 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             break;
 
         case 0x08: // read diskette drive parameters
-            drive = GET_ELDL(); //BX_DEBUG_INT13_FL("floppy f08\n");
+            drive = GET_DL();           //BX_DEBUG_INT13_FL("floppy f08\n");
             if(drive > 1) {
-                SET_WORD(rAX, 0x00);
-                SET_WORD(rBX, 0x00);
-                SET_WORD(rCX, 0x00);
-                SET_WORD(rDX, 0x00);
+                SET_AX(0x00);
+                SET_BX(0x00);
+                SET_CX(0x00);
+                SET_DX(0x00);
                 SET_WORD(rES, 0x00);
                 SET_WORD(rDI, 0x00);
                 SET_DL(num_floppies);
@@ -1230,47 +1230,47 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 
             switch(drive_type) {
                 case 0:                         // none
-                    SET_WORD(rCX, 0x00);        // N/A
+                    SET_CX(0x00);               // N/A
                     SET_DH(0x00);               // max head #
                     break;
 
                 case 1:                         // 360KB, 5.25"
-                    SET_WORD(rCX, 0x2709);      // 40 tracks, 9 sectors
+                    SET_CX(0x2709);             // 40 tracks, 9 sectors
                     SET_DH(0x01);               // max head #
                     break;
 
                 case 2:                         // 1.2MB, 5.25"
-                    SET_WORD(rCX, 0x4f0f);      // 80 tracks, 15 sectors
+                    SET_CX(0x4f0f);             // 80 tracks, 15 sectors
                     SET_DH(0x01);               // max head #
                     break;
 
                 case 3:                         // 720KB, 3.5"
-                    SET_WORD(rCX, 0x4f09);      // 80 tracks, 9 sectors
+                    SET_CX(0x4f09);             // 80 tracks, 9 sectors
                     SET_DH(0x01);               // max head #
                     break;
 
                 case 4:                         // 1.44MB, 3.5"
-                    SET_WORD(rCX, 0x4f12);      // 80 tracks, 18 sectors
+                    SET_CX(0x4f12);             // 80 tracks, 18 sectors
                     SET_DH(0x01);               // max head #
                     break;
 
                 case 5:                         // 2.88MB, 3.5"
-                    SET_WORD(rCX, 0x4f24);      // 80 tracks, 36 sectors
+                    SET_CX(0x4f24);             // 80 tracks, 36 sectors
                     SET_DH(0x01);               // max head #
                     break;
 
                 case 6:                         // 160k, 5.25"
-                    SET_WORD(rCX, 0x2708);      // 40 tracks, 8 sectors
+                    SET_CX(0x2708);             // 40 tracks, 8 sectors
                     SET_DH(0x00);               // max head #
                     break;
 
                 case 7:                         // 180k, 5.25"
-                    SET_WORD(rCX, 0x2709);      // 40 tracks, 9 sectors
+                    SET_CX(0x2709);             // 40 tracks, 9 sectors
                     SET_DH(0x00);               // max head #
                     break;
 
                 case 8:                         // 320k, 5.25"
-                    SET_WORD(rCX, 0x2708);      // 40 tracks, 8 sectors
+                    SET_CX(0x2708);             // 40 tracks, 8 sectors
                     SET_DH(0x01);               // max head #
                     break;
 
@@ -1287,7 +1287,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             break;
         
         case 0x15: // read diskette drive type
-            drive = GET_ELDL();     // BX_DEBUG_INT13_FL("floppy f15\n");
+            drive = GET_DL();     // BX_DEBUG_INT13_FL("floppy f15\n");
             if(drive > 1) {
                 SET_AH(0);      // only 2 drives supported
                 SET_CF();       // set_diskette_ret_status here ???
@@ -1307,7 +1307,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
             track       = GET_CH();
             sector      = GET_CL();
             head        = GET_DH();
-            drive       = GET_ELDL();                      // Was here but that meant that drive was not set for other cases
+            drive       = GET_DL();                      // Was here but that meant that drive was not set for other cases
 
             if(drive == DRIVE_B) {                         // Writing only works on Drive B
                 if((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) {
@@ -1346,11 +1346,9 @@ Bit16u rDS, rES, rDI, rSI, rBP, rELDX, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                     memcpyb(EMS_SECTOR_OFFSET, RamAddress, last_addr, base_count, SECTOR_SIZE);        // Copy the sector
                 }
 
-                // ??? should track be new val from return_status[3] ?
-                set_diskette_current_cyl(drive, track);
+                set_diskette_current_cyl(drive, track);   // ??? should track be new val from return_status[3] ?
 
-                // AL = number of sectors read (same value as passed)
-                SET_AH(0x00); // success
+                SET_AH(0x00); // success  - AL = number of sectors read (same value as passed)
                 CLEAR_CF();   // success
                 break;
             }
@@ -1419,7 +1417,7 @@ static void print_boot_device(ipl_entry_t BASESTK *e)
 // INT19 Support Function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void __cdecl int19_function(Bit16u seq_nr)
+void __cdecl int19_function(void)
 {
     Bit16u bootdev;
     Bit8u  bootdrv;
@@ -1559,8 +1557,8 @@ void __cdecl int1a_function(Bit16u rAX, Bit16u rCX, Bit16u rDX, Bit16u rFLAGS)
             ticks_high    = read_word(0x0000, 0x046E);
             midnight_flag = read_byte(0x0000, 0x046F);
             
-            SET_WORD(rCX, ticks_high);
-            SET_WORD(rDX, ticks_low); 
+            SET_CX(ticks_high);
+            SET_DX(ticks_low); 
             SET_AL(midnight_flag);
 
             write_byte(0x0000, 0x046F, 0);  // reset flag

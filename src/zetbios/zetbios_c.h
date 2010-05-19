@@ -69,7 +69,7 @@ typedef           int  BOOL;
 //---------------------------------------------------------------------------
 //  Macro definitions
 //---------------------------------------------------------------------------
-#define SET_WORD(parm, data) __asm { mov ax, data} __asm { mov ss:parm, ax } 
+#define SET_WORD(parm, data) __asm { mov ax, data} __asm { mov ss:parm, ax }
 #define SET_BYTL(parm, data) __asm { mov al, data} __asm { mov ss:parm, ax }
 #define SET_BYTH(parm, data) __asm { mov ah, data} __asm { mov ss:parm, ax } 
 
@@ -77,6 +77,11 @@ typedef           int  BOOL;
 #define CLEAR_ZF()  __asm{ and ss:rFLAGS, 0xffbf };
 #define SET_CF()    __asm{ or  ss:rFLAGS, 0x0001 };
 #define CLEAR_CF()  __asm{ and ss:rFLAGS, 0xfffe };
+
+#define SET_AX(val)  SET_WORD(rAX , val)
+#define SET_BX(val)  SET_WORD(rBX , val)
+#define SET_CX(val)  SET_WORD(rCX , val)
+#define SET_DX(val)  SET_WORD(rDX , val)
 
 #define SET_AL(val8) SET_BYTL(rAX , val8)
 #define SET_BL(val8) SET_BYTL(rBX , val8)
@@ -95,8 +100,6 @@ typedef           int  BOOL;
 #define GET_BH()   ( rBX >> 8 )
 #define GET_CH()   ( rCX >> 8 )
 #define GET_DH()   ( rDX >> 8 )
-#define GET_ELDL() ( rELDX & 0x00ff )
-#define GET_ELDH() ( rELDX >> 8 )
 #define GET_CF()   ( rFLAGS & 0x0001 )
 #define GET_ZF()   ( rFLAGS & 0x0040 )
 
@@ -383,11 +386,11 @@ static void     set_diskette_current_cyl(Bit8u drive, Bit8u cyl);
 void __cdecl    print_bios_banner(void);
 void __cdecl    int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS);
 void __cdecl    int09_function(Bit16u rAX);
-void __cdecl    int13_harddisk(Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u);
-void __cdecl    int13_diskette_function(Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u);
+void __cdecl    int13_harddisk(Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u);
+void __cdecl    int13_diskette_function(Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u, Bit16u);
 
 void __cdecl    init_boot_vectors(void);
-void __cdecl    int19_function(Bit16u seq_nr);
+void __cdecl    int19_function(void);
 void __cdecl    boot_halt(void);
 void __cdecl    int1a_function(Bit16u rAX, Bit16u rCX, Bit16u rDX, Bit16u rFLAGS);
 

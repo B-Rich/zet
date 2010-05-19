@@ -107,7 +107,7 @@ hard_drive_post:        xor     ax, ax           ; relocated here because the pr
 
                         mov     al, 0ffh         ; Initialize the SD card controller
                         mov     dx, 0100h        ; Location of SD controller 
-                        mov     cx, 10           ; Number of times to repeat
+                        mov     cx, 80           ; Number of times to repeat
   
 hd_post_init80:         out     dx, al           ; 80 cycles of initialization
                         loop    hd_post_init80   ; Looop 80 times
@@ -424,51 +424,51 @@ ebda_post:              xor ax, ax            ; mov EBDA seg into 40E
 ;;   - make all called C function get the same parameters list
 ;;--------------------------------------------------------------------------
                         org     (0e3feh - startofrom)   ;; INT 13h Fixed Disk Services Entry Point
-int13_handler:          push    ax      ;; Push all registers onto stack
-                        push    cx
-                        push    dx
-                        push    bx
-                        push    dx      ;; push eltorito value of dx instead of sp
-                        push    bp
-                        push    si
-                        push    di
-                        push    es
-                        push    ds      ;; DS, ES, DI, SI, BP, ELDX, BX, DX, CX, AX, IP, CS, FLAGS
+int13_handler:          pushf                       ;; Push all registers onto stack
+                        push    ax                  ;; This will save them all and pass them to
+                        push    cx                  ;; the C program
+                        push    dx                  ;;
+                        push    bx                  ;;
+                        push    bp                  ;;
+                        push    si                  ;;
+                        push    di                  ;;
+                        push    es                  ;; The order of parms in C program 
+                        push    ds                  ;; DS, ES, DI, SI, BP, BX, DX, CX, AX, FLAGS
+
+                        push    bx                  ;; Save BX reg just for a second here
+                        mov     bx, 0f000h          ;; Load the Bios Data segment
+                        mov     ds, bx              ;; Set the data seg to the bios
+                        pop     bx                  ;; Restore BX back
                         
-;;                        push    ss                  ;; Get stack segment and put it
-;;                        pop     ds                  ;; on current data segment 
-
-                        push    bx
-                        mov     bx, 0f000h              ;; Otherwise, just check for a key
-                        mov     ds, bx                  ;; First set the data seg to the bios
-                        pop     bx
-                        
-
-                        test    dl,80h              ;; Test to see if current drive is HD
-                        jnz     int13_HardDisk      ;; If so, do that, otherwise do floppy
-
-                        mov     ax, int13_out
-                        push    ax                        
-                        jmp     _int13_diskette_function
-                        
-int13_HardDisk:         call    _int13_harddisk     ;; int13_harddisk modifies high word of EAX
-                                         
-int13_out:              mov     bp, sp              ;; ZEUS HACK: Turn IF flag on. MS-DOS does a 'cli' before calling this
-                        mov     ax, 24[bp]          ;; FLAGS location
-                        or      ax, 0200h           ;; Turn IF back on
-                        mov     24[bp], ax          ;; Store Flags back into correct stack location
-
+                        test    dl,80h                      ;; Test to see if current drive is HD
+                        jnz     int13_HardDisk              ;; If so, do that, otherwise do floppy
+                        call    _int13_diskette_function    ;; Call the diskette function
+                        jmp     int13_out                   ;; Jump to exit code
+int13_HardDisk:         call    _int13_harddisk             ;; Otherwise call the hardisk function
+int13_out:                                                  ;; diskette jumps to here when done
                         pop     ds                  ;; Restore all registers
-                        pop     es
-                        pop     di
-                        pop     si
-                        pop     bp
-                        add     sp, 2
-                        pop     bx
-                        pop     dx
-                        pop     cx
-                        pop     ax
-                        iret                        ;; return from interupt
+                        pop     es                  ;; Back in the reverse order pushed from above
+                        pop     di                  ;;
+                        pop     si                  ;;
+                        pop     bp                  ;;
+                        pop     bx                  ;;
+                        pop     dx                  ;;
+                        pop     cx                  ;;
+                        pop     ax                  ;;
+                        popf                        ;; Pop off flags, but iret wipes this out, unless...
+                        
+                        jc      int13_carry_set                 ;; Check the CF flag set
+                        push    bp                              ;; Save base pointer registet
+                        mov     bp, sp                          ;; Get stack pointer, then set the ZF flag
+                        and     WORD PTR ss:[bp + 06h], 0fffeh  ;; while it is sitting on the stack
+                        or      WORD PTR ss:[bp + 06h], 00200h  ;; Perftorms equivalent of STi on iret
+                        pop     bp                              ;; The iret will popf 
+                        iret                                    ;; return from interupt
+int13_carry_set:        push    bp                              ;; Save the base pointer
+                        mov     bp, sp                          ;; load it with the stack pointer
+                        or      WORD PTR ss:[bp + 06h], 00201h  ;; locate the flags register on the stack
+                        pop     bp                              ;; Restore the BP register
+                        iret                                    ;; return from interupt
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -478,11 +478,10 @@ int13_out:              mov     bp, sp              ;; ZEUS HACK: Turn IF flag o
                         org     (0e6f2h - startofrom) 
 int19_handler:          push    bp              ;; int19 was beginning to be really complex, so now it
                         mov     bp, sp          ;; just calls a C function that does the work
-                        mov     ax, 0fffeh      ;; Reset SS and SP
-                        mov     sp, ax
-                        xor     ax, ax
-                        mov     ss, ax
-                        push    ax
+                        mov     ax, 0fffeh          ;; Reset SS and SP
+                        mov     sp, ax              ;; Set Stack pointer to top o ram
+                        xor     ax, ax              ;; Clear AX register
+                        mov     ss, ax              ;; Reset Stack Segment
 int19_next_boot:        call    _int19_function     ;; Call the C code for the next boot device
                         int     018h                ;; Boot failed: invoke the boot recovery function
 
@@ -507,13 +506,10 @@ int16_handler:          sti                             ;; Enable interupts
                         push    bp                      ;;
                         push    si                      ;;
                         push    di                      ;;
-
                         cmp     ah, 00h                 ;; Check to see what command
                         je      int16_F00               ;; was issued with the call
-                        
                         cmp     ah, 010h                ;; If either 0x00 or 0x10
                         je      int16_F00               ;; then it is a wait for key loop command
-                        
                         mov     bx, 0f000h              ;; Otherwise, just check for a key
                         mov     ds, bx                  ;; First set the data seg to the bios
                         pushf                           ;; Push the parms on the stack
@@ -523,7 +519,6 @@ int16_handler:          sti                             ;; Enable interupts
                         pop     ax                      ;; Now restor the stack
                         pop     cx                      ;;
                         popf                            ;; Flags should have ZF set correctly
-
                         pop     di                      ;; Now restore all the saved
                         pop     si                      ;; registers from above
                         pop     bp                      ;; 
@@ -532,13 +527,11 @@ int16_handler:          sti                             ;; Enable interupts
                         pop     ds                      ;;
                         
                         jz      int16_zero_set          ;; Check the ZF flag set
-
 int16_zero_clear:       push    bp                              ;; This section of code
                         mov     bp, sp                          ;; Sets the ZF flag
                         and     BYTE PTR ss:[bp + 06h], 0bfh    ;; while it is sitting on the stack
                         pop     bp                              ;; The iret will popf 
                         iret                                    ;; return from interupt
-
 int16_zero_set:         push    bp                              ;; Save the base pointer
                         mov     bp, sp                          ;; load it with the stack pointer
                         or      BYTE PTR ss:[bp + 06h], 040h    ;; locate the flags register on the stack
@@ -627,7 +620,7 @@ int09_done:             pop     di                  ;; Retore all the saved regi
                         pop     cx                  ;;
                         pop     ds                  ;;
                         pop     ax                  ;;  
-                        cli                         ;; Clear interupt enable flag
+;;                      cli                         ;; Clear interupt enable flag
                         iret                        ;; Return from interupt
 
 
@@ -702,11 +695,21 @@ int1a_handler:
                         
                         pop     di                      ;; Now restore all the saved
                         pop     si                      ;; registers from above
-                        pop     bp                      ;; 
-                        pop     bx                      ;;
-                        pop     ds                      ;;
-                        
-                        iret
+                        pop     bp                      ;; The next section insures that this
+                        pop     bx                      ;; routines returns with the Zero Flag
+                        pop     ds                      ;; Set correctly
+
+                        jc      int1a_carry_set                 ;; Check the CF flag set
+                        push    bp                              ;; Save base pointer registet
+                        mov     bp, sp                          ;; Get stack pointer, then set the CF flag
+                        and     BYTE PTR ss:[bp + 06h], 0feh    ;; while it is sitting on the stack
+                        pop     bp                              ;; The iret will popf 
+                        iret                                    ;; return from interupt
+int1a_carry_set:        push    bp                              ;; Save the base pointer
+                        mov     bp, sp                          ;; load it with the stack pointer
+                        or      BYTE PTR ss:[bp + 06h], 001h    ;; locate the flags register on the stack
+                        pop     bp                              ;; Restore the BP register
+                        iret                                    ;; return from interupt
 
 
 ;;--------------------------------------------------------------------------
@@ -726,7 +729,6 @@ int08_handler:          sti
                         inc     ax
                         jne     i08_linc_done
                         inc     bx            ;; inc high word
-
 i08_linc_done:          push    bx    
                         sub     bx, 00018h ;; compare eax to one days worth of timer ticks at 18.2 hz
                         jne     i08_lcmp_done
