@@ -1,0 +1,65 @@
+Open Watcom Linker Version 1.9
+Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
+Created on:       10/05/20 00:19:07
+Executable Image: vgabios.rom
+creating a DOS executable
+
+
+                        +------------+
+                        |   Groups   |
+                        +------------+
+
+Group                           Address              Size
+=====                           =======              ====
+
+DGROUP                          c000:0000            00003466
+
+
+
+                        +--------------+
+                        |   Segments   |
+                        +--------------+
+
+Segment                Class          Group          Address         Size
+=======                =====          =====          =======         ====
+
+_DATA                  DATA           DGROUP         c000:0000       00003466
+_TEXT                  CODE           AUTO           c000:4000       000018d4
+CONST                  DATA           DGROUP         c346:0006       00000000
+CONST2                 DATA           DGROUP         c346:0006       00000000
+
+
+                        +----------------+
+                        |   Memory Map   |
+                        +----------------+
+
+* = unreferenced symbol
++ = symbol only referenced locally
+
+Address        Symbol
+=======        ======
+
+Module: vgabios.obj(C:\Dev1\DOS\Zet\rtl\src\VGABios\vgabios.c)
+c000:581e*     _get_CS
+c000:344a+     _video_save_pointer_table
+Module: C:\WATCOM/lib286/dos\clibs.lib(cmodel)
+c000:58d4      _small_code_
+c000:58d4*     CodeModelMismatch
+Warning! W1023: no starting address found, using c000:0000
+
+
+                        +--------------------+
+                        |   Libraries Used   |
+                        +--------------------+
+
+C:\WATCOM/lib286/dos\clibs.lib
+
+
+                        +-----------------------+
+                        |   Linker Statistics   |
+                        +-----------------------+
+
+Stack size:  1000 (4096.)
+Memory size:  4d44 (19780.)
+Entry point address: c000:0000
+Link time: 00:00.00

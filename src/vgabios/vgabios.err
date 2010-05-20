@@ -1,0 +1,140 @@
+vgabios.h(150): Warning! W107: Missing return value for function 'inb'
+vgabios.h(173): Warning! W107: Missing return value for function 'inw'
+vgabios.h(206): Warning! W107: Missing return value for function 'read_byte'
+vgabios.h(220): Warning! W107: Missing return value for function 'read_word'
+vgabios.c(169): Warning! W102: Type mismatch (warning)
+vgabios.c(169): Note! I2003: source conversion type is 'VideoParamTableEntry *'
+vgabios.c(169): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(300): Warning! W112: Pointer truncated
+vgabios.c(300): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(300): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(300): Warning! W112: Pointer truncated
+vgabios.c(300): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(300): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(300): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.h(79)
+vgabios.c(312): Warning! W112: Pointer truncated
+vgabios.c(312): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(312): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(312): Note! I2002: 'biosfn_read_char_attr' defined in: vgabios.h(82)
+vgabios.c(376): Warning! W113: Pointer type mismatch
+vgabios.c(376): Note! I2003: source conversion type is 'unsigned char (*)[64][3]'
+vgabios.c(376): Note! I2004: target conversion type is 'unsigned char *'
+vgabios.c(377): Warning! W113: Pointer type mismatch
+vgabios.c(377): Note! I2003: source conversion type is 'unsigned char (*)[64][3]'
+vgabios.c(377): Note! I2004: target conversion type is 'unsigned char *'
+vgabios.c(378): Warning! W113: Pointer type mismatch
+vgabios.c(378): Note! I2003: source conversion type is 'unsigned char (*)[64][3]'
+vgabios.c(378): Note! I2004: target conversion type is 'unsigned char *'
+vgabios.c(379): Warning! W113: Pointer type mismatch
+vgabios.c(379): Note! I2003: source conversion type is 'unsigned char (*)[256][3]'
+vgabios.c(379): Note! I2004: target conversion type is 'unsigned char *'
+vgabios.c(475): Warning! W102: Type mismatch (warning)
+vgabios.c(475): Note! I2003: source conversion type is 'unsigned short *'
+vgabios.c(475): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(475): Note! I2002: 'write_word' defined in: vgabios.h(239)
+vgabios.c(573): Warning! W102: Type mismatch (warning)
+vgabios.c(573): Note! I2003: source conversion type is 'unsigned short *'
+vgabios.c(573): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(574): Warning! W102: Type mismatch (warning)
+vgabios.c(574): Note! I2003: source conversion type is 'unsigned short *'
+vgabios.c(574): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(578): Warning! W102: Type mismatch (warning)
+vgabios.c(578): Note! I2003: source conversion type is 'unsigned short *'
+vgabios.c(578): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(579): Warning! W102: Type mismatch (warning)
+vgabios.c(579): Note! I2003: source conversion type is 'unsigned short *'
+vgabios.c(579): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(597): Warning! W112: Pointer truncated
+vgabios.c(597): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(597): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(597): Warning! W112: Pointer truncated
+vgabios.c(597): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(597): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(597): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.c(568)
+vgabios.c(637): Warning! W202: Symbol 'cheight' has been defined, but not referenced
+vgabios.c(637): Warning! W202: Symbol 'bpp' has been defined, but not referenced
+vgabios.c(713): Warning! W112: Pointer truncated
+vgabios.c(713): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(713): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(713): Warning! W112: Pointer truncated
+vgabios.c(713): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(713): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(713): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.c(568)
+vgabios.c(723): Warning! W102: Type mismatch (warning)
+vgabios.c(723): Note! I2003: source conversion type is 'unsigned short *'
+vgabios.c(723): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(740): Warning! W112: Pointer truncated
+vgabios.c(740): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(740): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(740): Warning! W112: Pointer truncated
+vgabios.c(740): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(740): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(740): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.c(568)
+vgabios.c(730): Warning! W202: Symbol 'cheight' has been defined, but not referenced
+vgabios.c(730): Warning! W202: Symbol 'bpp' has been defined, but not referenced
+vgabios.c(768): Warning! W112: Pointer truncated
+vgabios.c(768): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(768): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(768): Warning! W112: Pointer truncated
+vgabios.c(768): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(768): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(768): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.c(568)
+vgabios.c(758): Warning! W202: Symbol 'cheight' has been defined, but not referenced
+vgabios.c(758): Warning! W202: Symbol 'bpp' has been defined, but not referenced
+vgabios.c(803): Warning! W112: Pointer truncated
+vgabios.c(803): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(803): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(803): Warning! W112: Pointer truncated
+vgabios.c(803): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(803): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(803): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.c(568)
+vgabios.c(832): Warning! W112: Pointer truncated
+vgabios.c(832): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(832): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(832): Warning! W112: Pointer truncated
+vgabios.c(832): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(832): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(832): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.c(568)
+vgabios.c(789): Warning! W202: Symbol 'cheight' has been defined, but not referenced
+vgabios.c(789): Warning! W202: Symbol 'bpp' has been defined, but not referenced
+vgabios.c(1465): Warning! W202: Symbol 'page' has been defined, but not referenced
+vgabios.c(1511): Warning! W102: Type mismatch (warning)
+vgabios.c(1511): Note! I2003: source conversion type is 'unsigned char *'
+vgabios.c(1511): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(1526): Warning! W112: Pointer truncated
+vgabios.c(1526): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(1526): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(1526): Warning! W112: Pointer truncated
+vgabios.c(1526): Note! I2003: source conversion type is 'unsigned short __far *'
+vgabios.c(1526): Note! I2004: target conversion type is 'unsigned short *'
+vgabios.c(1526): Note! I2002: 'biosfn_get_cursor_pos' defined in: vgabios.c(568)
+vgabios.c(1524): Warning! W202: Symbol 'carattr' has been defined, but not referenced
+vgabios.c(1607): Warning! W107: Missing return value for function 'get_CS'
+vgabios.c(1608): Warning! W107: Missing return value for function 'get_SS'
+vgabios.c(1750): Warning! W102: Type mismatch (warning)
+vgabios.c(1750): Note! I2003: source conversion type is 'unsigned char *'
+vgabios.c(1750): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(1750): Note! I2002: 'read_byte' defined in: vgabios.h(194)
+vgabios.c(1761): Warning! W102: Type mismatch (warning)
+vgabios.c(1761): Note! I2003: source conversion type is 'unsigned short *'
+vgabios.c(1761): Note! I2004: target conversion type is 'unsigned short '
+vgabios.c(1761): Note! I2002: 'read_word' defined in: vgabios.h(208)
+vgabios.c(1738): Warning! W202: Symbol 'format_char' has been defined, but not referenced
+vgabios.c(1742): Warning! W202: Symbol 'shift_count' has been defined, but not referenced
+vgabios.c(1640): Warning! W202: Symbol 'memsetb' has been defined, but not referenced
+vgabios.h(165): Warning! W202: Symbol 'inw' has been defined, but not referenced
+vgabios.c(1736): Warning! W202: Symbol 'printf' has been defined, but not referenced
+vgabios.c(40): Warning! W202: Symbol 'vgabios' has been defined, but not referenced
+vgabios.c(1453): Warning! W202: Symbol 'idiv_u' has been defined, but not referenced
+vgabios.c(15): Warning! W202: Symbol 'vgabios_start' has been defined, but not referenced
+vgatables.h(607): Warning! W202: Symbol 'static_functionality' has been defined, but not referenced
+vgabios.c(28): Warning! W202: Symbol 'vgabios_copyright' has been defined, but not referenced
+vgabios.c(16): Warning! W202: Symbol 'vgabios_length' has been defined, but not referenced
+vgafonts.h(784): Warning! W202: Symbol 'vgafont16alt' has been defined, but not referenced
+vgafonts.h(265): Warning! W202: Symbol 'vgafont14' has been defined, but not referenced
+vgafonts.h(783): Warning! W202: Symbol 'vgafont14alt' has been defined, but not referenced
+vgabios.c(27): Warning! W202: Symbol 'vgabios_date' has been defined, but not referenced
+vgabios.c(17): Warning! W202: Symbol 'jump_far_ptr' has been defined, but not referenced
+vgafonts.h(6): Warning! W202: Symbol 'vgafont8' has been defined, but not referenced
+vgabios.c(19): Warning! W202: Symbol 'IBM_String' has been defined, but not referenced
+vgabios.c(1782): Warning! W202: Symbol 'vgabiosend' has been defined, but not referenced

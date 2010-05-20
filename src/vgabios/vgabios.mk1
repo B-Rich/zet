@@ -1,0 +1,16 @@
+!define BLANK ""
+C:\Dev1\DOS\Zet\rtl\src\VGABios\vgabios.obj : C:\Dev1\DOS\Zet\rtl\src\VGABio&
+s\vgabios.c .AUTODEPEND
+ @C:
+ cd C:\Dev1\DOS\Zet\rtl\src\VGABios
+ *wcc vgabios.c -i="C:\WATCOM/h" -w4 -e25 -zq -od -d2 -bt=dos -fo=.obj -ms
+
+C:\Dev1\DOS\Zet\rtl\src\VGABios\vgabios.com : C:\Dev1\DOS\Zet\rtl\src\VGABio&
+s\vgabios.obj .AUTODEPEND
+ @C:
+ cd C:\Dev1\DOS\Zet\rtl\src\VGABios
+ @%write vgabios.lk1 FIL vgabios.obj
+ @%append vgabios.lk1 
+ *wlink name vgabios d all sys dos com op m libf cstart_t op maxe=25 op q op&
+ symf @vgabios.lk1
+
