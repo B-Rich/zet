@@ -1553,15 +1553,15 @@ void __cdecl int1a_function(Bit16u rAX, Bit16u rCX, Bit16u rDX, Bit16u rFLAGS)
     switch(GET_AL()) {
         case 0:             // get current clock count
             __asm { cli }
-            ticks_low     = read_word(0x0000, 0x046C);
-            ticks_high    = read_word(0x0000, 0x046E);
-            midnight_flag = read_byte(0x0000, 0x046F);
+            ticks_low     = read_word(0x0040, 0x006C);
+            ticks_high    = read_word(0x0040, 0x006E);
+            midnight_flag = read_byte(0x0040, 0x006F);
             
             SET_CX(ticks_high);
             SET_DX(ticks_low); 
             SET_AL(midnight_flag);
 
-            write_byte(0x0000, 0x046F, 0);  // reset flag
+            write_byte(0x0040, 0x006F, 0);  // reset flag
             __asm { sti }
             CLEAR_CF();       // OK  AH already 0
             break;

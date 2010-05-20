@@ -724,15 +724,15 @@ int08_handler:          sti
                         push    ds
                         xor     ax, ax
                         mov     ds, ax
-                        mov     ax, 0046ch    ;; get ticks dword
-                        mov     bx, 0046eh
+                        mov     ax, WORD PTR ds:046ch    ;; get ticks dword
+                        mov     bx, WORD PTR ds:046eh    ;; get ticks dword
                         inc     ax
                         jne     i08_linc_done
                         inc     bx            ;; inc high word
-i08_linc_done:          push    bx    
-                        sub     bx, 00018h ;; compare eax to one days worth of timer ticks at 18.2 hz
+i08_linc_done:          push    bx 
+                        sub     bx, 0018h ;; compare eax to one days worth of timer ticks at 18.2 hz
                         jne     i08_lcmp_done
-                        cmp     ax, 000B0h
+                        cmp     ax, 00B0h
                         jb      i08_lcmp_b_and_lt
                         jge     i08_lcmp_done
                         inc     bx
@@ -742,9 +742,9 @@ i08_lcmp_done:          pop     bx
                         jb      int08_store_ticks    ;; there has been a midnight rollover at this point
                         xor     ax, ax               ;; zero out counter
                         xor     bx, bx
-                        inc     BYTE PTR ds:[0470h]     ;; increment rollover flag
-int08_store_ticks:      mov     ds:0046ch, ax           ;; store new ticks dword
-                        mov     ds:0046eh, bx
+                        inc     BYTE PTR ds:0470h     ;; increment rollover flag
+int08_store_ticks:      mov     WORD PTR ds:046ch, ax           ;; store new ticks dword
+                        mov     WORD PTR ds:046eh, bx
                         int     01ch
                         cli
                         pop     ds        ;; call eoi_master_pic
