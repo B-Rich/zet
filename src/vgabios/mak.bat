@@ -2,5 +2,5 @@ cls
 
 wmake
 
-vgasums vgabios.rom
+rem vgasums vgabios.rom
 

@@ -53,207 +53,56 @@ typedef unsigned short Boolean;
 #define SCREEN_IO_START(x,y,p)  ((((x*y)|0x00ff)+1)*p)
 
 //---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 // Function prototypes:
 //---------------------------------------------------------------------------
-static Bit8u    read_byte();
-static Bit16u   read_word();
-static void     write_byte();
-static void     write_word();
-static Bit8u    inb();
-static Bit16u   inw();
-static void     outb();
-static void     outw();
+//---------------------------------------------------------------------------
+static void     biosfn_set_video_mode(Bit8u mode);
+static void     biosfn_set_cursor_shape(Bit8u CH, Bit8u CL);
+static void     biosfn_set_cursor_pos(Bit8u page, Bit16u cursor);
+static void     biosfn_get_cursor_pos(Bit8u page, Bit16u *shape, Bit16u *pos);
+static void     biosfn_set_active_page(Bit8u page);
+static void     biosfn_scroll(Bit8u, Bit8u, Bit8u, Bit8u, Bit8u, Bit8u, Bit8u, Bit8u);
+static void     biosfn_read_char_attr(Bit8u page, Bit16u *car);
+static void     biosfn_write_char_attr(Bit8u car, Bit8u page, Bit8u attr, Bit16u count);
+static void     biosfn_write_char_only(Bit8u car, Bit8u page, Bit8u attr, Bit16u count);
+static void     biosfn_write_teletype(Bit8u car, Bit8u page, Bit8u attr, Bit8u flag);
+static void     set_scan_lines(Bit8u lines);
+static void     get_font_access();
+static void     release_font_access();
+static void     biosfn_load_text_8_16_pat(Bit8u AL, Bit8u BL);
+static void     biosfn_write_string(Bit8u, Bit8u, Bit8u, Bit16u, Bit8u, Bit8u, Bit16u, Bit16u);
+static void     printf(Bit8u *s);     
+static Bit8u    find_vga_entry(Bit8u mode);
+
+
+//---------------------------------------------------------------------------
+// Prototypes for Utility Functions
+//---------------------------------------------------------------------------
+static Bit8u    inb(Bit16u port);
+static Bit16u   inw(Bit16u port);
+static void     outb(Bit16u port, Bit8u  val);
+static void     outw(Bit16u port, Bit16u  val);
+static Bit8u    read_byte(Bit16u s_segment, Bit16u s_offset);
+static Bit16u   read_word(Bit16u s_segment, Bit16u s_offset);
+static void     write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data);
+static void     write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data);
 static Bit16u   get_SS();
-static void     printf();     // Output
-
-static Bit8u    find_vga_entry();
-
 static void     memsetb(Bit16u s_segment, Bit16u s_offset, Bit8u value, Bit16u count);
 static void     memsetw(Bit16u s_segment, Bit16u s_offset, Bit16u value, Bit16u count);
 static void     memcpyb(Bit16u d_segment, Bit16u d_offset, Bit16u s_segment, Bit16u s_offset, Bit16u count);
 static void     memcpyw(Bit16u d_segment, Bit16u d_offset, Bit16u s_segment, Bit16u s_offset, Bit16u count);
 
-static void     biosfn_set_video_mode();
-static void     biosfn_set_cursor_shape();
-static void     biosfn_set_cursor_pos();
-static void     biosfn_get_cursor_pos(Bit8u page, Bit16u *shape, Bit16u *pos);
-static void     biosfn_set_active_page();
-static void     biosfn_scroll();
-static void     biosfn_read_char_attr(Bit8u page, Bit16u *car);
-static void     biosfn_write_char_attr();
-static void     biosfn_write_char_only();
-static void     biosfn_write_teletype();
-static void     biosfn_load_text_8_16_pat();
-static void     biosfn_write_string();
-extern Bit16u    video_save_pointer_table[];
-
-
-static void     vgabios();
-static void     vgabios_init_func();
-static void     biosfn_get_video_mode();
-static void     vgabios_int10_handler();
-static void     init_vga_card();
-static void     init_bios_area();
-static void     display_info();
-static void     display_string(char *ascii_string);
-static void     int10_func(Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
-static void     biosfn_group_1A();
-static void     biosfn_set_text_block_specifier();
-static void     biosfn_read_video_dac_state();
-static void     idiv_u();
-static void     biosfn_group_10();
-static void     biosfn_set_overscan_border_color();
-static void     biosfn_set_all_palette_reg();
-static void     biosfn_toggle_intensity();
-static void     biosfn_get_single_palette_reg();
-static void     biosfn_read_overscan_border_color();
-static void     biosfn_get_all_palette_reg();
-static void     biosfn_set_single_dac_reg();
-static void     biosfn_set_all_dac_reg();
-static void     biosfn_read_pel_mask();
-static void     biosfn_set_pel_mask();
-static void     biosfn_read_all_dac_reg();
-static void     biosfn_read_single_dac_reg();
-static void     biosfn_select_video_dac_color_page();
-static void     biosfn_set_single_palette_reg();
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+// Exported Function prototypes:
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+void int10_func(Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
 
 
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-// Compatibility Functions:
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//#ifdef __WATCOMC__
-#if 0
-
-Bit8u inb(Bit16u port);
-#pragma aux inb = "in al,dx" parm [dx] value [al] modify [] nomemory;
-
-Bit16u inw(Bit16u port);
-#pragma aux inw = "in ax,dx" parm [dx] value [ax] modify [] nomemory;
-
-void outb(Bit16u port, Bit8u val);
-#pragma aux outb = "out dx,al" parm [dx] [al] modify [] nomemory;
-
-void outw(Bit16u port, Bit16u val);
-#pragma aux outw = "out dx,ax" parm [dx] [ax] modify [] nomemory;
-
-#else
-//---------------------------------------------------------------------------
-Bit8u inb(Bit16u port) {
-    __asm {
-        push dx
-        mov  dx, port
-        in   al, dx
-        pop  dx
-    }
-}
-//---------------------------------------------------------------------------
-void outb(Bit16u port, Bit8u  val)
-{
-    __asm {
-        push ax
-        push dx
-        mov  dx, port
-        mov  al, val
-        out  dx, al
-        pop  dx
-        pop  ax
-    }   
-}
-//---------------------------------------------------------------------------
-Bit16u inw(Bit16u port)
-{
-    __asm {
-        push dx
-        mov  dx, port
-        in   ax, dx
-        pop  dx
-    }
-}
-//---------------------------------------------------------------------------
-void outw(Bit16u port, Bit16u  val)
-{
-    __asm {
-        push ax
-        push dx
-        mov  dx, port
-        mov  ax, val
-        out  dx, ax
-        pop  dx
-        pop  ax
-    }
-}
 #endif
-
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-// Assembly functions to access memory directly
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-Bit8u read_byte(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-        push bx
-        push ds
-        mov  ax, s_segment   // segment 
-        mov  ds, ax
-        mov  bx, s_offset    // offset 
-        mov  al, ds:[bx]     // al = return value (byte) 
-        pop  ds
-        pop  bx
-    }
-}
-//---------------------------------------------------------------------------
-Bit16u read_word(Bit16u s_segment, Bit16u s_offset)
-{
-    __asm {
-        push bx
-        push ds
-        mov  ax, s_segment // segment 
-        mov  ds, ax
-        mov  bx, s_offset  // offset 
-        mov  ax, ds:[bx]   // ax = return value (word) 
-        pop  ds
-        pop  bx
-    }
-}
-//---------------------------------------------------------------------------
-void write_byte(Bit16u s_segment, Bit16u s_offset, Bit8u data)
-{
-    __asm {
-        push ax
-        push bx
-        push ds
-        mov  ax, s_segment  // segment  
-        mov  ds, ax
-        mov  bx, s_offset   // offset 
-        mov  al, data       // data byte 
-        mov  ds:[bx], al    // write data byte 
-        pop  ds
-        pop  bx
-        pop  ax
-    }
-}
-//---------------------------------------------------------------------------
-void write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data)
-{
-    __asm {
-        push ax
-        push bx
-        push ds
-        mov  ax, s_segment   // segment 
-        mov  ds, ax
-        mov  bx, s_offset    //  offset 
-        mov  ax, data        //  data word 
-        mov  ds:[bx], ax     //  write data word 
-        pop  ds
-        pop  bx
-        pop  ax
-    }
-}
-//---------------------------------------------------------------------------
-
-#endif
 
 
