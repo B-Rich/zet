@@ -257,9 +257,9 @@ static void bios_printf(Bit16u action, Bit8u *s, ...)
 //--------------------------------------------------------------------------
 #define BIOS_COPYRIGHT_STRING   "(c) 2009, 2010 Zeus Gomez Marmolejo and (c) 2002 MandrakeSoft S.A."
 #define BIOS_BANNER             "Zet Test BIOS - build date: "
-#define BIOS_BUILD_DATE         "05/9/10\n"
-#define BIOS_DATE               ". Date: BIOS_DATE\n\n"
-#define BIOS_VERS               "Version: Special\n"
+#define BIOS_BUILD_DATE         "05/22/2010\n"
+#define BIOS_VERS               " Version: Special\n"
+#define BIOS_DATE               " Date: 5/9/2010\n\n"
 void __cdecl print_bios_banner(void)
 {
     bios_printf(BIOS_PRINTF_SCREEN,BIOS_BANNER);

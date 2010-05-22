@@ -881,6 +881,7 @@ Vectors:                dw      int08_handler       ; Timer tick
                         dw      int1E_table         ; Disk  parameter table
                         dw      0                   ; Graphic charactr table ptr
 
+
 ;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
 ;; Interrupt Vector -  IBM entry, nonsense interrupt
@@ -888,45 +889,6 @@ Vectors:                dw      int08_handler       ; Timer tick
 ;;--------------------------------------------------------------------------
                         org     (0ff23h - startofrom) 
 ignore_handler:         push    ds               ; Unexpected interrupts go here
-                        push    dx
-                        push    ax
-                        mov     ax, 040h
-                        mov     ds, ax
-                        mov     al, 00Bh         ; What IRQ caused this?
-                        out     020h, al
-                        nop
-                        in      al, 20h          ;  ...(read IRQ level)
-                        mov     ah, al
-                        or      al, al           ; test contents of al
-                        JNZ     DU_1
-                        mov     al, 0ffh         ; Not hardware, say 0FFh IRQ
-                        jmp     short DU_2
-DU_1:                   in      al, 21h          ; Clear the IRQ
-                        or      al, ah
-                        out     21h, al
-                        mov     AL, 020h         ; Send end_of_interrupt code
-                        out     020h, al         ;  ...to 8259 interrupt chip
-DU_2:                   mov     ds:006Bh, ah     ; Save last nonsense interrupt
-                        pop     ax
-                        pop     dx
-                        pop     ds
-                        iret 
-
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-;; - INT1Ch - User Timer Tick
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-int1c_handler:                                  ; Stub for later
-                        iret                                    ;; return from interupt
-
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-;; IRET Instruction for Dummy Interrupt Handler -
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0ff53h - startofrom)
-dummy_iret_handler:     push    ds               ; Unexpected interrupts go here
                         push    ax
                         mov     ax, 040h
                         mov     ds, ax
@@ -934,7 +896,18 @@ dummy_iret_handler:     push    ds               ; Unexpected interrupts go here
                         mov     ds:006Bh, ah     ; Save last nonsense interrupt
                         pop     ax
                         pop     ds
-                        iret    ;; IRET Instruction for Dummy Interrupt Handler
+                        iret    ;; IRET Instruction for Interrupt Handler
+
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+;; IRET Instruction for Dummy Interrupt Handler -
+;; Also INT1Ch - User Timer Tick and INT1B
+;;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
+                        org     (0ff53h - startofrom)
+int1c_handler:                                  ; Stub for later
+int1b_handler:                                  ; Stub for later
+dummy_iret_handler:     iret    ;; IRET Instruction for Dummy Interrupt Handler
 
 ;;---------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------

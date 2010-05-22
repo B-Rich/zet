@@ -146,7 +146,7 @@ vgabios_init_func:
 vgabios_int10_handler:  pushf
                         cmp     ah, 0x0f
                         jne     int10_test_1A
-;;                        call    biosfn_get_video_mode
+                        call    biosfn_get_video_mode
                         jmp     int10_end
 int10_test_1A:          cmp     ah, 0x1a
                         jne     int10_test_1103
@@ -154,13 +154,13 @@ int10_test_1A:          cmp     ah, 0x1a
                         jmp     int10_end
 int10_test_1103:        cmp     ax, 0x1103
                         jne     int10_test_101B
-;;                        call    biosfn_set_text_block_specifier
+                        call    biosfn_set_text_block_specifier
                         jmp     int10_end
 int10_test_101B:        cmp     ax, 0x101b
                         je      int10_normal
                         cmp     ah, 0x10
                         jne     int10_normal
-;;                        call    biosfn_group_10
+                        call    biosfn_group_10
                         jmp     int10_end
 int10_normal:           push    es
                         push    ds
@@ -211,14 +211,14 @@ init_vga_card:          mov     dx, 0x03C2  ;; switch to color mode and enable C
                         out     dx, al
 
 ;; #if defined(USE_BX_INFO) || defined(DEBUG)
-;;                      mov     bx, msg_vga_init
-;;                      push    bx
-;;                      call    _printf
+;                      mov     bx, msg_vga_init
+;                      push    bx
+;                      call    _printf
 ;; #endif
                         ret
 ;;--------------------------------------------------------------------------
-;;msg_vga_init:         db      "VGABios $Id: vgabios.c,v 1.66 2006/07/10 07:47:51 vruppert Exp $"
-;;                      db      0x0d, 0x0a,0x00
+msg_vga_init:         db      "VGABios $Id: vgabios.c,v 1.66 2006/07/10 07:47:51 vruppert Exp $"
+                      db      0x0d, 0x0a,0x00
 ;;--------------------------------------------------------------------------
 
 ;;--------------------------------------------------------------------------
@@ -262,7 +262,7 @@ init_bios_area:         push    ds
 ;;  Tell who we are
 ;;--------------------------------------------------------------------------
 display_info:           mov     ax, 0xC000
-                        mov     ds,ax
+                        mov     ds, ax
                         mov     si, word ptr vgabios_name
                         call    display_string
                         mov     si, word ptr vgabios_version
@@ -276,15 +276,14 @@ display_info:           mov     ax, 0xC000
 ;;--------------------------------------------------------------------------
 ;; Display a string
 ;;--------------------------------------------------------------------------
-display_string:         mov     ax, 0xc000
-                        mov     ds, ax
-                        mov     es, ax
-                        mov     di, si
-                        xor     cx, cx
-                        not     cx
-                        xor     al, al
-                        cld
-                        repne   scasb
+display_string:         mov     ax, ds
+                        mov     es, ax          ;; and to the extra segment
+                        mov     di, si          ;; store the string index to data index
+                        xor     cx, cx          ;; Clear the cx register
+                        not     cx              ;; then make it all 1's
+                        xor     al, al          ;; Clear al register
+                        cld                     ;;
+                        repne   scasb           ;;
                         not     cx
                         dec     cx
                         push    cx
