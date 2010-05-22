@@ -1,6 +1,6 @@
 Open Watcom Linker Version 1.9
 Portions Copyright (c) 1985-2002 Sybase, Inc. All Rights Reserved.
-Created on:       10/05/22 04:34:21
+Created on:       10/05/22 12:02:33
 Executable Image: vgabios.rom
 creating a DOS executable
 
@@ -23,8 +23,8 @@ DGROUP                          c000:1000            00006382
 Segment                Class          Group          Address         Size
 =======                =====          =====          =======         ====
 
-_VGASEG                CODE           AUTO           c000:0000       0000052d
-_TEXT                  CODE           DGROUP         c000:1000       0000144a
+_VGASEG                CODE           AUTO           c000:0000       0000052b
+_TEXT                  CODE           DGROUP         c000:1000       00001550
 _DATA                  DATA           DGROUP         c000:4000       00003382
 CONST                  DATA           DGROUP         c738:0002       00000000
 CONST2                 DATA           DGROUP         c738:0002       00000000
@@ -44,10 +44,11 @@ Module: vgabios_c.obj(C:\Dev1\DOS\Zet\rtl\src\VGABios\vgabios_c.c)
 c000:4094+     _video_param_table
 c000:4d64+     _video_save_pointer_table
 c000:1038      _int10_func
-c000:22d6*     _get_CS
+c000:22dc      _printf
+c000:23dc*     _get_CS
 Module: C:\WATCOM/lib286/dos\clibs.lib(cmodel)
-c000:244a      _small_code_
-c000:244a*     CodeModelMismatch
+c000:2550      _small_code_
+c000:2550*     CodeModelMismatch
 
 
                         +--------------------+
@@ -62,6 +63,6 @@ C:\WATCOM/lib286/dos\clibs.lib
                         +-----------------------+
 
 Stack size:  1000 (4096.)
-Memory size:  4cfc (19708.)
+Memory size:  4e02 (19970.)
 Entry point address: c000:0000
 Link time: 00:00.00

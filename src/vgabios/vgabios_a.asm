@@ -74,15 +74,20 @@ VGAMEM_MTEXT                    equ     0xB000
 ;; ROM Utilities Externals
 ;;--------------------------------------------------------------------------
                 EXTRN  _int10_func:proc      ; Contained in C source module
+                EXTRN  _printf    :proc      ; Contained in C source module
 
 ;;--------------------------------------------------------------------------
 ;; Set vector macro
 ;;--------------------------------------------------------------------------
 SET_INT_VECTOR MACRO parm1, parm2, parm3
+                        push    ds
+                        xor     ax, ax
+                        mov     ds, ax
                         mov     ax, parm3
                         mov     ds:[parm1*4], ax
                         mov     ax, parm2
                         mov     ds:[parm1*4+2], ax
+                        pop     ds
 ENDM
 
 ;;--------------------------------------------------------------------------
@@ -129,10 +134,8 @@ vgabios_init_func:
                         call    init_vga_card               ;; init vga card
                         call    init_bios_area              ;; init basic bios vars
 
-                        mov     ax, vgabios_int10_handler   ;; SET_INT_VECTOR 
-                        mov     ds:[0x10*4], ax             ;; set int10 vect
-                        mov     ax, 0xC000
-                        mov     ds:[0x10*4+2], ax
+           SET_INT_VECTOR 0x10, 0xC000, vgabios_int10_handler ;; set int10 vect
+           
                         mov     ax,0x0003                   ;; init video mode and clear the screen
                         int     0x10
                         call    display_info                ;; show info
@@ -171,7 +174,7 @@ int10_normal:           push    es
                         push    sp
                         mov     bx, sp
                         add     word ptr ss:[bx], 10
-                        mov     bx, ss:[bx+2]
+                        mov     bx, word ptr ss:[bx+2]
                         push    bp
                         push    si
                         push    di
@@ -210,15 +213,15 @@ init_vga_card:          mov     dx, 0x03C2  ;; switch to color mode and enable C
                         mov     al, 0x02
                         out     dx, al
 
-;; #if defined(USE_BX_INFO) || defined(DEBUG)
-;                      mov     bx, msg_vga_init
-;                      push    bx
-;                      call    _printf
-;; #endif
+if USE_BX_INFO
+                        mov     bx, msg_vga_init
+                        push    bx
+                        call    _printf
+endif
                         ret
 ;;--------------------------------------------------------------------------
-msg_vga_init:         db      "VGABios $Id: vgabios.c,v 1.66 2006/07/10 07:47:51 vruppert Exp $"
-                      db      0x0d, 0x0a,0x00
+msg_vga_init:           db      "VGABios $Id: vgabios.c,v 1.66 2006/07/10 07:47:51 vruppert Exp $"
+                        db      0x0d, 0x0a,0x00
 ;;--------------------------------------------------------------------------
 
 ;;--------------------------------------------------------------------------
@@ -263,13 +266,13 @@ init_bios_area:         push    ds
 ;;--------------------------------------------------------------------------
 display_info:           mov     ax, 0xC000
                         mov     ds, ax
-                        mov     si, word ptr vgabios_name
+                        mov     si, near ptr vgabios_name 
                         call    display_string
-                        mov     si, word ptr vgabios_version
+                        mov     si, near ptr vgabios_version
                         call    display_string
-                        mov     si, word ptr vgabios_license
+                        mov     si, near ptr vgabios_license
                         call    display_string
-                        mov     si, word ptr vgabios_website
+                        mov     si, near ptr vgabios_website
                         call    display_string
                         ret
 
@@ -286,15 +289,15 @@ display_string:         mov     ax, ds
                         repne   scasb           ;;
                         not     cx
                         dec     cx
-                        push    cx
 
+                        push    cx
                         mov     ax, 0x0300
                         mov     bx, 0x0000
                         int     0x10
-
                         pop     cx
+
                         mov     ax, 0x1301
-                        mov     bx, 0x0000
+                        mov     bx, 0x000b
                         mov     bp, si
                         int     0x10
                         ret
@@ -357,7 +360,7 @@ int10_test_1009:        cmp   al, 0x09
                         jmp   biosfn_get_all_palette_reg
 int10_test_1010:        cmp   al, 0x10
                         jne   int10_test_1012
-                        jmp  biosfn_set_single_dac_reg
+                        jmp   biosfn_set_single_dac_reg
 int10_test_1012:        cmp   al, 0x12
                         jne   int10_test_1013
                         jmp   biosfn_set_all_dac_reg
@@ -379,8 +382,7 @@ int10_test_1019:        cmp   al, 0x19
 int10_test_101A:        cmp   al, 0x1a
                         jne   int10_group_10_unknown
                         jmp   biosfn_read_video_dac_state
-int10_group_10_unknown:
-                        ret
+int10_group_10_unknown: ret
 
 ;;--------------------------------------------------------------------------
 biosfn_set_single_palette_reg:
@@ -399,8 +401,7 @@ biosfn_set_single_palette_reg:
                         out     dx, al
                         pop     dx
                         pop     ax
-no_actl_reg1:
-                        ret
+no_actl_reg1:           ret
 
 ;;--------------------------------------------------------------------------
 biosfn_set_overscan_border_color:

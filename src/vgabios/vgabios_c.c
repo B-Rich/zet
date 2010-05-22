@@ -12,8 +12,8 @@
 // int10 main dispatcher
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
-  Bit16u DI, SI, BP, SP, BX, DX, CX, AX, ES, DS, FLAGS;
+void int10_func(rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rDS, rES, rFLAGS)
+Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rDS, rES, rFLAGS;
 {
     switch(GET_AH()) {     // BIOS functions
         case 0x00:  
@@ -31,13 +31,13 @@ void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
             }
             break;
         case 0x01:
-            biosfn_set_cursor_shape(GET_CH(),GET_CL());
+            biosfn_set_cursor_shape(GET_CH(), GET_CL());
             break;
         case 0x02:
-            biosfn_set_cursor_pos(GET_BH(),DX);
+            biosfn_set_cursor_pos(GET_BH(), rDX);
             break;
         case 0x03:
-            biosfn_get_cursor_pos(GET_BH(), (Bit16u *)&CX, (Bit16u *)&DX);
+            biosfn_get_cursor_pos(GET_BH(), (Bit16u *)&rCX, (Bit16u *)&rDX);
             break;
         case 0x05:
             biosfn_set_active_page(GET_AL());
@@ -49,13 +49,13 @@ void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
             biosfn_scroll(GET_AL(),GET_BH(),GET_CH(),GET_CL(),GET_DH(),GET_DL(),0xFF,SCROLL_DOWN);
             break;
         case 0x08:
-            biosfn_read_char_attr(GET_BH(), (Bit16u *)&AX);
+            biosfn_read_char_attr(GET_BH(), (Bit16u *)&rAX);
             break;
         case 0x09:
-            biosfn_write_char_attr(GET_AL(), GET_BH(), GET_BL(), CX);
+            biosfn_write_char_attr(GET_AL(), GET_BH(), GET_BL(), rCX);
             break;
         case 0x0A:
-            biosfn_write_char_only(GET_AL(),GET_BH(),GET_BL(),CX);
+            biosfn_write_char_only(GET_AL() ,GET_BH(), GET_BL(), rCX);
             break;
         case 0x0E:
             // Ralf Brown Interrupt list is WRONG on bh(page)
@@ -71,7 +71,7 @@ void int10_func(DI, SI, BP, SP, BX, DX, CX, AX, DS, ES, FLAGS)
             }
             break;
         case 0x13:
-            biosfn_write_string(GET_AL(),GET_BH(),GET_BL(),CX,GET_DH(),GET_DL(),ES,BP);
+            biosfn_write_string(GET_AL(),GET_BH(),GET_BL(),rCX,GET_DH(),GET_DL(),rES,rBP);
             break;
     }
 }
@@ -90,24 +90,23 @@ static void biosfn_set_video_mode(Bit8u mode)
     Bit16u crtc_addr;
  
     mode = mode & 0x7f;             // The real mode
-     line = find_vga_entry(mode);   // find the entry in the video modes
-
-    if(line == 0xFF)  return;
+    line = find_vga_entry(mode);    // find the entry in the video modes
+    if(line == 0xFF)  return;       // Could not find it
 
     vpti = line_to_vpti[line];
     twidth = video_param_table[vpti].twidth;
     theightm1 = video_param_table[vpti].theightm1;
     cheight = video_param_table[vpti].cheight;
 
-    video_ctl=read_byte(BIOSMEM_SEG,BIOSMEM_VIDEO_CTL);    // Read the bios vga control
-    vga_switches=read_byte(BIOSMEM_SEG,BIOSMEM_SWITCHES);  // Read the bios vga switches
-    modeset_ctl=read_byte(BIOSMEM_SEG,BIOSMEM_MODESET_CTL);// Read the bios mode set control
+    video_ctl = read_byte(BIOSMEM_SEG,BIOSMEM_VIDEO_CTL);    // Read the bios vga control
+    vga_switches = read_byte(BIOSMEM_SEG,BIOSMEM_SWITCHES);  // Read the bios vga switches
+    modeset_ctl = read_byte(BIOSMEM_SEG,BIOSMEM_MODESET_CTL);// Read the bios mode set control
 
     // Then we know the number of lines
     // FIXME
 
     // if palette loading (bit 3 of modeset ctl = 0)
-    if((modeset_ctl&0x08) == 0) {   // Set the PEL mask
+    if((modeset_ctl & 0x08) == 0) {   // Set the PEL mask
         outb(VGAREG_PEL_MASK,vga_modes[line].pelmask);
         outb(VGAREG_DAC_WRITE_ADDRESS,0x00); // Set the whole dac always, from 0
         // From which palette
@@ -749,9 +748,9 @@ void printf(Bit8u *s)
 //--------------------------------------------------------------------------
 static Bit8u find_vga_entry(Bit8u mode)
 {
-    Bit8u i,line=0xFF;
-    for(i=0;i<=MODE_MAX;i++)
-        if(vga_modes[i].svgamode==mode) {
+    Bit8u i, line = 0xFF;
+    for(i = 0; i <= MODE_MAX; i++)
+        if(vga_modes[i].svgamode == mode) {
             line=i;
             break;
         }

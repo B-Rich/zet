@@ -112,7 +112,7 @@ typedef struct
 } VGAMODES;
 
 //---------------------------------------------------------------------------
-static VGAMODES vga_modes[MODE_MAX+1]=
+static VGAMODES vga_modes[MODE_MAX+1] =
 {
     //mode  class  model bits sstart  pelm  dac
     {0x00, TEXT,  CTEXT,   4, 0xB800, 0xFF, 0x02},

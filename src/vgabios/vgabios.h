@@ -17,31 +17,17 @@ typedef unsigned short Boolean;
 //---------------------------------------------------------------------------
 // Macro Definitions
 //---------------------------------------------------------------------------
-#define SET_AL(val8) AX = ((AX & 0xff00) | (val8))
-#define SET_BL(val8) BX = ((BX & 0xff00) | (val8))
-#define SET_CL(val8) CX = ((CX & 0xff00) | (val8))
-#define SET_DL(val8) DX = ((DX & 0xff00) | (val8))
-#define SET_AH(val8) AX = ((AX & 0x00ff) | ((val8) << 8))
-#define SET_BH(val8) BX = ((BX & 0x00ff) | ((val8) << 8))
-#define SET_CH(val8) CX = ((CX & 0x00ff) | ((val8) << 8))
-#define SET_DH(val8) DX = ((DX & 0x00ff) | ((val8) << 8))
+#define SET_BYTL(parm, data) __asm { mov al, data} __asm { mov ss:parm, ax }
+#define SET_AL(val8) SET_BYTL(rAX , val8)
 
-#define GET_AL() ( AX & 0x00ff )
-#define GET_BL() ( BX & 0x00ff )
-#define GET_CL() ( CX & 0x00ff )
-#define GET_DL() ( DX & 0x00ff )
-#define GET_AH() ( AX >> 8 )
-#define GET_BH() ( BX >> 8 )
-#define GET_CH() ( CX >> 8 )
-#define GET_DH() ( DX >> 8 )
-
-#define SET_CF()        FLAGS |= 0x0001
-#define CLEAR_CF()      FLAGS &= 0xfffe
-#define GET_CF()        (FLAGS & 0x0001)
-
-#define SET_ZF()        FLAGS |= 0x0040
-#define CLEAR_ZF()      FLAGS &= 0xffbf
-#define GET_ZF()        (FLAGS & 0x0040)
+#define GET_AL() ( rAX & 0x00ff )
+#define GET_BL() ( rBX & 0x00ff )
+#define GET_CL() ( rCX & 0x00ff )
+#define GET_DL() ( rDX & 0x00ff )
+#define GET_AH() ( rAX >> 8 )
+#define GET_BH() ( rBX >> 8 )
+#define GET_CH() ( rCX >> 8 )
+#define GET_DH() ( rDX >> 8 )
 
 #define SCROLL_DOWN     0
 #define SCROLL_UP       1
@@ -72,7 +58,6 @@ static void     get_font_access();
 static void     release_font_access();
 static void     biosfn_load_text_8_16_pat(Bit8u AL, Bit8u BL);
 static void     biosfn_write_string(Bit8u, Bit8u, Bit8u, Bit16u, Bit8u, Bit8u, Bit16u, Bit16u);
-static void     printf(Bit8u *s);     
 static Bit8u    find_vga_entry(Bit8u mode);
 
 
@@ -99,6 +84,7 @@ static void     memcpyw(Bit16u d_segment, Bit16u d_offset, Bit16u s_segment, Bit
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 void int10_func(Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u,Bit16u);
+void printf(Bit8u *s);     
 
 
 //---------------------------------------------------------------------------

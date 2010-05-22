@@ -1,15 +1,14 @@
-vgabios_c.c(766): Warning! W107: Missing return value for function 'get_CS'
-vgabios_c.c(767): Warning! W107: Missing return value for function 'get_SS'
-vgabios_c.c(909): Warning! W107: Missing return value for function 'read_byte'
-vgabios_c.c(923): Warning! W107: Missing return value for function 'read_word'
-vgabios_c.c(971): Warning! W107: Missing return value for function 'inb'
-vgabios_c.c(994): Warning! W107: Missing return value for function 'inw'
-vgabios_c.c(986): Warning! W202: Symbol 'inw' has been defined, but not referenced
-vgabios_c.c(700): Warning! W202: Symbol 'printf' has been defined, but not referenced
-vgabios_c.c(799): Warning! W202: Symbol 'memsetb' has been defined, but not referenced
+vgabios_c.c(765): Warning! W107: Missing return value for function 'get_CS'
+vgabios_c.c(766): Warning! W107: Missing return value for function 'get_SS'
+vgabios_c.c(908): Warning! W107: Missing return value for function 'read_byte'
+vgabios_c.c(922): Warning! W107: Missing return value for function 'read_word'
+vgabios_c.c(970): Warning! W107: Missing return value for function 'inb'
+vgabios_c.c(993): Warning! W107: Missing return value for function 'inw'
+vgabios_c.c(985): Warning! W202: Symbol 'inw' has been defined, but not referenced
+vgabios_c.c(798): Warning! W202: Symbol 'memsetb' has been defined, but not referenced
 vgatables.h(629): Warning! W202: Symbol 'static_functionality' has been defined, but not referenced
 vgafonts.h(790): Warning! W202: Symbol 'vgafont16alt' has been defined, but not referenced
 vgafonts.h(271): Warning! W202: Symbol 'vgafont14' has been defined, but not referenced
 vgafonts.h(789): Warning! W202: Symbol 'vgafont14alt' has been defined, but not referenced
 vgafonts.h(12): Warning! W202: Symbol 'vgafont8' has been defined, but not referenced
-vgabios_c.c(1010): Warning! W202: Symbol 'vgabiosend' has been defined, but not referenced
+vgabios_c.c(1009): Warning! W202: Symbol 'vgabiosend' has been defined, but not referenced
