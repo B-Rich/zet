@@ -225,7 +225,7 @@ static struct {
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //#ifdef __WATCOMC__
-#if 0
+#if 0                       // These do not work, probably because dx is modified
 
 Bit8u inb(Bit16u port);
 #pragma aux inb = "in al,dx" parm [dx] value [al] modify [] nomemory;

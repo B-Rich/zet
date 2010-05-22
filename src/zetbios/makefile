@@ -19,15 +19,16 @@ AFLAGS = -0 -wx
 OBJS = zetbios_c.obj zetbios_a.obj
 
 zetbios.rom : $(OBJS) $(__MAKEFILES__)
-	wlink name $@ system dos option quiet OPTION NOFARCALLS , map &
-	 output raw offset=0xf0000 order &
-	 clname DATA segaddr=0xf000 segment _DATA &
-	 clname CODE &
-	 segment _TEXT segaddr=0xf000 offset=0x1000 &
-	 segment _BIOSSEG segaddr=0xf000 offset=0xc000 &
-	 file { $(OBJS) } &
-	 library clibs.lib &
+	wlink name $@ system dos &
+	 OPTION quiet &
+	 OPTION NOFARCALLS &
+	 OPTION FILLCHAR=0xFF, MAP  &
+	 OUTPUT raw offset=0xf0000  &
+	 ORDER &
+	 clname DATA segment _DATA    segaddr=0xf000 offset=0x0000 &
+	 clname CODE segment _TEXT    segaddr=0xf000 offset=0x1000 &
+	             segment _BIOSSEG segaddr=0xf000 offset=0xe000 &
+	 FILE { $(OBJS) } &
+	 LIBRARY clibs.lib &
 	 disable 1014
-
-
 

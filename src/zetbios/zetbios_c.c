@@ -1055,14 +1055,14 @@ static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
                 push dx
                 push di
                 push ds
-                mov  ax, s_segment //; segment
+                mov  ax, s_segment       //; segment
                 mov  ds, ax
-                mov  bx, s_offset  //; offset
+                mov  bx, s_offset        //; offset
                 mov  dx, 0xe000
                 mov  cx, 256
                 xor  di, di
-    one_sect:   in   ax, dx        //; read word from flash
-                mov  ds:[bx+di], ax   //; write word
+    one_sect:   in   ax, dx             //; read word from flash
+                mov  ds:[bx+di], ax     //; write word
                 inc  dx
                 inc  dx
                 inc  di
@@ -1094,7 +1094,7 @@ static Bit16u GetRamdiskSector(Bit16u Sector)
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-//  Called from INT13 - Floppy diskette API in BIOS.asm                     
+//  Used by INT13 - Floppy diskette API in BIOS
 //  New diskette parameter table adding 3 parameters from IBM Since no
 //  provisions are made for multiple drive types, most values in this
 //  table are ignored. set parameters for 1.44M floppy here                  
@@ -1127,28 +1127,32 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
 {
     Bit8u  drive, num_sectors, track, sector, head;
     Bit16u base_address, base_count, base_es;
-    Bit8u  page;
-    Bit8u  drive_type, num_floppies;
-    Bit16u last_addr;
-    Bit16u log_sector, j;
+    Bit8u  page, drive_type, num_floppies;
+    Bit16u last_addr, log_sector, j;
     Bit16u RamAddress;
 
     switch(GET_AH()) {
     
         case 0x00:                // Disk controller reset
             drive = GET_DL();     // Was here but that meant that drive was not set for other cases
-            SET_AH(0x00);
+            SET_AH(0x00);                   // disk operation status (see ~INT 13,STATUS~)
             set_diskette_ret_status(0);
-            CLEAR_CF();                         // Successful
+            CLEAR_CF();                         // CF = 0 if Successful
             set_diskette_current_cyl(drive, 0); // Current cylinder
             break;
 
-        case 0x02: // Read Diskette Sectors
-            num_sectors = GET_AL();
-            track       = GET_CH();
-            sector      = GET_CL();
-            head        = GET_DH();
-            drive       = GET_DL();                    // Was here but that meant that drive was not set for other cases
+        case 0x01:                          // Disk status
+            SET_AL(0x00);                   // no error
+            set_diskette_ret_status(0);
+            CLEAR_CF();                         // CF = 0 if Successful
+            break;
+
+        case 0x02:                      // Read Diskette Sectors
+            num_sectors = GET_AL();     // number of sectors to read (1-128 dec.)
+            track       = GET_CH();     // track/cylinder number (0-1023 dec., see below)
+            sector      = GET_CL();     // CL = sector number (1-17 dec.)
+            head        = GET_DH();     // head number (0-15 dec.)
+            drive       = GET_DL();     // drive number (0=A:, 1=2nd floppy, 80h=drive 0, 81h=drive 1)
 
             if((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) {
                 BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
@@ -1195,16 +1199,14 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
                     memcpyb(last_addr, base_count, EMS_SECTOR_OFFSET, RamAddress, SECTOR_SIZE);  // Copy the sector
                 }
             }
-            // ??? should track be new val from return_status[3] ?
-            set_diskette_current_cyl(drive, track);
-
-            // AL = number of sectors read (same value as passed)
-            SET_AH(0x00); // success
-            CLEAR_CF();   // success
+            set_diskette_current_cyl(drive, track); // ??? should track be new val from return_status[3] ?
+            
+            SET_AH(0x00);   // AH = 0, sucess AL = number of sectors read (same value as passed)
+            CLEAR_CF();     // success
             break;
 
-        case 0x08: // read diskette drive parameters
-            drive = GET_DL();           //BX_DEBUG_INT13_FL("floppy f08\n");
+        case 0x08:                  // read diskette drive parameters
+            drive = GET_DL();       //BX_DEBUG_INT13_FL("floppy f08\n");
             if(drive > 1) {
                 SET_AX(0x00);
                 SET_BX(0x00);
@@ -1223,11 +1225,10 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             if(drive == 0) drive_type >>= 4;
             else           drive_type &= 0x0f;
             SET_BH(0x00);
-            SET_BL(drive_type);
+            SET_BL(drive_type);     // CMOS Drive type
             SET_AH(0x00);
             SET_AL(0x00);
             SET_DL(num_floppies);
-
             switch(drive_type) {
                 case 0:                         // none
                     SET_CX(0x00);               // N/A
@@ -1286,11 +1287,11 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             CLEAR_CF(); // success, disk status not changed upon success 
             break;
         
-        case 0x15: // read diskette drive type
-            drive = GET_DL();     // BX_DEBUG_INT13_FL("floppy f15\n");
+        case 0x15:                  // read diskette drive type
+            drive = GET_DL();       // BX_DEBUG_INT13_FL("floppy f15\n");
             if(drive > 1) {
-                SET_AH(0);      // only 2 drives supported
-                SET_CF();       // set_diskette_ret_status here ???
+                SET_AH(0);          // only 2 drives supported
+                SET_CF();           // set_diskette_ret_status here ???
                 return;
             }
             drive_type = 0x44;            // inb_cmos(0x10);
@@ -1302,14 +1303,14 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             else                SET_AH(1); // drive present, does not support change line
             break;
 
-        case 0x03:    // Write disk sector
-            num_sectors = GET_AL();
-            track       = GET_CH();
-            sector      = GET_CL();
-            head        = GET_DH();
-            drive       = GET_DL();                      // Was here but that meant that drive was not set for other cases
+        case 0x03:                      // Write disk sector
+            num_sectors = GET_AL();     // number of sectors to write (1-128 dec.)
+            track       = GET_CH();     // track/cylinder number (0-1023 dec.)
+            sector      = GET_CL();     // sector number (1-17 dec., see below)
+            head        = GET_DH();     // DH = head number (0-15 dec.)
+            drive       = GET_DL();     // drive number (0=A:, 1=2nd floppy, 80h=drive 0, 81h=drive 1)
 
-            if(drive == DRIVE_B) {                         // Writing only works on Drive B
+            if(drive == DRIVE_B) {      // Writing only works on Drive B
                 if((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) {
                     BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
                     SET_AH(0x01);
@@ -1345,14 +1346,12 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
                     base_count = base_address + (j << 9);
                     memcpyb(EMS_SECTOR_OFFSET, RamAddress, last_addr, base_count, SECTOR_SIZE);        // Copy the sector
                 }
-
                 set_diskette_current_cyl(drive, track);   // ??? should track be new val from return_status[3] ?
-
                 SET_AH(0x00); // success  - AL = number of sectors read (same value as passed)
                 CLEAR_CF();   // success
                 break;
             }
-        default:     // Fall Through to what it used to do!
+        default:     // If not B Drive, then Fall Through to error message
             BX_INFO("int13_diskette: unsupported AH=%02x\n", GET_AH());
             SET_AH(0x01); // ???
             set_diskette_ret_status(1);
@@ -1400,7 +1399,7 @@ static void print_boot_device(ipl_entry_t BASESTK *e)
     type = e->type;
   
     if(type == IPL_TYPE_BEV) type = 0x04; // NIC appears as type 0x80 
-    if(type == 0 || type > 0x4) BX_PANIC("Bad drive type\n");
+    if(type == 0 || type > 0x04) BX_PANIC("Bad drive type\n");
 
     bios_printf(BIOS_PRINTF_SCREEN, "Booting from %s", drivetypes[type]);
  
@@ -1488,7 +1487,7 @@ void __cdecl int19_function(void)
             }
 
             if(read_word(bootseg, 0x01fe)!= 0xaa55) {    // this is the magic number
-                print_boot_failure(e.type, 0);          // "not a bootable disk"
+                print_boot_failure(e.type, 0);           // "not a bootable disk"
                 return;
             }
 
@@ -1555,13 +1554,13 @@ void __cdecl int1a_function(Bit16u rAX, Bit16u rCX, Bit16u rDX, Bit16u rFLAGS)
             __asm { cli }
             ticks_low     = read_word(0x0040, 0x006C);
             ticks_high    = read_word(0x0040, 0x006E);
-            midnight_flag = read_byte(0x0040, 0x006F);
+            midnight_flag = read_byte(0x0040, 0x0070);
             
             SET_CX(ticks_high);
             SET_DX(ticks_low); 
             SET_AL(midnight_flag);
 
-            write_byte(0x0040, 0x006F, 0);  // reset flag
+            write_byte(0x0040, 0x0070, 0);  // reset flag
             __asm { sti }
             CLEAR_CF();       // OK  AH already 0
             break;
