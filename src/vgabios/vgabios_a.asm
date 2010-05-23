@@ -212,7 +212,6 @@ init_vga_card:          mov     dx, 0x03C2  ;; switch to color mode and enable C
                         mov     dx, 0x03C5
                         mov     al, 0x02
                         out     dx, al
-
 if USE_BX_INFO
                         mov     bx, msg_vga_init
                         push    bx
@@ -424,8 +423,7 @@ biosfn_set_all_palette_reg:
                         mov     dx, VGAREG_ACTL_ADDRESS
 set_palette_loop:       mov     al, cl
                         out     dx, al
-                        seg     es
-                        mov     al, [bx]
+                        mov     al, es:[bx]
                         out     dx, al
                         inc     bx
                         inc     cl
@@ -433,8 +431,7 @@ set_palette_loop:       mov     al, cl
                         jne     set_palette_loop
                         mov     al, 0x11
                         out     dx, al
-                        seg     es
-                        mov     al, [bx]
+                        mov     al, es:[bx]
                         out     dx, al
                         mov     al, 0x20
                         out     dx, al
@@ -522,8 +519,7 @@ get_palette_loop:       mov   dx, VGAREG_ACTL_RESET
                         out   dx, al
                         mov   dx, VGAREG_ACTL_READ_DATA
                         in    al, dx
-                        seg   es
-                        mov   [bx], al
+                        mov   es:[bx], al
                         inc   bx
                         inc   cl
                         cmp   cl, 0x10
@@ -535,8 +531,7 @@ get_palette_loop:       mov   dx, VGAREG_ACTL_RESET
                         out   dx, al
                         mov   dx, VGAREG_ACTL_READ_DATA
                         in    al, dx
-                        seg   es
-                        mov   [bx], al
+                        mov   es:[bx], al
                         mov   dx, VGAREG_ACTL_RESET
                         in    al, dx
                         mov   dx, VGAREG_ACTL_ADDRESS
@@ -581,16 +576,13 @@ biosfn_set_all_dac_reg:
                         push  dx
                         mov   bx, dx
                         mov   dx, VGAREG_DAC_DATA
-set_dac_loop:           seg   es
-                        mov   al, [bx]
+set_dac_loop:           mov   al, es:[bx]
                         out   dx, al
                         inc   bx
-                        seg   es
-                        mov   al, [bx]
+                        mov   al, es:[bx]
                         out   dx, al
                         inc   bx
-                        seg   es
-                        mov   al, [bx]
+                        mov   al, es:[bx]
                         out   dx, al
                         inc   bx
                         dec   cx
@@ -680,16 +672,13 @@ biosfn_read_all_dac_reg:
                         mov   bx, dx
                         mov   dx, VGAREG_DAC_DATA
 read_dac_loop:          in    al, dx
-                        seg   es
-                        mov   [bx], al
+                        mov   es:[bx], al
                         inc   bx
                         in    al, dx
-                        seg   es
-                        mov   [bx], al
+                        mov   es:[bx], al
                         inc   bx
                         in    al, dx
-                        seg   es
-                        mov   [bx], al
+                        mov   es:[bx], al
                         inc   bx
                         dec   cx
                         jnz   read_dac_loop

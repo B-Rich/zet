@@ -18,7 +18,7 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rDS, rES, rFLAGS;
     switch(GET_AH()) {     // BIOS functions
         case 0x00:  
             biosfn_set_video_mode(GET_AL());
-            switch(GET_AL()&0x7F) {
+            switch((rAX & 0x007F)) {
                 case 6:  SET_AL(0x3F);   break;
                 case 0:
                 case 1:
@@ -57,9 +57,7 @@ Bit16u rDI, rSI, rBP, rSP, rBX, rDX, rCX, rAX, rDS, rES, rFLAGS;
         case 0x0A:
             biosfn_write_char_only(GET_AL() ,GET_BH(), GET_BL(), rCX);
             break;
-        case 0x0E:
-            // Ralf Brown Interrupt list is WRONG on bh(page)
-            // We do output only on the current page !
+        case 0x0E: // Ralf Brown Interrupt list is WRONG on bh(page), we do output only on the current page !
             biosfn_write_teletype(GET_AL(),0xff,GET_BL(),NO_ATTR);
             break;
         case 0x11:
@@ -85,8 +83,8 @@ static void biosfn_set_video_mode(Bit8u mode)
 { 
     Bit8u noclearmem = mode & 0x80;
     Bit8u line, mmask, *palette, vpti;
-    Bit16u i,twidth,theightm1,cheight;
-    Bit8u modeset_ctl,video_ctl,vga_switches;
+    Bit16u i, twidth, theightm1, cheight;
+    Bit8u modeset_ctl, video_ctl, vga_switches;
     Bit16u crtc_addr;
  
     mode = mode & 0x7f;             // The real mode
@@ -106,27 +104,27 @@ static void biosfn_set_video_mode(Bit8u mode)
     // FIXME
 
     // if palette loading (bit 3 of modeset ctl = 0)
-    if((modeset_ctl & 0x08) == 0) {   // Set the PEL mask
-        outb(VGAREG_PEL_MASK,vga_modes[line].pelmask);
-        outb(VGAREG_DAC_WRITE_ADDRESS,0x00); // Set the whole dac always, from 0
+    if((modeset_ctl & 0x08) == 0) {             // Set the PEL mask
+        outb(VGAREG_PEL_MASK, vga_modes[line].pelmask);
+        outb(VGAREG_DAC_WRITE_ADDRESS, 0x00);    // Set the whole dac always, from 0
         // From which palette
         switch(vga_modes[line].dacmodel) {
-            case 0:  palette = (Bit8u *)&palette0;     break;
-            case 1:  palette = (Bit8u *)&palette1;     break;
-            case 2:  palette = (Bit8u *)&palette2;     break;
-            case 3:  palette = (Bit8u *)&palette3;     break;
+            case 0:  palette = (Bit8u *)&palette0;  break;
+            case 1:  palette = (Bit8u *)&palette1;  break;
+            case 2:  palette = (Bit8u *)&palette2;  break;
+            case 3:  palette = (Bit8u *)&palette3;  break;
         }
         // Always 256*3 values
-        for(i=0;i<0x0100;i++) {
+        for(i = 0; i < 0x0100; i++) {
             if(i<=dac_regs[vga_modes[line].dacmodel]) {
                 outb(VGAREG_DAC_DATA,palette[(i*3)+0]);
                 outb(VGAREG_DAC_DATA,palette[(i*3)+1]);
                 outb(VGAREG_DAC_DATA,palette[(i*3)+2]);
             }
             else {
-                outb(VGAREG_DAC_DATA,0);
-                outb(VGAREG_DAC_DATA,0);
-                outb(VGAREG_DAC_DATA,0);
+                outb(VGAREG_DAC_DATA, 0);
+                outb(VGAREG_DAC_DATA, 0);
+                outb(VGAREG_DAC_DATA, 0);
             }
         }
     }
@@ -134,57 +132,57 @@ static void biosfn_set_video_mode(Bit8u mode)
 
     // Set Attribute Ctl
     for(i=0;i<=0x13;i++){
-        outb(VGAREG_ACTL_ADDRESS,i);
-        outb(VGAREG_ACTL_WRITE_DATA,video_param_table[vpti].actl_regs[i]);
+        outb(VGAREG_ACTL_ADDRESS, i);
+        outb(VGAREG_ACTL_WRITE_DATA, video_param_table[vpti].actl_regs[i]);
     }
-    outb(VGAREG_ACTL_ADDRESS,0x14);
-    outb(VGAREG_ACTL_WRITE_DATA,0x00);
+    outb(VGAREG_ACTL_ADDRESS, 0x14);
+    outb(VGAREG_ACTL_WRITE_DATA, 0x00);
 
     // Set Sequencer Ctl
-    outb(VGAREG_SEQU_ADDRESS,0);
-    outb(VGAREG_SEQU_DATA,0x03);
+    outb(VGAREG_SEQU_ADDRESS, 0);
+    outb(VGAREG_SEQU_DATA, 0x03);
     for(i=1;i<=4;i++) {
-        outb(VGAREG_SEQU_ADDRESS,i);
-        outb(VGAREG_SEQU_DATA,video_param_table[vpti].sequ_regs[i - 1]);
+        outb(VGAREG_SEQU_ADDRESS, i);
+        outb(VGAREG_SEQU_DATA, video_param_table[vpti].sequ_regs[i - 1]);
     }
 
     // Set Grafx Ctl
     for(i=0;i<=8;i++) {
-        outb(VGAREG_GRDC_ADDRESS,i);
-        outb(VGAREG_GRDC_DATA,video_param_table[vpti].grdc_regs[i]);
+        outb(VGAREG_GRDC_ADDRESS, i);
+        outb(VGAREG_GRDC_DATA, video_param_table[vpti].grdc_regs[i]);
     }
 
     // Set CRTC address VGA or MDA
-    crtc_addr=vga_modes[line].memmodel==MTEXT?VGAREG_MDA_CRTC_ADDRESS:VGAREG_VGA_CRTC_ADDRESS;
+    crtc_addr = vga_modes[line].memmodel == MTEXT ? VGAREG_MDA_CRTC_ADDRESS : VGAREG_VGA_CRTC_ADDRESS;
 
     // Disable CRTC write protection
     outw(crtc_addr,0x0011);
     // Set CRTC regs
-    for(i=0;i<=0x18;i++) {
-        outb(crtc_addr,i);
-        outb(crtc_addr+1,video_param_table[vpti].crtc_regs[i]);
+    for(i=0; i<=0x18; i++) {
+        outb(crtc_addr, i);
+        outb(crtc_addr+1, video_param_table[vpti].crtc_regs[i]);
     }
 
     // Set the misc register
-    outb(VGAREG_WRITE_MISC_OUTPUT,video_param_table[vpti].miscreg);
+    outb(VGAREG_WRITE_MISC_OUTPUT, video_param_table[vpti].miscreg);
 
     // Enable video
-    outb(VGAREG_ACTL_ADDRESS,0x20);
+    outb(VGAREG_ACTL_ADDRESS, 0x20);
     inb(VGAREG_ACTL_RESET);
 
     if(noclearmem==0x00) {
-        if(vga_modes[line].class==TEXT) {
-            memsetw(vga_modes[line].sstart,0,0x0720,0x4000); // 32k
+        if(vga_modes[line].class == TEXT) {
+            memsetw(vga_modes[line].sstart, 0, 0x0720, 0x4000); // 32k
         }
         else {
             if(mode<0x0d) {
-                memsetw(vga_modes[line].sstart,0,0x0000,0x4000); // 32k
+                memsetw(vga_modes[line].sstart, 0, 0x0000, 0x4000); // 32k
             }
             else {
                 outb( VGAREG_SEQU_ADDRESS, 0x02 );
                 mmask = inb( VGAREG_SEQU_DATA );
                 outb( VGAREG_SEQU_DATA, 0x0f ); // all planes
-                memsetw(vga_modes[line].sstart,0,0x0000,0x8000); // 64k
+                memsetw(vga_modes[line].sstart, 0, 0x0000, 0x8000); // 64k
                 outb( VGAREG_SEQU_DATA, mmask );
             }
         }
@@ -207,18 +205,17 @@ static void biosfn_set_video_mode(Bit8u mode)
     write_word(BIOSMEM_SEG,BIOSMEM_VS_POINTER+2, 0xc000);
 
     // FIXME
-    write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_MSR,0x00); // Unavailable on vanilla vga, but...
-    write_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_PAL,0x00); // Unavailable on vanilla vga, but...
+    write_byte(BIOSMEM_SEG, BIOSMEM_CURRENT_MSR, 0x00); // Unavailable on vanilla vga, but...
+    write_byte(BIOSMEM_SEG, BIOSMEM_CURRENT_PAL, 0x00); // Unavailable on vanilla vga, but...
 
     if(vga_modes[line].class==TEXT) {
-        biosfn_set_cursor_shape(0x06,0x07);
+        biosfn_set_cursor_shape(0x06, 0x07);
     }
 
     // Set cursor pos for page 0..7
-    for(i=0;i<8;i++)  biosfn_set_cursor_pos(i,0x0000);
+    for(i = 0; i < 8; i++) biosfn_set_cursor_pos(i, 0x0000);
 
-    // Set active page 0
-    biosfn_set_active_page(0x00);
+    biosfn_set_active_page(0x00);   // Set active page 0
 
     // Write the fonts in memory
     if(vga_modes[line].class==TEXT)  {
@@ -266,17 +263,12 @@ static void biosfn_set_cursor_pos(Bit8u page, Bit16u cursor)
     Bit8u current;
     Bit16u crtc_addr;
 
-    // Should not happen...
-    if(page>7)return;
-
-    // Bios cursor pos
-    write_word(BIOSMEM_SEG, BIOSMEM_CURSOR_POS+2*page, cursor);
-
-    // Set the hardware cursor
-    current=read_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_PAGE);
-    if(page==current) {
-        // CRTC regs 0x0e and 0x0f
-        crtc_addr=read_word(BIOSMEM_SEG,BIOSMEM_CRTC_ADDRESS);
+    if(page>7) return;  // Should not happen...
+    
+    write_word(BIOSMEM_SEG, BIOSMEM_CURSOR_POS+2*page, cursor); // Bios cursor pos
+    current=read_byte(BIOSMEM_SEG,BIOSMEM_CURRENT_PAGE);    // Set the hardware cursor
+    if(page==current) {     
+        crtc_addr=read_word(BIOSMEM_SEG,BIOSMEM_CRTC_ADDRESS);  // CRTC regs 0x0e and 0x0f
         outb(crtc_addr,0x0e);
         outb(crtc_addr+1,(cursor&0xff00)>>8);
         outb(crtc_addr,0x0f);
@@ -289,12 +281,10 @@ static void biosfn_get_cursor_pos(Bit8u page, Bit16u *shape, Bit16u *pos)
 {
     Bit16u ss = get_SS();
 
-    // Default
-    write_word(ss, (Bit16u)shape, 0);
+    write_word(ss, (Bit16u)shape, 0);       // Default
     write_word(ss, (Bit16u)pos,   0);
 
-    if(page>7)return;
-    // FIXME should handle VGA 14/16 lines
+    if(page>7)return;              // FIXME should handle VGA 14/16 lines
     write_word(ss, (Bit16u)shape, read_word(BIOSMEM_SEG, BIOSMEM_CURSOR_TYPE));
     write_word(ss, (Bit16u)pos,   read_word(BIOSMEM_SEG,BIOSMEM_CURSOR_POS+page*2));
 }
@@ -385,27 +375,25 @@ Bit8u nblines;Bit8u attr;Bit8u rul;Bit8u cul;Bit8u rlr;Bit8u clr;Bit8u page;Bit8
             memsetw(vga_modes[line].sstart,address,(Bit16u)attr*0x100+' ',nbrows*nbcols);
         }
         else {          // if Scroll up
-     if(dir==SCROLL_UP)
-      {for(i=rul;i<=rlr;i++)
-        {
-         if((i+nblines>rlr)||(nblines==0))
-          memsetw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,(Bit16u)attr*0x100+' ',cols);
-         else
-          memcpyw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,vga_modes[line].sstart,((i+nblines)*nbcols+cul)*2,cols);
+            if(dir==SCROLL_UP) {
+                for(i=rul;i<=rlr;i++) {
+                    if((i+nblines>rlr)||(nblines==0))
+                        memsetw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,(Bit16u)attr*0x100+' ',cols);
+                    else
+                        memcpyw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,vga_modes[line].sstart,((i+nblines)*nbcols+cul)*2,cols);
+                }
+            }
+            else {
+                for(i=rlr;i>=rul;i--) {
+                    if((i<rul+nblines)||(nblines==0))
+                        memsetw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,(Bit16u)attr*0x100+' ',cols);
+                    else
+                        memcpyw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,vga_modes[line].sstart,((i-nblines)*nbcols+cul)*2,cols);
+                    if(i>rlr) break;
+                }
+            }
         }
-      }
-     else
-      {for(i=rlr;i>=rul;i--)
-        {
-         if((i<rul+nblines)||(nblines==0))
-          memsetw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,(Bit16u)attr*0x100+' ',cols);
-         else
-          memcpyw(vga_modes[line].sstart,address+(i*nbcols+cul)*2,vga_modes[line].sstart,((i-nblines)*nbcols+cul)*2,cols);
-         if (i>rlr) break;
-        }
-      }
     }
-  }
 }
 
 //---------------------------------------------------------------------------
@@ -633,7 +621,7 @@ static void release_font_access()
                         in      al, dx
                         and     al, 0x01
                         push    cx
-                        mov     cl, *2
+                        mov     cl, 2
                         shl     al, cl
                         pop     cx
                         or      al, 0x0a
