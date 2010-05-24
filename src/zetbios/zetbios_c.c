@@ -445,7 +445,6 @@ void __cdecl int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS)
             SET_AX(kbd_code);
             break;
 
-
         case 0x11:  // check MF-II keyboard status 
             if(!dequeue_key(&scan_code, &ascii_code, 0) ) {
                 SET_ZF();
@@ -480,7 +479,6 @@ void __cdecl int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS)
             break;
     }
 }
-
 
 //--------------------------------------------------------------------------
 // Enqueue Key
@@ -1079,6 +1077,23 @@ static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
+// The principle of this routine is to copy directly from flash to the ram disk
+// Using the same call that is used to read the flash disk. This routing is
+// not called from anywhere but I left it in anyway
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+void MakeRamdisk(void)
+{
+    Bit16u Sector ,base_count;
+    outb(EMS_ENABLE_REG, EMS_ENABLE_VAL);                                                                           // Turn on EMS from 0xB0000 - 0xBFFFF
+    for(Sector = 0; Sector < SECTOR_COUNT; Sector++) {  // Configure the sector address
+        outw(FLASH_PAGE_REG, Sector);                                                                   // Select the Flash Disk Sector
+        base_count = GetRamdiskSector(Sector);  // Select the Flash Page and get the address within the page of the Sector
+        transf_sect_drive_a(EMS_SECTOR_OFFSET, base_count);     // We now have the correct page of flash selected and the sector is always in the same place so just pass the place to copy it too
+    }
+}
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 // The RAM Disk is stored at 0x110000 to 0x277FFF in the SDRAM
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -1091,31 +1106,6 @@ static Bit16u GetRamdiskSector(Bit16u Sector)
     outb(EMS_PAGE1_REG, Page);       // Set the first 16K
     return ((Sector & 0x001F) << 9); // Return the memory location within the sector
 }
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-//  Used by INT13 - Floppy diskette API in BIOS
-//  New diskette parameter table adding 3 parameters from IBM Since no
-//  provisions are made for multiple drive types, most values in this
-//  table are ignored. set parameters for 1.44M floppy here                  
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-Bit8u diskette_param_table2[] = {
-         0xAF,
-         0x02,   // head load time 0000001, DMA used 
-         0x25,
-         0x02,
-           18,
-         0x1B,
-         0xFF,
-         0x6C,
-         0xF6,
-         0x0F,
-         0x08,
-           79,   // maximum track      
-            0,   // data transfer rate 
-            4    // drive type in cmos 
-};
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -1135,14 +1125,14 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
     
         case 0x00:                // Disk controller reset
             drive = GET_DL();     // Was here but that meant that drive was not set for other cases
-            SET_AH(0x00);                   // disk operation status (see ~INT 13,STATUS~)
+            SET_AH(0);                          // disk operation status (see ~INT 13,STATUS~)
             set_diskette_ret_status(0);
             CLEAR_CF();                         // CF = 0 if Successful
             set_diskette_current_cyl(drive, 0); // Current cylinder
             break;
 
-        case 0x01:                          // Disk status
-            SET_AL(0x00);                   // no error
+        case 0x01:                              // Disk status
+            SET_AL(0);                          // no error
             set_diskette_ret_status(0);
             CLEAR_CF();                         // CF = 0 if Successful
             break;
@@ -1156,9 +1146,9 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
 
             if((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) {
                 BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
-                SET_AH(0x01);
+                SET_AH(1);
                 set_diskette_ret_status(1);
-                SET_AL(0x00);    // No sectors have been read
+                SET_AL(0);       // No sectors have been read
                 SET_CF();        // An error occurred
                 return;
             }
@@ -1177,13 +1167,13 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             if(last_addr < base_address) {           // If the last address is less than the base then there must have been an overflow above !
                 SET_AH(0x09);
                 set_diskette_ret_status(0x09);
-                SET_AL(0x00);                        // No sectors have been read
+                SET_AL(0);                           // No sectors have been read
                 SET_CF();                            // An error occurred
                 return;
             }
 
-            log_sector    = track * 36 + head * 18 + sector - 1;  // Calculate the first sector we are going to read
-            last_addr    = page << 12;                                            
+            log_sector  = track * 36 + head * 18 + sector - 1;  // Calculate the first sector we are going to read
+            last_addr   = page << 12;                                            
 
             if(drive == DRIVE_A) {      // This is the Flash Based Drive
                 for(j = 0; j < num_sectors; j++) {
@@ -1201,7 +1191,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             }
             set_diskette_current_cyl(drive, track); // ??? should track be new val from return_status[3] ?
             
-            SET_AH(0x00);   // AH = 0, sucess AL = number of sectors read (same value as passed)
+            SET_AH(0);      // AH = 0, sucess AL = number of sectors read (same value as passed)
             CLEAR_CF();     // success
             break;
 
@@ -1280,7 +1270,8 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
                     break;
             }
             __asm {     // Set es & di to point to 11 byte diskette param table in ROM
-                mov ax, WORD PTR diskette_param_table2
+//                mov ax, NEAR PTR int1E_table //(located  absolutely at  0xefc7
+                mov ax, 0xefc7
                 mov ss:rDI, ax
                 mov ss:rES, cs
             }
@@ -1499,7 +1490,7 @@ void __cdecl int19_function(void)
             return;
     }
 
-//    printf("Booting from %x:%x\n", bootseg, bootip);        // Debugging info 
+    printf("Booting from %x:%x\n", bootseg, bootip);        // Debugging info 
 
     __asm {                 // This routine Jumps to the boot vector we just loaded 
         pushf               // iret pops ip, then cs, then flags, so push them in the opposite order.

@@ -353,7 +353,6 @@ void write_word(Bit16u s_segment, Bit16u s_offset, Bit16u data)
         pop  ax
     }
 }
-//---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -383,6 +382,7 @@ static Bit16u   GetRamdiskSector(Bit16u Sector);
 static void     set_diskette_ret_status(Bit8u value);
 static void     set_diskette_current_cyl(Bit8u drive, Bit8u cyl);
 
+void __cdecl    MakeRamdisk(void);
 void __cdecl    print_bios_banner(void);
 void __cdecl    int16_function(Bit16u rAX, Bit16u rCX, Bit16u rFLAGS);
 void __cdecl    int09_function(Bit16u rAX);
@@ -394,6 +394,10 @@ void __cdecl    int19_function(void);
 void __cdecl    boot_halt(void);
 void __cdecl    int1a_function(Bit16u rAX, Bit16u rCX, Bit16u rDX, Bit16u rFLAGS);
 
+//---------------------------------------------------------------------------
+// External linkages
+//---------------------------------------------------------------------------
+extern Bit8u *int1E_table;
 
 //---------------------------------------------------------------------------
 #endif
