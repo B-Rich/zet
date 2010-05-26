@@ -1198,12 +1198,12 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
         case 0x08:                  // read diskette drive parameters
             drive = GET_DL();       //BX_DEBUG_INT13_FL("floppy f08\n");
             if(drive > 1) {
-                SET_AX(0x00);
-                SET_BX(0x00);
-                SET_CX(0x00);
-                SET_DX(0x00);
-                SET_WORD(rES, 0x00);
-                SET_WORD(rDI, 0x00);
+                SET_AX(0);
+                SET_BX(0);
+                SET_CX(0);
+                SET_DX(0);
+                SET_WORD(rES, 0);
+                SET_WORD(rDI, 0);
                 SET_DL(num_floppies);
                 SET_CF();
                 return;
@@ -1214,10 +1214,10 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             if(drive_type & 0x0f) num_floppies++;
             if(drive == 0) drive_type >>= 4;
             else           drive_type &= 0x0f;
-            SET_BH(0x00);
+            SET_BH(0);
             SET_BL(drive_type);     // CMOS Drive type
-            SET_AH(0x00);
-            SET_AL(0x00);
+            SET_AH(0);
+            SET_AL(0);
             SET_DL(num_floppies);
             switch(drive_type) {
                 case 0:                         // none
@@ -1344,7 +1344,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             }
         default:     // If not B Drive, then Fall Through to error message
             BX_INFO("int13_diskette: unsupported AH=%02x\n", GET_AH());
-            SET_AH(0x01); // ???
+            SET_AH(0x01); // signal error
             set_diskette_ret_status(1);
             SET_CF();
             break;
@@ -1492,7 +1492,7 @@ void __cdecl int19_function(void)
 
     printf("Booting from %x:%x\n", bootseg, bootip);        // Debugging info 
 
-    __asm {                 // This routine Jumps to the boot vector we just loaded 
+    __asm {                 // This routine Jumps to the boot vector we just loaded
         pushf               // iret pops ip, then cs, then flags, so push them in the opposite order.
         mov  ax, bootseg    // Here is the return segment to jump to 
         push ax             // push it so it will get popped when we iret

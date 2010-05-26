@@ -130,7 +130,7 @@ a:                      loop    a               ; Loop until 50 goes to zero
                         rep     stosw           ; repeat cx times
                         xor     bx, bx          ; set all interrupts to default handleroffset index
                         mov     cx, 0100h                   ;; counter (256 interrupts)
-                        mov     ax, ignore_handler          ;; handle ignored vectors
+                        mov     ax, dummy_iret_handler      ;; handle ignored vectors
                         mov     dx, 0F000h                  ;; load the Bios Data Segment
 
 post_default_ints:      mov     [bx], ax             ; Store dummy return handler offset
@@ -145,11 +145,9 @@ post_default_ints:      mov     [bx], ax             ; Store dummy return handle
 
                         SET_INT_VECTOR 018h, 0F000h, int18_handler    ;; Bootstrap failure vector
                         SET_INT_VECTOR 019h, 0F000h, int19_handler    ;; Bootstrap Loader vector
-                        SET_INT_VECTOR 01bh, 0F000h, int1b_handler    ;; Revectored by DOS later
                         SET_INT_VECTOR 01ch, 0F000h, int1c_handler    ;; User Timer Tick vector
                         SET_INT_VECTOR 011h, 0F000h, int11_handler    ;; Equipment Configuration Check vector
                         SET_INT_VECTOR 012h, 0F000h, int12_handler    ;; Memory Size Check vector
-                        SET_INT_VECTOR 015h, 0F000h, int15_handler    ;; BIOS system services
 
 ebda_post:              xor     ax, ax                                ;; mov EBDA seg into 40E
                         mov     ds, ax
@@ -321,13 +319,12 @@ hd_post_success:        ret
 ;;--------------------------------------------------------------------------
 int76_handler:          push    ax
                         push    ds
-                        mov     ax, 00040h
+                        mov     ax, 0040h
                         mov     ds, ax
                         mov     BYTE PTR ds:008Eh, 0ffh
-
+                                            ;; 
                      ;; call  eoi_both_pics ;; commented out because we do not
                                             ;; have a PIC in this computer
-
                         pop     ds
                         pop     ax
                         iret  
@@ -358,7 +355,7 @@ checksum_loop:          add     al, BYTE PTR ds:[bx]    ;; Add
 ;;  We need a copy of this string, but we are not actually a PnP BIOS,
 ;;  so make sure it is *not* aligned, so OSes will not see it if they scan.
 ;;--------------------------------------------------------------------------
-                        even
+                        align 16
                         db      0
 pnp_string:             DB      "$PnP"
 
@@ -453,7 +450,7 @@ rom_scan_increment:     push    cx
                         add     cx, ax
                         pop     ax                          ;; Restore AX
                         cmp     cx, ax
-                        jbe     rom_scan_loop       ;; This is a far jump
+                        jbe     rom_scan_loop               ;; This is a far jump
                         xor     ax, ax                      ;; Restore DS back to 0000:
                         mov     ds, ax
                         ret
@@ -472,14 +469,14 @@ rom_scan_increment:     push    cx
 ;;     flags reg on the stack then return from interupt
 ;;--------------------------------------------------------------------------
                         org     (0e3feh - startofrom)   ;; INT 13h Fixed Disk Services Entry Point
-int13_handler:          pushf                       ;; Push all registers onto stack
-                        push    ax                  ;; This will save them all and pass them to
-                        push    cx                  ;; the C program
-                        push    dx                  ;;
-                        push    bx                  ;;
-                        push    bp                  ;;
-                        push    si                  ;;
-                        push    di                  ;;
+int13_handler:          pushf                           ;; Push all registers onto stack
+                        push    ax                      ;; This will save them all and pass them to
+                        push    cx                      ;; the C program
+                        push    dx                      ;;
+                        push    bx                      ;;
+                        push    bp                      ;;
+                        push    si                      ;;
+                        push    di                      ;;
                         push    es                  ;; The order of parms in C program 
                         push    ds                  ;; DS, ES, DI, SI, BP, BX, DX, CX, AX, FLAGS
 
@@ -526,33 +523,16 @@ int13_carry_set:        push    bp                              ;; Save the base
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0e6f2h - startofrom) 
-int19_handler:          push    bp                  ;; int19 was beginning to be really complex, so now it
+int19_handler:          
+                        push    bp                  ;; int19 was beginning to be really complex, so now it
                         mov     bp, sp              ;; just calls a C function that does the work
+
                         mov     ax, 0fffeh          ;; Reset SS and SP
                         mov     sp, ax              ;; Set Stack pointer to top o ram
                         xor     ax, ax              ;; Clear AX register
                         mov     ss, ax              ;; Reset Stack Segment
 int19_next_boot:        call    _int19_function     ;; Call the C code for the next boot device
                         int     018h                ;; Boot failed: invoke the boot recovery function
-
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-;; INT14h - IBM entry point for Serial com. RS232 services
-;; This is not an actual interupt and no RS232 service is included in this
-;; BIOS, this table was included to compatibility purposes only.
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0e729h - startofrom) 
-baud_rates:             dw      0417h               ;  110 baud clock divisor
-                        dw      0300h               ;  150 baud clock divisor
-                        dw      0180h               ;  300 baud clock divisor
-                        dw      00C0h               ;  600 baud clock divisor
-                        dw      0060h               ; 1200 baud clock divisor
-                        dw      0030h               ; 2400 baud clock divisor
-                        dw      0018h               ; 4800 baud clock divisor
-                        dw      000Ch               ; 9600 baud clock divisor
-int14_handler:          sti                         ; Serial com. RS232 services
-                        iret                        ;; return from interupt
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -690,27 +670,7 @@ int09_done:             pop     di                  ;; Retore all the saved regi
                         pop     cx                  ;;
                         pop     ds                  ;;
                         pop     ax                  ;;  
-;;                      cli                         ;; Clear interupt enable flag
-                        iret                        ;; Return from interupt
-
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-;; Disk interrupt entry
-;; I added this code because it was in the orignal xt-bios, I do not think it
-;; does anything. I omitted the command that sent 20h to the 8259 since there is
-;; not PIC in this implementation. Without it, this may be dead code. Therefore
-;; it is not vectored in BDA
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0ef57h - startofrom)
-int0E_handler:          sti                    ; Floppy disk attention
-                        push    ds
-                        push    ax
-                        mov     ax,40h
-                        mov     ds, ax
-                        or      byte ptr ds:3Eh,10000000b       ; Raise "attention" flag
-                        pop     ax
-                        pop     ds
+                        cli                         ;; Clear interupt enable flag
                         iret                        ;; Return from interupt
 
 ;;---------------------------------------------------------------------------
@@ -725,33 +685,21 @@ int0E_handler:          sti                    ; Floppy disk attention
 ;;--------------------------------------------------------------------------
                         org     (0efc7h - startofrom)  ; IBM entry for disk param
 int1E_table:            db      0xAF                   ; Disk parameter table
-                        db      0x02    ;; head load time 0000001, DMA used 
+                        db      0x02       ;; head load time 0000001, DMA used 
                         db      0x25
                         db      0x02
-                        db      18
+                        db        18
                         db      0x1B
                         db      0xFF
                         db      0x6C
                         db      0xF6
                         db      0x0F
                         db      0x08
-                        db      79      ;; maximum track      
-                        db      0       ;; data transfer rate 
-                        db      4       ;; drive type in cmos                         
+                        db        79       ;; maximum track      
+                        db         0       ;; data transfer rate 
+                        db         4       ;; drive type in cmos                         
                         
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-;; INT17 -  IBM entry for parallel LPT
-;; This was placed here for compatibility purposes, in the actual xt-bios
-;; it checks the LPT port and if one is not there, it simply returns. Since
-;; this is not really doing anything, it is perhaps a stub for later, 
-;; therefore it is not vectored in BDA
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0efd2h - startofrom)     
-int17_handler:          sti      ; Parallel printer services
-                        iret
-                                                
+                                               
 ;;--------------------------------------------------------------------------
 ;;---------------------------------------------------------------------------
 ;; INT10h - Video Support Service Entry Point
@@ -763,36 +711,6 @@ int17_handler:          sti      ; Parallel printer services
                         org     (0f065h - startofrom)    
 int10_handler:                  ; dont do anything, since 
                         iret    ; the VGA BIOS handles int10h requests
-
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-;; MDA/CGA Video Parameter Table (INT 1Dh)
-;; This is not an actual interupt and is not vectored. I placed it here for
-;; compatibility purposes only. It is located in the correct place for 
-;; a standard xt bios.
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0f0a4h - startofrom)    
-int1d_Table:            db      38h,28h,2Dh,0Ah,1Fh,6,19h ; Init string for 40 x 25
-                        db      1Ch,2,7,6,7
-                        db      0,0,0,0
-                        db      71h,50h,5Ah,0Ah,1Fh,6,19h       ; Init string for 80 x 25 col
-                        db      1Ch,2,7,6,7
-                        db      0,0,0,0
-                        db      38h,28h,2Dh,0Ah,7Fh,6,64h       ; Init string for GRAPHIX
-                        db      70h,2,1,6,7
-                        db      0,0,0,0
-                        db      61h,50h,52h,0Fh,19h,6,19h       ; Init string for 80 x 25 b/w
-                        db      19h,2,0Dh,0Bh,0Ch
-                        db      0,0,0,0
-REGENL:                 dw      0800h                           ; Regen len, 40 x 25
-                        dw      1000h                           ;            80 x 25
-                        dw      4000h                           ;            GRAPHIX
-                        dw      4000h
-MAXCOL:                 db      28h,28h,50h,50h,28h,28h,50h,50h ; Maximum columns
-MODES:                  db      2Ch,28h,2Dh,29h,2Ah,2Eh,1Eh,29h ; Table of mode sets
-TABMUL:                 db      00h,00h,10h,10h,20h,20h,20h,30h ; Table lookup for multiply
-                        ret                     ;  ...error  return if not
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -819,19 +737,7 @@ int11_handler:          push    ds                      ;; save data segment reg
                         mov     ax, WORD PTR ds:[0010h] ;; get equipment list pointer
                         pop     ds
                         iret
-
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-;; Interrupt 15h - Cassette
-;; This is a legacy support function. It just clears the CF and returns.
-;;--------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0f859h - startofrom)
-int15_handler:          sti                  ; enable interupts
-                        stc                  ; Cassette service (error ret)
-                        mov     ah, 086h     ; indicates unsupported command
-                        retf    2
-                       
+                      
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; - INT1Ah - INT 1Ah Time-of-day Service Entry Point
@@ -875,6 +781,8 @@ int1a_carry_set:        push    bp                              ;; Save the base
                         pop     bp                              ;; Restore the BP register
                         iret                                    ;; return from interupt
 
+int1c_handler:                          ;; re-vectored by users later 
+                        iret            ;; IRET Instruction for Dummy Interrupt Handler
 
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
@@ -917,63 +825,13 @@ int08_store_ticks:      mov     WORD PTR ds:046ch, ax           ;; store new tic
                         iret
 
 ;;--------------------------------------------------------------------------
-;;---------------------------------------------------------------------------
-;; Interrupt Vector -  Vector table
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0fef3h - startofrom) 
-Vectors:                dw      int08_handler       ; Timer tick
-                        dw      int09_handler       ; Key attention
-                        dw      ignore_handler      ; Reserved
-                        dw      ignore_handler      ; Reserved for COM2 serial i/o
-                        dw      ignore_handler      ; Reserved for COM1 serial i/o
-                        dw      ignore_handler      ; Reserved for hard disk attn.
-                        dw      int0E_handler       ; Floppy disk attention
-                        dw      ignore_handler      ; Reserved for parallel printer
-                        dw      int10_handler       ; Video bios services
-                        dw      int11_handler       ; Equipment present
-                        dw      int12_handler       ; Memories  present
-                        dw      int13_handler       ; Disk bios services
-                        dw      int14_handler       ; Serial com. services
-                        dw      int15_handler       ; Cassette bios services
-                        dw      int16_handler       ; Keyboard bios services
-                        dw      int17_handler       ; Parallel printer services
-                        dw      ignore_handler      ; ROM Basic 
-                        dw      int19_handler       ; Bootstrap
-                        dw      int1a_handler       ; Timer bios services
-                        dw      int1b_handler       ; Keyboard break user service
-                        dw      int1c_handler       ; System tick user service
-                        dw      int1d_Table         ; Video parameter table
-                        dw      int1E_table         ; Disk  parameter table
-                        dw      0                   ; Graphic charactr table ptr
-
-;;--------------------------------------------------------------------------
-;;---------------------------------------------------------------------------
-;; Interrupt Vector -  nonsense interrupt
-;;---------------------------------------------------------------------------
-;;--------------------------------------------------------------------------
-                        org     (0ff23h - startofrom) 
-dummy_iret_handler:     sti 
-                        stc                 ;; error
-                        clc                 ;; no error
-                        mov     ah, 086h    ;; indicates unsupported command
-                        retf    2
-
-;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; IRET Instruction for Dummy Interrupt Handler -
 ;; Also INT1Ch - User Timer Tick and INT1B
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0ff53h - startofrom)
-ignore_handler:         sti 
-                        stc                 ;; error
-                        clc                 ;; no error
-                        mov     ah, 086h    ;; indicates unsupported command
-                        retf    2
-
-int1c_handler:                          ;; re-vectored by users later 
-int1b_handler:                          ;; Re-vectored by dos Ctrl-Break Handler Address
+dummy_iret_handler:     
                         iret            ;; IRET Instruction for Dummy Interrupt Handler
 
 ;;---------------------------------------------------------------------------
@@ -1000,7 +858,7 @@ BIOS_BUILD_DATE         equ     "04/5/10\n"
 MSG1:                   db      BIOS_COPYRIGHT_STRING
 
 ;;---------------------------------------------------------------------------
-                                org     (0fff5h - startofrom)     ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
+                                org     (0fff5h - startofrom)   ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
 MSG2:                   db      BIOS_BUILD_DATE
                                 org     (0fffeh -startofrom)    ;; Put the 
 SYS_MODEL_ID                    equ     0FCh                    ;; System Model ID 
