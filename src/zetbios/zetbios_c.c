@@ -700,8 +700,8 @@ void __cdecl int09_function(Bit16u rAX)
 //--------------------------------------------------------------------------
 #define SET_DISK_RET_STATUS(status) write_byte(0x0040, 0x0074, status)
 //--------------------------------------------------------------------------
-void __cdecl int13_harddisk(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS)
-Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
+void __cdecl int13_harddisk(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
+Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 {
     Bit8u    drive, num_sectors, sector, head, status;
     Bit8u    drive_map, sd_error;
@@ -714,6 +714,8 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
     Bit16u   addr_l, addr_h;
     Bit32u   log_sector;
     Bit8u    tmp;
+
+    SET_IF();   // Turn on IF when Flag Register is popped off the stack
 
     write_byte(0x0040, 0x008e, 0);  // clear completion flag
 
@@ -1053,14 +1055,14 @@ static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
                 push dx
                 push di
                 push ds
-                mov  ax, s_segment       //; segment
+                mov  ax, s_segment       // segment
                 mov  ds, ax
-                mov  bx, s_offset        //; offset
+                mov  bx, s_offset        // offset
                 mov  dx, 0xe000
                 mov  cx, 256
                 xor  di, di
-    one_sect:   in   ax, dx             //; read word from flash
-                mov  ds:[bx+di], ax     //; write word
+    one_sect:   in   ax, dx              // read word from flash
+                mov  ds:[bx+di], ax      // write word
                 inc  dx
                 inc  dx
                 inc  di
@@ -1112,28 +1114,31 @@ static Bit16u GetRamdiskSector(Bit16u Sector)
 // INT13 Diskette service function
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void __cdecl int13_diskette_function(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS)
-Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
+void __cdecl int13_diskette_function(rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS)
+Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 {
     Bit8u  drive, num_sectors, track, sector, head;
-    Bit16u base_address, base_count, base_es;
-    Bit8u  page, drive_type, num_floppies;
-    Bit16u last_addr, log_sector, j;
-    Bit16u RamAddress;
+    Bit8u  drive_type, num_floppies;
+    Bit16u last_addr, base_address, base_count;
+    Bit16u log_sector, j, RamAddress;
+
+//    BX_INFO(" %x ",GET_AH());
+
+    SET_IF();   // Turn on IF when Flag Register is popped off the stack
 
     switch(GET_AH()) {
     
         case 0x00:                // Disk controller reset
             drive = GET_DL();     // Was here but that meant that drive was not set for other cases
-            SET_AH(0);                          // disk operation status (see ~INT 13,STATUS~)
             set_diskette_ret_status(0);
-            CLEAR_CF();                         // CF = 0 if Successful
             set_diskette_current_cyl(drive, 0); // Current cylinder
+            SET_AH(0);                          // disk operation status (see ~INT 13,STATUS~)
+            CLEAR_CF();                         // CF = 0 if Successful
             break;
 
         case 0x01:                              // Disk status
-            SET_AL(0);                          // no error
             set_diskette_ret_status(0);
+            SET_AL(0);                          // no error
             CLEAR_CF();                         // CF = 0 if Successful
             break;
 
@@ -1146,51 +1151,42 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
 
             if((drive > 1) || (head > 1) || (sector == 0) || (num_sectors == 0) || (num_sectors > 72)) {
                 BX_INFO("int13_diskette: read/write/verify: parameter out of range\n");
-                SET_AH(1);
                 set_diskette_ret_status(1);
+                SET_AH(1);
                 SET_AL(0);       // No sectors have been read
                 SET_CF();        // An error occurred
                 return;
             }
-
-            page            = (rES >> 12);      // The upper 4 bits give the page
-            base_es         = (rES << 4);       // The lower 16bits contributed by ES
-            base_address    = base_es + rBX;    // The lower 16 bits of address
-
-            // Contributed by ES:BX
-            if(base_address < base_es) page++;       // If the base_address is less than the base_es then there was an overflow above so we need to go to the next page
-                                                     // In case of carry, adjust page by 1
-            base_count = (num_sectors * 512) - 1;    // Work out the number of bytes to be transfered less one (last address to be transfered)
-
-            // Check for 64K boundary overrun
-            last_addr = base_address + base_count;   // Add the base address to work out if the last address is in the same segment
-            if(last_addr < base_address) {           // If the last address is less than the base then there must have been an overflow above !
+/*                                                    // Check for 64K boundary overrun
+            base_address = (rES << 4) + rBX;          // Base Address is upper 12 bits of segment + offset
+            base_count   = (num_sectors * 512);       // Number of bytes to be transfered 
+            last_addr = base_address + base_count -1; // Compute the last address is in the same segment
+            if(last_addr < base_address) {            // If the last address is less than the base then there will be a segment overrun
+                BX_INFO("int13_diskette - 02: 64K boundary overrun\n");
                 SET_AH(0x09);
                 set_diskette_ret_status(0x09);
                 SET_AL(0);                           // No sectors have been read
                 SET_CF();                            // An error occurred
                 return;
             }
-
+*/
             log_sector  = track * 36 + head * 18 + sector - 1;  // Calculate the first sector we are going to read
-            last_addr   = page << 12;                                            
-
             if(drive == DRIVE_A) {      // This is the Flash Based Drive
                 for(j = 0; j < num_sectors; j++) {
-                    outw(FLASH_PAGE_REG, log_sector + j);
-                    base_count = base_address + (j << 9);
-                    transf_sect_drive_a(last_addr, base_count);   // We now have the correct page of flash selected and the sector is always in the same place so just pass the place to copy it too
+                    outw(FLASH_PAGE_REG, log_sector + j);       // We now have the correct page of flash selected 
+//                    base_count = base_address + (j << 9);     // and the sector is always in the same place 
+                    transf_sect_drive_a(rES, (rBX + (j << 9)));       // now just pass the place to copy it too
                 }
             }
             else {                  // This is the SDRAM based drive
                 for(j = 0; j < num_sectors; j++) {
+                    BX_INFO("int13_diskette - 02: Accessing ramdisk\n");
                     RamAddress = GetRamdiskSector(log_sector + j);  // Pass in the sector which will set the right RAM page and give back the ram address
                     base_count = base_address + (j << 9);
                     memcpyb(last_addr, base_count, EMS_SECTOR_OFFSET, RamAddress, SECTOR_SIZE);  // Copy the sector
                 }
             }
             set_diskette_current_cyl(drive, track); // ??? should track be new val from return_status[3] ?
-            
             SET_AH(0);      // AH = 0, sucess AL = number of sectors read (same value as passed)
             CLEAR_CF();     // success
             break;
@@ -1198,6 +1194,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
         case 0x08:                  // read diskette drive parameters
             drive = GET_DL();       //BX_DEBUG_INT13_FL("floppy f08\n");
             if(drive > 1) {
+                BX_INFO("int13_diskette - 08: drive >1\n");
                 SET_AX(0);
                 SET_BX(0);
                 SET_CX(0);
@@ -1269,18 +1266,23 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
                     BX_PANIC("floppy: int13: bad floppy type\n");
                     break;
             }
+/*
             __asm {     // Set es & di to point to 11 byte diskette param table in ROM
 //                mov ax, NEAR PTR int1E_table //(located  absolutely at  0xefc7
                 mov ax, 0xefc7
                 mov ss:rDI, ax
                 mov ss:rES, cs
             }
-            CLEAR_CF(); // success, disk status not changed upon success 
+*/
+            SET_WORD(rDI, 0xefc7);
+            SET_WORD(rES, 0xf000);
+            CLEAR_CF();             // success, disk status not changed upon success 
             break;
         
         case 0x15:                  // read diskette drive type
             drive = GET_DL();       // BX_DEBUG_INT13_FL("floppy f15\n");
             if(drive > 1) {
+                BX_INFO("int13_diskette - 15: drive >1\n");
                 SET_AH(0);          // only 2 drives supported
                 SET_CF();           // set_diskette_ret_status here ???
                 return;
@@ -1288,10 +1290,9 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
             drive_type = 0x44;            // inb_cmos(0x10);
             if(drive == 0) drive_type >>= 4;
             else           drive_type &= 0x0f;
-
-            CLEAR_CF(); // successful, not present
             if(drive_type == 0) SET_AH(0); // drive not present
             else                SET_AH(1); // drive present, does not support change line
+            CLEAR_CF();                     // successful
             break;
 
         case 0x03:                      // Write disk sector
@@ -1310,17 +1311,12 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
                     SET_CF();                              // An error occurred
                     return;
                 }
-                page               = (rES >> 12);          // The upper 4 bits give the page
-                base_es            = (rES << 4);           // The lower 16bits contributed by ES
-                base_address    = base_es + rBX;           // The lower 16 bits of address
-
-                // Contributed by ES:BX
-                if(base_address < base_es) page++;        // If the base_address is less than the base_es then there was an overflow above so we need to go to the next page
-                base_count = (num_sectors << 9) - 1;       // Work out the number of bytes to be transfered less one (last address to be transfered)
-
-                // Check for 64K boundary overrun
-                last_addr = base_address + base_count;     // Add the base address to work out if the last address is in the same segment
+                                                           // Check for 64K boundary overrun
+                base_address = (rES << 4) + rBX;           // Base Address is upper 12 bits of segment + offset
+                base_count   = (num_sectors * 512);        // Number of bytes to be transfered 
+                last_addr = base_address + base_count -1;  // Compute the last address is in the same segment
                 if(last_addr < base_address) {             // If the last address is less than the base then there must have been an overflow above !
+                    BX_INFO("int13_diskette - 03: 64K boundary overrun\n");
                     SET_AH(0x09);
                     set_diskette_ret_status(0x09);
                     SET_AL(0x00);                                    // No sectors have been read
@@ -1329,13 +1325,12 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rFLAGS;
                 }
 
                 log_sector    = track * 36 + head * 18 + sector - 1;    // Calculate the first sector we are going to read
-                last_addr    = page << 12;                                            
 
                 // This is the SDRAM based drive
                 for(j = 0; j < num_sectors; j++) {
                     RamAddress = GetRamdiskSector(log_sector + j);   // Pass in the sector which will set the right RAM page and give back the ram address
                     base_count = base_address + (j << 9);
-                    memcpyb(EMS_SECTOR_OFFSET, RamAddress, last_addr, base_count, SECTOR_SIZE);        // Copy the sector
+                    memcpyb(EMS_SECTOR_OFFSET, RamAddress, rES, base_count, SECTOR_SIZE);        // Copy the sector
                 }
                 set_diskette_current_cyl(drive, track);   // ??? should track be new val from return_status[3] ?
                 SET_AH(0x00); // success  - AL = number of sectors read (same value as passed)
@@ -1533,7 +1528,8 @@ void __cdecl boot_halt(void)
 //  updated after midnight; this will avoid the passing two midnights
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-void __cdecl int1a_function(Bit16u rAX, Bit16u rCX, Bit16u rDX, Bit16u rFLAGS)
+void __cdecl int1a_function(rAX, rCX, rDX, rDI, rSI, rBP, rBX, rDS, rIP, rCS, rFLAGS)
+Bit16u rAX, rCX, rDX, rDI, rSI, rBP, rBX, rDS, rIP, rCS, rFLAGS;
 {
     Bit16u ticks_low;
     Bit16u ticks_high;

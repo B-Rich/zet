@@ -211,15 +211,15 @@ int18_handler:          mov     ax, 0fffeh
                         mov     ss, ax              ;; Clears SS
                         mov     bx, IPL_SEG         ;; Get the boot sequence number out of the IPL memory
                         mov     ds, bx                                  ;; Set segment
-                        mov     bx, WORD PTR ds:[IPL_SEQUENCE_OFFSET]   ;; BX is now the sequence number
+                        mov     bx, WORD PTR ds:IPL_SEQUENCE_OFFSET   ;; BX is now the sequence number
                         inc     bx                                      ;; Increment BX register
-                        mov     ax, WORD PTR ds:[IPL_COUNT_OFFSET]      ;; get offset
+                        mov     ax, WORD PTR ds:IPL_COUNT_OFFSET      ;; get offset
                         cmp     ax, bx                                  
                         jg      i18_next
                         call    _boot_halt                              ;; Call the halt message
                         hlt                                             ;; Halt the processor
 i18_next:               xor     ax, ax
-                        mov     WORD PTR ds:[IPL_SEQUENCE_OFFSET], bx    ;; Write it back
+                        mov     WORD PTR ds:IPL_SEQUENCE_OFFSET, bx    ;; Write it back
                         mov     ds, ax                                   ;; and reset the segment to zero.
                         push    bx                              ;; Carry on in the INT 19h handler, 
                         jmp     int19_next_boot                 ;; using the new sequence number
@@ -407,7 +407,7 @@ block_count_rounded:    xor     bx, bx                  ;; Restore DS back to 00
                                                             ;; to init all the ROMs and then go back and build an IPL table of
                                                             ;; all the bootable devices, but we can get away with one pass.
                         mov     ds, cx                      ;; ROM base
-                        mov     bx, WORD PTR ds:[01ah]      ;; 0x1A is the offset into ROM header that contains...
+                        mov     bx, WORD PTR ds:01ah      ;; 0x1A is the offset into ROM header that contains...
                         mov     ax, [bx]                    ;; the offset of PnP expansion header, where...
                         cmp     ax, 05024h                  ;; we look for signature "$PnP"
                         jne     no_bev
@@ -421,7 +421,7 @@ block_count_rounded:    xor     bx, bx                  ;; Restore DS back to 00
                         mov     di, 010h[bx]                ;; Pointer to the product name string or zero if none
                         mov     bx, IPL_SEG                 ;; Go to the segment where the IPL table lives
                         mov     ds, bx
-                        mov     bx, WORD PTR ds:[IPL_COUNT_OFFSET]  ;; Read the number of entries so far
+                        mov     bx, WORD PTR ds:IPL_COUNT_OFFSET  ;; Read the number of entries so far
                         cmp     bx, IPL_TABLE_ENTRIES
                         je      no_bev                              ;; Get out if the table is full
                         push    cx
@@ -469,8 +469,7 @@ rom_scan_increment:     push    cx
 ;;     flags reg on the stack then return from interupt
 ;;--------------------------------------------------------------------------
                         org     (0e3feh - startofrom)   ;; INT 13h Fixed Disk Services Entry Point
-int13_handler:          pushf                           ;; Push all registers onto stack
-                        push    ax                      ;; This will save them all and pass them to
+int13_handler:          push    ax                      ;; This will save them all and pass them to
                         push    cx                      ;; the C program
                         push    dx                      ;;
                         push    bx                      ;;
@@ -478,13 +477,15 @@ int13_handler:          pushf                           ;; Push all registers on
                         push    si                      ;;
                         push    di                      ;;
                         push    es                  ;; The order of parms in C program 
-                        push    ds                  ;; DS, ES, DI, SI, BP, BX, DX, CX, AX, FLAGS
+                        push    ds                  ;; DS, ES, DI, SI, BP, BX, DX, CX, AX, rIP, rCS, FLAGS
 
-                        push    bx                  ;; Save BX reg just for a second here
-                        mov     bx, 0f000h          ;; Load the Bios Data segment
-                        mov     ds, bx              ;; Set the data seg to the bios
-                        pop     bx                  ;; Restore BX back
-                        
+;;                        push    bx                  ;; Save BX reg just for a second here
+;;                        mov     bx, 0f000h          ;; Load the Bios Data segment
+;;                        mov     ds, bx              ;; Set the data seg to the bios
+;;                        pop     bx                  ;; Restore BX back
+
+    push ss
+    pop  ds                        
                         test    dl,80h                      ;; Test to see if current drive is HD
                         jnz     int13_HardDisk              ;; If so, do that, otherwise do floppy
 
@@ -502,19 +503,6 @@ int13_out:                                                  ;; diskette jumps to
                         pop     dx                  ;;
                         pop     cx                  ;;
                         pop     ax                  ;;
-                        popf                        ;; Pop off flags, but iret wipes this out, unless...
-                        
-                        jc      int13_carry_set                 ;; Check the CF flag set
-                        push    bp                              ;; Save base pointer registet
-                        mov     bp, sp                          ;; Get stack pointer, then set the ZF flag
-                        and     WORD PTR ss:[bp + 06h], 0fffeh  ;; while it is sitting on the stack
-                        or      WORD PTR ss:[bp + 06h], 00200h  ;; Perftorms equivalent of STi on iret
-                        pop     bp                              ;; The iret will popf 
-                        iret                                    ;; return from interupt
-int13_carry_set:        push    bp                              ;; Save the base pointer
-                        mov     bp, sp                          ;; load it with the stack pointer
-                        or      WORD PTR ss:[bp + 06h], 00201h  ;; locate the flags register on the stack
-                        pop     bp                              ;; Restore the BP register
                         iret                                    ;; return from interupt
 
 ;;--------------------------------------------------------------------------
@@ -624,10 +612,8 @@ int16_key_found:        mov     bx, 0f000h              ;; Otherwise, just check
                         org     (0e987h - startofrom)
 int09_handler:          cli                         ;; Clear interupt enable flag
                         push    ax                  ;; Save the AX register      
-                        
                         in      al, 060h            ;; read key from keyboard controller
                         sti                         ;; Enable interupts again
-                        
                         push    ds                  ;; next pushes 6 equivalent of pusha
                         push    cx                  ;; Save all register contents
                         push    dx                  ;; Onto the stack
@@ -638,7 +624,6 @@ int09_handler:          cli                         ;; Clear interupt enable fla
                         
                         cmp     al, 0e0h            ;; check for extended key
                         jne     int09_check_pause   ;; check if the pause key pressed
-                        
                         xor     ax, ax                      ;; Clear the ax register
                         mov     ds, ax                      ;; Load the data segment reg with 0
                         mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x02
@@ -648,7 +633,6 @@ int09_handler:          cli                         ;; Clear interupt enable fla
 
 int09_check_pause:      cmp     al, 0e1h                    ;; check for pause key
                         jne     int09_process_key           ;; Pause was not pressed
-                        
                         xor     ax, ax                      ;; Pause was pressed
                         mov     ds, ax                      ;; Load the data segment reg with 0
                         mov     al, BYTE PTR ds:[0496h]     ;; mf2_state |= 0x01
@@ -744,8 +728,7 @@ int11_handler:          push    ds                      ;; save data segment reg
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
                         org     (0fe6eh - startofrom)    
-int1a_handler:          
-                        push    ds                      ;; Save all registers that
+int1a_handler:          push    ds                      ;; Save all registers that
                         push    bx                      ;; on return
                         push    bp                      ;;
                         push    si                      ;;
@@ -753,34 +736,26 @@ int1a_handler:
                         
                         mov     ax, 0f000h              ;; Bios data segment
                         mov     ds, ax                  ;; set the data seg to the bios                        
-                        pushf                           ;; Push the parms on the stack
+
                         push    dx                      ;; for the C program to receive
                         push    cx                      ;; for the C program to receive
                         push    ax                      ;; Pass the user command
+
                         call    _int1a_function         ;; Now call the function
                         pop     ax                      ;; Now restor the stack
                         pop     cx                      ;;
                         pop     dx                      ;;
-                        popf                            ;; Flags should have ZF set correctly
-                        
                         pop     di                      ;; Now restore all the saved
                         pop     si                      ;; registers from above
                         pop     bp                      ;; The next section insures that this
                         pop     bx                      ;; routines returns with the Zero Flag
                         pop     ds                      ;; Set correctly
+                        iret            ;; IRET Instruction for Dummy Interrupt Handler
 
-                        jc      int1a_carry_set                 ;; Check the CF flag set
-                        push    bp                              ;; Save base pointer registet
-                        mov     bp, sp                          ;; Get stack pointer, then set the CF flag
-                        and     BYTE PTR ss:[bp + 06h], 0feh    ;; while it is sitting on the stack
-                        pop     bp                              ;; The iret will popf 
-                        iret                                    ;; return from interupt
-int1a_carry_set:        push    bp                              ;; Save the base pointer
-                        mov     bp, sp                          ;; load it with the stack pointer
-                        or      BYTE PTR ss:[bp + 06h], 001h    ;; locate the flags register on the stack
-                        pop     bp                              ;; Restore the BP register
-                        iret                                    ;; return from interupt
 
+;;--------------------------------------------------------------------------
+;; INT 1C Dummy Handler routing
+;;--------------------------------------------------------------------------
 int1c_handler:                          ;; re-vectored by users later 
                         iret            ;; IRET Instruction for Dummy Interrupt Handler
 
