@@ -470,22 +470,23 @@ rom_scan_increment:     push    cx
 ;;--------------------------------------------------------------------------
                         org     (0e3feh - startofrom)   ;; INT 13h Fixed Disk Services Entry Point
 int13_handler:          push    ax                      ;; This will save them all and pass them to
-                        push    cx                      ;; the C program
-                        push    dx                      ;;
-                        push    bx                      ;;
-                        push    bp                      ;;
-                        push    si                      ;;
-                        push    di                      ;;
+                        push    cx                  ;; the C program
+                        push    dx                  ;;
+                        push    bx                  ;;
+                        push    bp                  ;;
+                        push    si                  ;;
+                        push    di                  ;;
                         push    es                  ;; The order of parms in C program 
                         push    ds                  ;; DS, ES, DI, SI, BP, BX, DX, CX, AX, rIP, rCS, FLAGS
+
+                        push    ss                  ;; Push the stack segment
+                        pop     ds                  ;; Pop it to the Data segment, now we have DS set for our C call
 
 ;;                        push    bx                  ;; Save BX reg just for a second here
 ;;                        mov     bx, 0f000h          ;; Load the Bios Data segment
 ;;                        mov     ds, bx              ;; Set the data seg to the bios
 ;;                        pop     bx                  ;; Restore BX back
-
-    push ss
-    pop  ds                        
+                        
                         test    dl,80h                      ;; Test to see if current drive is HD
                         jnz     int13_HardDisk              ;; If so, do that, otherwise do floppy
 

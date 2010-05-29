@@ -788,51 +788,51 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                 addr_h =  (Bit16u) (log_sector >> 7);
 
                 __asm {
-                   mov   es, rES                //;; ES: destination segment
-                   mov   di, tempbx             //;; DI: destination offset from bx
-                   cmp   di, 0xfe00             //;; adjust if there will be an overrun
+                   mov   es, rES                // ES: destination segment
+                   mov   di, tempbx             // DI: destination offset from bx
+                   cmp   di, 0xfe00             // adjust if there will be an overrun
                    jbe   i13_f02_no_adjust
                    
                 i13_f02_adjust:
-                    sub   di, 0x0200            //; sub 512 bytes from offset
+                    sub   di, 0x0200            // sub 512 bytes from offset
                     mov   ax, es
-                    add   ax, 0x0020            //; add 512 to segment
+                    add   ax, 0x0020            // add 512 to segment
                     mov   es, ax
 
                 i13_f02_no_adjust:
                     mov   bx, addr_l
                     mov   cx, addr_h
 
-                    mov   dx, 0x0100        //; SD card IO Port 
-                    mov   ax, 0x51          //; CS = 0, command CMD17
+                    mov   dx, 0x0100        // SD card IO Port 
+                    mov   ax, 0x51          // CS = 0, command CMD17
                     out   dx, ax
-                    mov   al, ch            //; addr[31:24]
+                    mov   al, ch            // addr[31:24]
                     out   dx, al
-                    mov   al, cl            //; addr[23:16]
+                    mov   al, cl            // addr[23:16]
                     out   dx, al
-                    mov   al, bh            //; addr[15:8]
+                    mov   al, bh            // addr[15:8]
                     out   dx, al
-                    mov   al, bl            //; addr[7:0]
+                    mov   al, bl            // addr[7:0]
                     out   dx, al
-                    mov   al, 0x0ff         //; CRC (not used)
+                    mov   al, 0x0ff         // CRC (not used)
                     out   dx, al
-                    out   dx, al            //; wait
+                    out   dx, al            // wait
 
                 i13_f02_read_res_cmd17:
-                    in    al, dx            //; card response
+                    in    al, dx            // card response
                     cmp   al, 0
                     jne   i13_f02_read_res_cmd17
 
-                i13_f02_read_tok_cmd17:     //; read data token: 0xfe
+                i13_f02_read_tok_cmd17:     // read data token: 0xfe
                     in    al, dx
                     cmp   al, 0x0fe
                     jne   i13_f02_read_tok_cmd17
                     mov   cx, 0x100
                     
                 i13_f02_read_bytes:
-                    in    al, dx            //; low byte
+                    in    al, dx                 // low byte
                     mov   bl, al
-                    in    al, dx            //; high byte
+                    in    al, dx                 // high byte
                     mov   bh, al
                     mov   word ptr es:[di], bx   // eseg
                     add   di, 2
@@ -1049,15 +1049,25 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
 static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
 {
     __asm {
-                push ax
-                push bx
-                push cx
-                push dx
-                push di
-                push ds
+                push  ax
+                push  bx
+                push  cx
+                push  dx
+                push  di
+                push  ds
+
                 mov  ax, s_segment       // segment
                 mov  ds, ax
                 mov  bx, s_offset        // offset
+                cmp  bx, 0xfe00          // adjust if there will be an overrun
+                jbe  transf_no_adjust
+                        
+                sub   bx, 0x0200         // sub 512 bytes from offset
+                mov   ax, ds
+                add   ax, 0x0020         // add 512 to segment
+                mov   ds, ax
+
+    transf_no_adjust:
                 mov  dx, 0xe000
                 mov  cx, 256
                 xor  di, di
@@ -1122,10 +1132,7 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
     Bit16u last_addr, base_address, base_count;
     Bit16u log_sector, j, RamAddress;
 
-//    BX_INFO(" %x ",GET_AH());
-
     SET_IF();   // Turn on IF when Flag Register is popped off the stack
-
     switch(GET_AH()) {
     
         case 0x00:                // Disk controller reset
@@ -1157,26 +1164,13 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                 SET_CF();        // An error occurred
                 return;
             }
-/*                                                    // Check for 64K boundary overrun
-            base_address = (rES << 4) + rBX;          // Base Address is upper 12 bits of segment + offset
-            base_count   = (num_sectors * 512);       // Number of bytes to be transfered 
-            last_addr = base_address + base_count -1; // Compute the last address is in the same segment
-            if(last_addr < base_address) {            // If the last address is less than the base then there will be a segment overrun
-                BX_INFO("int13_diskette - 02: 64K boundary overrun\n");
-                SET_AH(0x09);
-                set_diskette_ret_status(0x09);
-                SET_AL(0);                           // No sectors have been read
-                SET_CF();                            // An error occurred
-                return;
-            }
-*/
+
             log_sector  = track * 36 + head * 18 + sector - 1;  // Calculate the first sector we are going to read
             if(drive == DRIVE_A) {      // This is the Flash Based Drive
                 for(j = 0; j < num_sectors; j++) {
                     outw(FLASH_PAGE_REG, log_sector + j);       // We now have the correct page of flash selected 
-//                    base_count = base_address + (j << 9);     // and the sector is always in the same place 
-                    transf_sect_drive_a(rES, (rBX + (j << 9)));       // now just pass the place to copy it too
-                }
+                    transf_sect_drive_a(rES, (rBX + (j << 9)));  // now just pass the place to copy it too, j<<9 is the same thing as multiplying by 512
+                }                                                // a good optimizing compiler probably does this for you anyway
             }
             else {                  // This is the SDRAM based drive
                 for(j = 0; j < num_sectors; j++) {
@@ -1266,16 +1260,8 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                     BX_PANIC("floppy: int13: bad floppy type\n");
                     break;
             }
-/*
-            __asm {     // Set es & di to point to 11 byte diskette param table in ROM
-//                mov ax, NEAR PTR int1E_table //(located  absolutely at  0xefc7
-                mov ax, 0xefc7
-                mov ss:rDI, ax
-                mov ss:rES, cs
-            }
-*/
-            SET_WORD(rDI, 0xefc7);
-            SET_WORD(rES, 0xf000);
+            SET_WORD(rDI, 0xefc7);  // This table is hard coded into the bios at this location
+            SET_WORD(rES, 0xf000);  // This is done for compatibility purposes
             CLEAR_CF();             // success, disk status not changed upon success 
             break;
         
