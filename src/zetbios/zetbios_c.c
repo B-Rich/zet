@@ -1090,19 +1090,25 @@ static void transf_sect_drive_a(Bit16u s_segment, Bit16u s_offset)
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 // The principle of this routine is to copy directly from flash to the ram disk
-// Using the same call that is used to read the flash disk. This routing is
-// not called from anywhere but I left it in anyway
+// Using the same call that is used to read the flash disk. This routine is
+// called from The assembly section during post. It is commented out here
+// Because it was also commented out in the original zet bios and I tried
+// uncommenting it there and building the old way and it did not work. It does
+// not work here either. I have not been able to debug it. Maybe someone can
+// figure it out. It would be nice to have, but it is not working right now.
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 void MakeRamdisk(void)
 {
-    Bit16u Sector ,base_count;
-    outb(EMS_ENABLE_REG, EMS_ENABLE_VAL);                                                                           // Turn on EMS from 0xB0000 - 0xBFFFF
+/*    
+    Bit16u Sector, base_count;
+    outb(EMS_ENABLE_REG, EMS_ENABLE_VAL);               // Turn on EMS from 0xB0000 - 0xBFFFF
     for(Sector = 0; Sector < SECTOR_COUNT; Sector++) {  // Configure the sector address
-        outw(FLASH_PAGE_REG, Sector);                                                                   // Select the Flash Disk Sector
+        outw(FLASH_PAGE_REG, Sector);                   // Select the Flash Disk Sector
         base_count = GetRamdiskSector(Sector);  // Select the Flash Page and get the address within the page of the Sector
         transf_sect_drive_a(EMS_SECTOR_OFFSET, base_count);     // We now have the correct page of flash selected and the sector is always in the same place so just pass the place to copy it too
     }
+*/
 }
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -1116,7 +1122,7 @@ static Bit16u GetRamdiskSector(Bit16u Sector)
     // The lower five bits tells us where in the 16K Page the Sector is
     Page = RAM_DISK_BASE + (Sector >> 5);
     outb(EMS_PAGE1_REG, Page);       // Set the first 16K
-    return ((Sector & 0x001F) << 9); // Return the memory location within the sector
+    return((Sector & 0x001F) << 9); // Return the memory location within the sector
 }
 
 //--------------------------------------------------------------------------
@@ -1173,6 +1179,17 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                 }                                                // a good optimizing compiler probably does this for you anyway
             }
             else {                  // This is the SDRAM based drive
+                base_address = (rES << 4) + rBX;           // Base Address is upper 12 bits of segment + offset
+                base_count   = (num_sectors * 512);        // Number of bytes to be transfered 
+                last_addr = base_address + base_count -1;  // Compute the last address is in the same segment
+                if(last_addr < base_address) {             // If the last address is less than the base then there must have been an overflow above !
+                    BX_INFO("int13_diskette - 03: 64K boundary overrun\n");
+                    SET_AH(0x09);
+                    set_diskette_ret_status(0x09);
+                    SET_AL(0x00);                                    // No sectors have been read
+                    SET_CF();                                        // An error occurred
+                    return;
+                }
                 for(j = 0; j < num_sectors; j++) {
                     BX_INFO("int13_diskette - 02: Accessing ramdisk\n");
                     RamAddress = GetRamdiskSector(log_sector + j);  // Pass in the sector which will set the right RAM page and give back the ram address
@@ -1297,7 +1314,6 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                     SET_CF();                              // An error occurred
                     return;
                 }
-                                                           // Check for 64K boundary overrun
                 base_address = (rES << 4) + rBX;           // Base Address is upper 12 bits of segment + offset
                 base_count   = (num_sectors * 512);        // Number of bytes to be transfered 
                 last_addr = base_address + base_count -1;  // Compute the last address is in the same segment
@@ -1309,7 +1325,6 @@ Bit16u rDS, rES, rDI, rSI, rBP, rBX, rDX, rCX, rAX, rIP, rCS, rFLAGS;
                     SET_CF();                                        // An error occurred
                     return;
                 }
-
                 log_sector    = track * 36 + head * 18 + sector - 1;    // Calculate the first sector we are going to read
 
                 // This is the SDRAM based drive
@@ -1471,7 +1486,7 @@ void __cdecl int19_function(void)
             return;
     }
 
-    printf("Booting from %x:%x\n", bootseg, bootip);        // Debugging info 
+    BX_INFO("Booting from %x:%x\n", bootseg, bootip);        // Debugging info 
 
     __asm {                 // This routine Jumps to the boot vector we just loaded
         pushf               // iret pops ip, then cs, then flags, so push them in the opposite order.

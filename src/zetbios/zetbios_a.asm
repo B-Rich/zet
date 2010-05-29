@@ -183,7 +183,7 @@ ebda_post:              xor     ax, ax                                ;; mov EBD
                         call    _print_bios_banner     ;; Print the openning banner
 
 
-                     ;; call    _MakeRamdisk           ;; Ram Drive setup
+                        call    _MakeRamdisk           ;; Ram Drive setup
                         call    hard_drive_post        ;; Hard Drive setup
                         call    _init_boot_vectors     ;; Initialize the boot vectors
 

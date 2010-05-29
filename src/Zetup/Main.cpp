@@ -26,6 +26,9 @@ __fastcall TForm1::TForm1(TComponent* Owner) : TForm(Owner)
     ToolBar1->Buttons[1]->Enabled = false;
     ToolBar1->Buttons[0]->Style = tbsButton	;
     ToolBar1->Buttons[1]->Style = tbsButton	;
+
+    AppPath = ExtractFilePath(Application->ExeName);
+    StatusBar1->SimpleText = "Idle - " + AppPath;
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::FormShow(TObject *Sender)
@@ -59,8 +62,8 @@ void __fastcall TForm1::OpenUSBPort1Click(TObject *Sender)
     if(USB1.Open_Device()) {
         USB_is_Open = true;
         USB1.Reset_Device(USB1.DevNum);
-        PS2_REC = new TPS2_REC(true);
-        PS2_REC->Resume();
+//        PS2_REC = new TPS2_REC(true);
+//        PS2_REC->Resume();
         Show_All_Button(true);    // Enable All Button
 
         ToolBar1->Buttons[0]->Enabled = false;
@@ -71,7 +74,7 @@ void __fastcall TForm1::OpenUSBPort1Click(TObject *Sender)
 void __fastcall TForm1::Close_USB_Port()
 {
     if(USB_is_Open)   {
-        PS2_REC->Terminate();
+//        PS2_REC->Terminate();
         USB1.Close_Device();       // Close USB Port
         Show_All_Button(false);
         USB_is_Open = false;
@@ -89,11 +92,13 @@ void __fastcall TForm1::Exit1Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::CloseUSBPort1Click(TObject *Sender)
 {
+    USB1.Reset_Device(0);
     Close_USB_Port();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
 {
+    USB1.Reset_Device(0);
     Close_USB_Port();  // Close Control Panel and Close USB JTAG Port
 }
 //---------------------------------------------------------------------------
@@ -169,14 +174,14 @@ void __fastcall TForm1::TabSheet1Show(TObject *Sender)
 {
     if(USB_is_Open) {
         USB1.Reset_Device(USB1.DevNum);
-        PS2_REC->Resume();         //  Enable PS2_REC Thread
+//        PS2_REC->Resume();         //  Enable PS2_REC Thread
     }
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::TabSheet2Show(TObject *Sender)
 {
     if(USB_is_Open) {             // Disable PS2_REC Thread
-        PS2_REC->Suspend();       // Disable PS2_REC Thread
+//        PS2_REC->Suspend();       // Disable PS2_REC Thread
         USB1.Reset_Device(USB1.DevNum);
     }
 }
@@ -194,10 +199,10 @@ void __fastcall TForm1::Button2Click(TObject *Sender)
     x[6] = (char(D8->Checked)<<7)+(char(D7->Checked)<<6)+(char(D6->Checked)<<5)+(char(D5->Checked)<<4)+
            (char(D4->Checked)<<3)+(char(D3->Checked)<<2)+(char(D2->Checked)<<1)+(char(D1->Checked));
     x[7] = DISPLAY;
-    PS2_REC->Suspend();
+//    PS2_REC->Suspend();
     USB1.Reset_Device(0);
     USB1.Write_Data(x,8,0,true);
-    PS2_REC->Resume();
+//    PS2_REC->Resume();
     Button1Click(this);
 }
 //---------------------------------------------------------------------------
@@ -277,24 +282,25 @@ void __fastcall TForm1::Button3Click(TObject *Sender)
     x[6] = 0x00;
     x[7] = NORMAL;
     USB1.Reset_Device(0);
-     USB1.Write_Data(x,8,0,true);
     USB1.Write_Data(x,8,0,true);
     USB1.Write_Data(x,8,0,true);
-    for(int i = 0; i < 400; i++) {        // Wait 40 Sec.....
-        Process_Label->Caption=IntToStr(i*100/400) + " %";    // Display Process %
+    USB1.Write_Data(x,8,0,true);
+    int timedelay = 400;
+    ProgressBar1->Max = timedelay;
+    for(int i = 0; i < timedelay; i++) {        // Wait 40 Sec.....
+        Process_Label->Caption=IntToStr(i*100/timedelay) + " %";    // Display Process %
         ProgressBar1->Position = i;
         Application->ProcessMessages();
         Sleep(100);                   // Waitting
     }
     Form1->iFL_DATA->Text = "00";
     while((HexToInt(Form1->iFL_DATA->Text)!= 255) && wait < 600) {    // Max Wait 60 Sec...
-        Form1->Button4Click(this);
+        Form1->Button4->Click();
         Application->ProcessMessages();
         Sleep(100);
         wait++;
     }
-    if(wait == 600)
-    ShowMessage("FLASH Erase TimeOut!!");
+    if(wait == 600) ShowMessage("FLASH Erase TimeOut!!");
     Form1->iFL_DATA->Text = "00";
     Panel1->Visible = false;             // Close Busy Panel
     Show_All_Button(true);             // Enable All Button
@@ -305,57 +311,55 @@ void __fastcall TForm1::Button6Click(TObject *Sender)
 {
    if(OpenDialog1->Execute()) {           // Write File To Flash
       char x[8];
-      int File_Length,File_Type;
-      int ADDR=HexToInt(iWR_ADDR->Text);
-      Screen->Cursor=crHourGlass;
-      Panel1->Visible=true;            // Show Busy Panel
-      Show_All_Button(false);          // Disable All Button
-      x[0]=WRITE;
-      x[1]=FLASH;           // Send Flash Write Command To FPGA
-      x[5]=0xFF;
-      x[7]=NORMAL;
+      int File_Length ,File_Type;
+      int ADDR = HexToInt(iWR_ADDR->Text);
+      Screen->Cursor = crHourGlass;
+      Panel1->Visible = true;            // Show Busy Panel
+      Show_All_Button(false);           // Disable All Button
       USB1.Reset_Device(0);
-      if(Select_File(OpenDialog1->FileName)==1) {   // Check File Type and Open File
+      if(Select_File(OpenDialog1->FileName) == 1) {   // Check File Type and Open File
          File_AscToHex(OpenDialog1->FileName,"123.tmp",1);
          Sleep(100);
-         file1=fopen("123.tmp","rb");
+         file1 = fopen("123.tmp","rb");
       }
-      else file1=fopen(OpenDialog1->FileName.c_str(),"rb");
-      fseek(file1,0,SEEK_END);     // Set File ptr To File End
+      else file1 = fopen(OpenDialog1->FileName.c_str(),"rb");
+      fseek(file1, 0, SEEK_END);     // Set File ptr To File End
       if(CheckBox1->Checked) {      // Set Transport Length
-         File_Length=ftell(file1);       // Check File Length
-         iWR_Length->Text=IntToHex(File_Length,6);   // Show File Length To Text Field
+         File_Length = ftell(file1);       // Check File Length
+         iWR_Length->Text = IntToHex(File_Length, 6);   // Show File Length To Text Field
       }
-      else File_Length=HexToInt(iWR_Length->Text);
-      ProgressBar1->Max=File_Length;     // Set ProgressBar
+      else File_Length = HexToInt(iWR_Length->Text);
+      ProgressBar1->Max = File_Length;     // Set ProgressBar
       fseek(file1,0,SEEK_SET);           // Set File ptr To File Start
       // Read File Data To Temp Memory
       unsigned char* a=(unsigned char*)VirtualAlloc(NULL,File_Length,MEM_COMMIT,PAGE_READWRITE);
-      fread(a,sizeof(char),File_Length,file1);
-      for(int i=0;i<File_Length;i++) {    // Transport File To Flash
-         Process_Label->Caption=IntToStr(i*100/File_Length)+" %"; // Display Process %
-         ProgressBar1->Position=i;
-         Application->ProcessMessages();
-         x[2]=char(ADDR>>16);         // Send Data and Address
-         x[3]=char(ADDR>>8);
-         x[4]=char(ADDR);
-         x[5]=0xFF;
-         x[6]=a[i];
-         if(i%MAX_TOTAL_PACKET==MAX_TOTAL_PACKET-1)
-         USB1.Reset_Device(0);
-         if(i<File_Length-1)
-         USB1.Write_Data(x,8,0,false);
-         else
-         USB1.Write_Data(x,8,0,true);
-         // Inc Address
-         ADDR++;
+      fread(a, sizeof(char), File_Length, file1);
+      x[0] = WRITE;
+      x[1] = FLASH;                     // Send Flash Write Command To FPGA
+      x[5] = 0xFF;
+      x[7] = NORMAL;
+      for(int i=0; i < File_Length; i++) {    // Transport File To Flash
+         if(a[i] != 0xFF) {
+            Process_Label->Caption = IntToStr(i*100/File_Length) + " %"; // Display Process %
+            ProgressBar1->Position = i; ProgressBar1->Update();
+            x[2] = char(ADDR>>16);         // Send Data and Address
+            x[3] = char(ADDR>>8);
+            x[4] = char(ADDR);
+            x[5] = 0xFF;
+            x[6] = a[i];
+            if(i%MAX_TOTAL_PACKET == MAX_TOTAL_PACKET-1) USB1.Reset_Device(0);
+            if(i < File_Length-1)    USB1.Write_Data(x,8,0,false);
+            else                     USB1.Write_Data(x,8,0,true);
+         }
+         ADDR++;        // Inc Address
+//         Application->ProcessMessages();
       }
       USB1.Reset_Device(0);
       fclose(file1);           // Close File
       if(FileExists("123.tmp")) DeleteFile("123.tmp");   // Delete Temp File
-      Panel1->Visible=false;        // Close Busy Panel
-      Show_All_Button(true);     // Enable All Button
-      VirtualFree(a,0,MEM_RELEASE);    // Free Temp Memory
+      Panel1->Visible = false;          // Close Busy Panel
+      Show_All_Button(true);            // Enable All Button
+      VirtualFree(a, 0, MEM_RELEASE);   // Free Temp Memory
       Screen->Cursor=crArrow;
    }
 }
@@ -918,7 +922,7 @@ void __fastcall TForm1::ScrollBar2Change(TObject *Sender)
     x[2] = 0x00;
     x[3] = 0x00;
     x[7] = DISPLAY;
-    PS2_REC->Suspend();
+//    PS2_REC->Suspend();
     USB1.Reset_Device(0);
     x[4] = 0x01;
     x[5] = char(ScrollBar1->Position/256);
@@ -928,7 +932,7 @@ void __fastcall TForm1::ScrollBar2Change(TObject *Sender)
     x[5] = char(ScrollBar2->Position/256);
     x[6] = char(ScrollBar2->Position%256);
     USB1.Write_Data(x,8,0,true);
-    PS2_REC->Resume();
+//    PS2_REC->Resume();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ScrollBar1Change(TObject *Sender)
@@ -940,7 +944,7 @@ void __fastcall TForm1::ScrollBar1Change(TObject *Sender)
     x[2] = 0x00;
     x[3] = 0x00;
     x[7] = DISPLAY;
-    PS2_REC->Suspend();
+//    PS2_REC->Suspend();
     USB1.Reset_Device(0);
     x[4] = 0x01;
     x[5] = char(ScrollBar1->Position/256);
@@ -950,7 +954,7 @@ void __fastcall TForm1::ScrollBar1Change(TObject *Sender)
     x[5] = char(ScrollBar2->Position/256);
     x[6] = char(ScrollBar2->Position%256);
     USB1.Write_Data(x,8,0,true);
-    PS2_REC->Resume();
+//    PS2_REC->Resume();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Default_IMGClick(TObject *Sender)
@@ -964,10 +968,10 @@ void __fastcall TForm1::Default_IMGClick(TObject *Sender)
     x[5] = 0x00;
     x[6] = (char(!Default_IMG->Checked)<<1)+char(Cursor_EN->Checked);
     x[7] = DISPLAY;
-    PS2_REC->Suspend();
+//    PS2_REC->Suspend();
     USB1.Reset_Device(0);
     USB1.Write_Data(x,8,0,true);
-    PS2_REC->Resume();
+//    PS2_REC->Resume();
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Cursor_ENClick(TObject *Sender)
@@ -981,7 +985,7 @@ void __fastcall TForm1::Cursor_ENClick(TObject *Sender)
     x[5] = 0x00;
     x[6] = (char(!Default_IMG->Checked)<<1)+char(Cursor_EN->Checked);
     x[7] = DISPLAY;
-    PS2_REC->Suspend();
+//    PS2_REC->Suspend();
     USB1.Reset_Device(0);
     USB1.Write_Data(x,8,0,true);
     x[4] = 0x03;
@@ -996,7 +1000,7 @@ void __fastcall TForm1::Cursor_ENClick(TObject *Sender)
     x[5] = 0x00;
     x[6] = 0x00;
     USB1.Write_Data(x,8,0,true);
-    PS2_REC->Resume();
+//    PS2_REC->Resume();
 }
 //---------------------------------------------------------------------------
 int __fastcall TForm1::Select_File(String File_Name)
@@ -1006,10 +1010,8 @@ int __fastcall TForm1::Select_File(String File_Name)
     String Sub_Name;
     for(i=File_Name.Length()-3;i<=File_Name.Length();i++)
     Sub_Name=Sub_Name+File_Name[i];
-    if(Sub_Name==".hex" || Sub_Name==".HEX")
-    File_Type=1;
-    else
-    File_Type=0;
+    if(Sub_Name==".hex" || Sub_Name==".HEX") File_Type=1;
+    else                                     File_Type=0;
     return File_Type;
 }
 //---------------------------------------------------------------------------
@@ -1152,10 +1154,10 @@ void __fastcall TForm1::Button1Click(TObject *Sender)
     x[5] = (DIG_4->ItemIndex<<4)+DIG_3->ItemIndex;
     x[6] = (DIG_2->ItemIndex<<4)+DIG_1->ItemIndex;
     x[7] = DISPLAY;
-    PS2_REC->Suspend();
+//    PS2_REC->Suspend();
     USB1.Reset_Device(0);
     USB1.Write_Data(x,8,0,true);
-    PS2_REC->Resume();
+//    PS2_REC->Resume();
 }
 //---------------------------------------------------------------------------
 int __fastcall TForm1::HexToInt(AnsiString strHex)
@@ -1237,16 +1239,26 @@ void __fastcall TForm1::CopyToSDCardButton1Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ConfigControllerButton1Click(TObject *Sender)
 {
-    if(USB_is_Open) CloseUSBPort1->Click();
-    Application->ProcessMessages();
+    if(USB_is_Open) {
+        USB1.Reset_Device(0);
+        CloseUSBPort1->Click();
+        Sleep(250);
+    }
+    StatusBar1->SimpleText = "Launched DE1 Board Configurator";
     ShellExecute(NULL,NULL,"quartus_pgm","-cUSB-Blaster -mJTAG --o=P;DE1_Zetup.sof",NULL,SW_SHOWNORMAL);
+    StatusBar1->SimpleText = "Configurator Launched";
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::ConfigKotkuButton1Click(TObject *Sender)
 {
-    if(USB_is_Open) CloseUSBPort1->Click();
-    Application->ProcessMessages();
+    if(USB_is_Open) {
+        USB1.Reset_Device(0);
+        CloseUSBPort1->Click();
+        Sleep(250);
+    }
+    StatusBar1->SimpleText = "Launched ZET Configurator";
     ShellExecute(NULL,NULL,"quartus_pgm","-cUSB-Blaster -mJTAG --o=P;Kotku.sof",NULL,SW_SHOWNORMAL);
+    StatusBar1->SimpleText = "Configurator Launched";
 }
 //---------------------------------------------------------------------------
 bool __fastcall TForm1::AutoOpenUSB(TObject *Sender)
@@ -1271,42 +1283,143 @@ bool __fastcall TForm1::AutoOpenUSB(TObject *Sender)
 void __fastcall TForm1::EraseFlashButton1Click(TObject *Sender)
 {
     if(AutoOpenUSB(Sender)) {
+        StatusBar1->SimpleText = "Erasing Flash Chip";
         Button3->Click();
+        StatusBar1->SimpleText = "Flash Chip Erasure completed";
     }
+    else  StatusBar1->SimpleText = "Open USB Port Failed";
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::LoadBiosButton1Click(TObject *Sender)
 {
-    if(AutoOpenUSB(Sender)) {
-        CheckBox1->Checked = true;
-        iWR_ADDR->Text     = "0";
-        OpenDialog1->DefaultExt = "rom";
-        Button6->Click();
+    if(AutoOpenUSB(Sender) == false) {
+        StatusBar1->SimpleText = "Open USB port Failed";
+        return;
     }
+    StatusBar1->SimpleText = "USB port Opened";
+
+    AnsiString BiosRomFile;
+    if(BiosROMCheckBox1->Checked) BiosRomFile = "bios.rom";
+    else {
+        OpenDialog1->DefaultExt = "rom";
+        if(OpenDialog1->Execute()) BiosRomFile = OpenDialog1->FileName;
+        else {
+            StatusBar1->SimpleText = "Operation aborted";
+            return;
+        }
+    }
+    USB1.Reset_Device(0);
+    Screen->Cursor = crHourGlass;
+    ProgressBar1->Position = 0;
+    Panel1->Visible = true;            // Show Busy Panel
+    Show_All_Button(false);           // Disable All Button
+
+    TMemoryStream *rom = new TMemoryStream();
+    rom->LoadFromFile(BiosRomFile);
+    rom->Position = 0;
+    ProgressBar1->Max = rom->Size;     // Set ProgressBar
+    StatusBar1->SimpleText = "Bios Rom upload in progress...";
+
+    int ADDR = 0;
+    byte x[8], val;
+    x[0] = WRITE;
+    x[1] = FLASH;                     // Send Flash Write Command To FPGA
+    x[5] = 0xFF;
+    x[7] = NORMAL;
+    for(int i=0; i < rom->Size; i++) {    // Transport File To Flash
+        rom->Read(&val,1);
+        if(val != 0xFF) {
+            x[2] = char(ADDR >> 16);         // Send Data and Address
+            x[3] = char(ADDR >>  8);
+            x[4] = char(ADDR);
+            x[5] = 0xFF;
+            x[6] = val;
+            if(i < rom->Size-1)    USB1.Write_Data(x, 8, 0, false);
+            else                   USB1.Write_Data(x, 8, 0, true);
+            if(i % MAX_TOTAL_PACKET == MAX_TOTAL_PACKET - 1) {
+                USB1.Reset_Device(0);
+                Process_Label->Caption = IntToStr(i*100/rom->Size) + " %"; // Display Process %
+                ProgressBar1->Position = i; 
+            }
+        }
+        ADDR++;        // Inc Address
+        Application->ProcessMessages();
+    }
+    USB1.Reset_Device(0);
+    delete rom;
+    
+    Panel1->Visible = false;          // Close Busy Panel
+    Show_All_Button(true);            // Enable All Button
+    Screen->Cursor = crArrow;
+    StatusBar1->SimpleText = "Bios Rom upload Completed";
 }
 //---------------------------------------------------------------------------
+//#define TEMP_MAX_TOTAL_PACKET 8092
+#define TEMP_MAX_TOTAL_PACKET 0x4000
 void __fastcall TForm1::LoadAtoFlashButton1Click(TObject *Sender)
 {
-    if(AutoOpenUSB(Sender)) {
-        CheckBox1->Checked = true;
-        iWR_ADDR->Text     = "200000";
-        OpenDialog1->DefaultExt = "img";
-        Button6->Click();
+    if(AutoOpenUSB(Sender) == false) {
+        StatusBar1->SimpleText = "Open USB port Failed";
+        return;
     }
+    StatusBar1->SimpleText = "USB port Opened";
+
+    AnsiString DiskImageFile;
+    if(IMGFileCheckBox1->Checked) DiskImageFile = "a-zet.img";
+    else {
+        if(OpenDialog4->Execute()) DiskImageFile = OpenDialog4->FileName;
+        else {
+            StatusBar1->SimpleText = "Operation aborted";
+            return;
+        }
+    }
+    USB1.Reset_Device(0);
+    Screen->Cursor = crHourGlass;
+    ProgressBar1->Position = 0;
+    Panel1->Visible = true;            // Show Busy Panel
+    Show_All_Button(false);           // Disable All Button
+
+    TMemoryStream *img = new TMemoryStream();
+    img->LoadFromFile(DiskImageFile);
+    img->Position = 0;
+    ProgressBar1->Max = img->Size;     // Set ProgressBar
+    StatusBar1->SimpleText = "Floppy Image upload in progress...";
+
+    int ADDR = 0x200000;
+    byte x[8], val;
+    x[0] = WRITE;
+    x[1] = FLASH;                     // Send Flash Write Command To FPGA
+    x[5] = 0xFF;
+    x[7] = NORMAL;
+    for(int i=0; i < img->Size; i++) {    // Transport File To Flash
+        img->Read(&val,1);
+        if(val != 0xFF) {
+            x[2] = char(ADDR >> 16);         // Send Data and Address
+            x[3] = char(ADDR >>  8);
+            x[4] = char(ADDR);
+            x[5] = 0xFF;
+            x[6] = val;
+            if(i < img->Size-1)    USB1.Write_Data(x, 8, 0, false);
+            else                   USB1.Write_Data(x, 8, 0, true);
+            if(i % TEMP_MAX_TOTAL_PACKET == TEMP_MAX_TOTAL_PACKET - 1) {
+//                USB1.Reset_Device(0);
+                Process_Label->Caption = IntToStr(i*100/img->Size) + " %"; // Display Process %
+                ProgressBar1->Position = i; ProgressBar1->Update();
+            }
+        }
+        ADDR++;        // Inc Address
+        Application->ProcessMessages();
+    }
+    USB1.Reset_Device(0);
+    delete img;
+    
+    Panel1->Visible = false;          // Close Busy Panel
+    Show_All_Button(true);            // Enable All Button
+    Screen->Cursor = crArrow;
+    StatusBar1->SimpleText = "Floppy Image upload Completed";
+
 }
 //---------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -1,9 +1,10 @@
 object Form1: TForm1
   Left = 227
   Top = 107
-  Width = 473
-  Height = 486
+  BorderStyle = bsSingle
   Caption = ' Zetup Control Panel'
+  ClientHeight = 462
+  ClientWidth = 459
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,7 +12,6 @@ object Form1: TForm1
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
-  Position = poScreenCenter
   OnClose = FormClose
   OnShow = FormShow
   PixelsPerInch = 96
@@ -19,10 +19,9 @@ object Form1: TForm1
   object PageControl1: TPageControl
     Left = 0
     Top = 35
-    Width = 465
-    Height = 424
+    Width = 457
+    Height = 406
     ActivePage = TabSheet8
-    Align = alClient
     BiDiMode = bdLeftToRight
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -37,14 +36,14 @@ object Form1: TForm1
     TabIndex = 7
     TabOrder = 1
     object TabSheet6: TTabSheet
-      Caption = 'PS2 && LED'
+      Caption = 'Switches && LEDs'
       ImageIndex = 5
       OnShow = TabSheet2Show
       object GroupBox2: TGroupBox
         Left = 13
         Top = 13
         Width = 417
-        Height = 193
+        Height = 252
         Caption = ' LED'#39's and  7-Segment '
         Color = clBtnFace
         Font.Charset = DEFAULT_CHARSET
@@ -56,8 +55,8 @@ object Form1: TForm1
         ParentFont = False
         TabOrder = 0
         object Label4: TLabel
-          Left = 333
-          Top = 19
+          Left = 334
+          Top = 83
           Width = 46
           Height = 16
           Caption = 'HEX 0 : '
@@ -69,8 +68,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label1: TLabel
-          Left = 38
-          Top = 19
+          Left = 39
+          Top = 83
           Width = 46
           Height = 16
           Caption = 'HEX 3 : '
@@ -82,8 +81,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label2: TLabel
-          Left = 134
-          Top = 19
+          Left = 135
+          Top = 83
           Width = 46
           Height = 16
           Caption = 'HEX 2 : '
@@ -95,8 +94,8 @@ object Form1: TForm1
           ParentFont = False
         end
         object Label3: TLabel
-          Left = 237
-          Top = 19
+          Left = 238
+          Top = 83
           Width = 46
           Height = 16
           Caption = 'HEX 1 : '
@@ -109,7 +108,7 @@ object Form1: TForm1
         end
         object D1: TCheckBox
           Left = 96
-          Top = 134
+          Top = 188
           Width = 58
           Height = 20
           Caption = 'LED0'
@@ -125,7 +124,7 @@ object Form1: TForm1
         end
         object D2: TCheckBox
           Left = 38
-          Top = 134
+          Top = 188
           Width = 59
           Height = 20
           Caption = 'LED1'
@@ -141,7 +140,7 @@ object Form1: TForm1
         end
         object D3: TCheckBox
           Left = 326
-          Top = 109
+          Top = 158
           Width = 59
           Height = 20
           Caption = 'LED2'
@@ -157,7 +156,7 @@ object Form1: TForm1
         end
         object D4: TCheckBox
           Left = 269
-          Top = 109
+          Top = 158
           Width = 58
           Height = 20
           Caption = 'LED3'
@@ -172,18 +171,18 @@ object Form1: TForm1
           TabOrder = 3
         end
         object Button2: TButton
-          Left = 32
-          Top = 70
+          Left = 40
+          Top = 30
           Width = 353
           Height = 27
-          Caption = 'Set'
+          Caption = 'Set Values Entered Below'
           Enabled = False
           TabOrder = 4
           OnClick = Button2Click
         end
         object D5: TCheckBox
           Left = 211
-          Top = 109
+          Top = 158
           Width = 59
           Height = 20
           Caption = 'LED4'
@@ -199,7 +198,7 @@ object Form1: TForm1
         end
         object D6: TCheckBox
           Left = 154
-          Top = 109
+          Top = 158
           Width = 58
           Height = 20
           Caption = 'LED5'
@@ -215,7 +214,7 @@ object Form1: TForm1
         end
         object D7: TCheckBox
           Left = 96
-          Top = 109
+          Top = 158
           Width = 58
           Height = 20
           Caption = 'LED6'
@@ -231,7 +230,7 @@ object Form1: TForm1
         end
         object D8: TCheckBox
           Left = 38
-          Top = 109
+          Top = 158
           Width = 59
           Height = 20
           Caption = 'LED7'
@@ -247,7 +246,7 @@ object Form1: TForm1
         end
         object DR9: TCheckBox
           Left = 154
-          Top = 134
+          Top = 188
           Width = 58
           Height = 20
           Caption = 'LED9'
@@ -263,7 +262,7 @@ object Form1: TForm1
         end
         object DR8: TCheckBox
           Left = 211
-          Top = 134
+          Top = 188
           Width = 59
           Height = 20
           Caption = 'LED8'
@@ -279,7 +278,7 @@ object Form1: TForm1
         end
         object DR7: TCheckBox
           Left = 269
-          Top = 134
+          Top = 188
           Width = 58
           Height = 20
           Caption = 'LED7'
@@ -295,7 +294,7 @@ object Form1: TForm1
         end
         object DR6: TCheckBox
           Left = 326
-          Top = 134
+          Top = 188
           Width = 59
           Height = 20
           Caption = 'LED6'
@@ -311,7 +310,7 @@ object Form1: TForm1
         end
         object DR5: TCheckBox
           Left = 38
-          Top = 160
+          Top = 218
           Width = 59
           Height = 20
           Caption = 'LED5'
@@ -327,7 +326,7 @@ object Form1: TForm1
         end
         object DR4: TCheckBox
           Left = 96
-          Top = 160
+          Top = 218
           Width = 58
           Height = 20
           Caption = 'LED4'
@@ -343,7 +342,7 @@ object Form1: TForm1
         end
         object DR3: TCheckBox
           Left = 154
-          Top = 160
+          Top = 218
           Width = 58
           Height = 20
           Caption = 'LED3'
@@ -359,7 +358,7 @@ object Form1: TForm1
         end
         object DR2: TCheckBox
           Left = 211
-          Top = 160
+          Top = 218
           Width = 59
           Height = 20
           Caption = 'LED2'
@@ -375,7 +374,7 @@ object Form1: TForm1
         end
         object DR1: TCheckBox
           Left = 269
-          Top = 160
+          Top = 218
           Width = 58
           Height = 20
           Caption = 'LED1'
@@ -391,7 +390,7 @@ object Form1: TForm1
         end
         object DR0: TCheckBox
           Left = 326
-          Top = 160
+          Top = 218
           Width = 59
           Height = 20
           Caption = 'LED0'
@@ -406,8 +405,8 @@ object Form1: TForm1
           TabOrder = 18
         end
         object DIG_4: TComboBox
-          Left = 32
-          Top = 38
+          Left = 33
+          Top = 102
           Width = 65
           Height = 24
           Font.Charset = DEFAULT_CHARSET
@@ -438,8 +437,8 @@ object Form1: TForm1
             'F')
         end
         object DIG_3: TComboBox
-          Left = 122
-          Top = 38
+          Left = 123
+          Top = 102
           Width = 64
           Height = 24
           Font.Charset = DEFAULT_CHARSET
@@ -470,8 +469,8 @@ object Form1: TForm1
             'F')
         end
         object DIG_2: TComboBox
-          Left = 224
-          Top = 38
+          Left = 225
+          Top = 102
           Width = 65
           Height = 24
           Font.Charset = DEFAULT_CHARSET
@@ -502,8 +501,8 @@ object Form1: TForm1
             'F')
         end
         object DIG_1: TComboBox
-          Left = 320
-          Top = 38
+          Left = 321
+          Top = 102
           Width = 65
           Height = 24
           Font.Charset = DEFAULT_CHARSET
@@ -536,9 +535,9 @@ object Form1: TForm1
       end
       object GroupBox6: TGroupBox
         Left = 13
-        Top = 211
+        Top = 267
         Width = 417
-        Height = 135
+        Height = 86
         Caption = ' PS2 Keyboard '
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clNavy
@@ -547,11 +546,12 @@ object Form1: TForm1
         Font.Style = []
         ParentFont = False
         TabOrder = 1
+        Visible = False
         object Memo1: TMemo
           Left = 19
-          Top = 26
-          Width = 379
-          Height = 64
+          Top = 18
+          Width = 374
+          Height = 23
           Font.Charset = CHINESEBIG5_CHARSET
           Font.Color = clNavy
           Font.Height = -19
@@ -563,7 +563,7 @@ object Form1: TForm1
         end
         object Button8: TButton
           Left = 19
-          Top = 96
+          Top = 48
           Width = 379
           Height = 26
           Caption = 'Clear'
@@ -573,8 +573,8 @@ object Form1: TForm1
         end
       end
       object Button1: TButton
-        Left = 19
-        Top = 83
+        Left = 27
+        Top = 43
         Width = 20
         Height = 27
         Caption = 'Set'
@@ -30316,9 +30316,10 @@ object Form1: TForm1
         Left = 13
         Top = 13
         Width = 417
-        Height = 236
+        Height = 284
         Caption = ' SD Card '
         Color = clBtnFace
+        Enabled = False
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clNavy
         Font.Height = -13
@@ -30329,7 +30330,7 @@ object Form1: TForm1
         TabOrder = 0
         object GroupBox17: TGroupBox
           Left = 13
-          Top = 18
+          Top = 34
           Width = 391
           Height = 96
           Caption = ' Sequential Write '
@@ -30340,6 +30341,7 @@ object Form1: TForm1
           Font.Style = []
           ParentFont = False
           TabOrder = 0
+          Visible = False
           object Label32: TLabel
             Left = 13
             Top = 26
@@ -30391,7 +30393,7 @@ object Form1: TForm1
         end
         object GroupBox18: TGroupBox
           Left = 13
-          Top = 120
+          Top = 152
           Width = 391
           Height = 97
           Caption = ' Sequential Read '
@@ -30466,13 +30468,6 @@ object Form1: TForm1
         Height = 14
         Caption = '[Skip if done previously]'
       end
-      object Label31: TLabel
-        Left = 246
-        Top = 102
-        Width = 163
-        Height = 14
-        Caption = '[Skip if done previously]'
-      end
       object Label39: TLabel
         Left = 246
         Top = 177
@@ -30480,17 +30475,10 @@ object Form1: TForm1
         Height = 14
         Caption = '[Just Boot up Zet]'
       end
-      object Label40: TLabel
-        Left = 246
-        Top = 140
-        Width = 163
-        Height = 14
-        Caption = '[Skip if done previously]'
-      end
       object Label41: TLabel
         Left = 0
         Top = 0
-        Width = 457
+        Width = 449
         Height = 17
         Align = alTop
         Alignment = taCenter
@@ -30620,13 +30608,33 @@ object Form1: TForm1
         TabOrder = 9
         OnClick = LoadAtoFlashButton1Click
       end
+      object BiosROMCheckBox1: TCheckBox
+        Left = 248
+        Top = 100
+        Width = 153
+        Height = 17
+        Caption = 'Use bios.rom'
+        Checked = True
+        State = cbChecked
+        TabOrder = 10
+      end
+      object IMGFileCheckBox1: TCheckBox
+        Left = 248
+        Top = 140
+        Width = 153
+        Height = 17
+        Caption = 'Use a-zet.img'
+        Checked = True
+        State = cbChecked
+        TabOrder = 11
+      end
     end
   end
   object Panel1: TPanel
-    Left = 1
-    Top = 403
-    Width = 461
-    Height = 53
+    Left = 4
+    Top = 379
+    Width = 443
+    Height = 50
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clRed
     Font.Height = -27
@@ -30638,7 +30646,7 @@ object Form1: TForm1
     object Label12: TLabel
       Left = 1
       Top = 1
-      Width = 459
+      Width = 441
       Height = 18
       Align = alTop
       Alignment = taCenter
@@ -30682,7 +30690,7 @@ object Form1: TForm1
   object ControlBar1: TControlBar
     Left = 0
     Top = 0
-    Width = 465
+    Width = 459
     Height = 35
     Align = alTop
     TabOrder = 2
@@ -30714,6 +30722,15 @@ object Form1: TForm1
       OnChange = DevComboBox1Change
     end
   end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 443
+    Width = 459
+    Height = 19
+    Panels = <>
+    SimplePanel = True
+    SimpleText = 'Idle'
+  end
   object MainMenu1: TMainMenu
     AutoLineReduction = maManual
     AutoMerge = True
@@ -30742,8 +30759,8 @@ object Form1: TForm1
   end
   object OpenDialog1: TOpenDialog
     Filter = 
-      'Rom File (*.rom)|*.rom|Rom File (*.out)|*.out|Disk Image File (*' +
-      '.img)|*.img|All Files (*.*)|*.*'
+      'Rom File (*.rom)|*.rom|Rom File (*.out)|*.out|All Files (*.*)|*.' +
+      '*'
     InitialDir = '.'
     Title = 'Load Flash File:'
     Left = 41

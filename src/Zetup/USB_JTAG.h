@@ -95,15 +95,15 @@ void USB_JTAG::Select_Device(int Number)
 //---------------------------------------------------------------------------
 int  USB_JTAG::Number_Of_Device(void)
 {
-     unsigned long numDevs=0;
+     unsigned long numDevs = 0;
      FT_Status=FT_ListDevices(&numDevs,NULL,FT_LIST_NUMBER_ONLY);
      return numDevs;
 }
 //---------------------------------------------------------------------------
 int  USB_JTAG::Number_Of_Queue_Data(void)
 {
-     unsigned long numData=0;
-     FT_Status=FT_GetQueueStatus(FT_Handle,&numData);
+     unsigned long numData = 0;
+     FT_Status = FT_GetQueueStatus(FT_Handle, &numData);
      return numData;
 }
 //---------------------------------------------------------------------------
@@ -117,7 +117,7 @@ bool USB_JTAG::Open_Device(void)
 //---------------------------------------------------------------------------
 bool USB_JTAG::Close_Device(void)
 {
-     FT_Status=FT_Write(FT_Handle,&Close_CMD,1,&NumOfWritten);
+     FT_Status=FT_Write(FT_Handle, &Close_CMD,1, &NumOfWritten);
      if(FT_Status!=FT_OK)  return false;
      FT_Status=FT_Close(FT_Handle);
      if(FT_Status!=FT_OK)  return false;
@@ -155,14 +155,14 @@ bool USB_JTAG::Write_Data(unsigned char* Source, int Size, int WithRead, bool Im
           Buffer.push(0x00);
      }
      int Trans_Size=Buffer.size();               //   Transfer Queue To Array
-     if(Immediate || Trans_Size>MAX_TXD_PACKET-ALMOST_FULL_SIZE)  {
+     if(Immediate || Trans_Size>MAX_TXD_PACKET - ALMOST_FULL_SIZE)  {
           for(i=0;i<Trans_Size;i++) {
                TXD_Buffer[i]=Buffer.front();
                Buffer.pop();
           }
-          FT_Status=FT_Write(FT_Handle,TXD_Buffer,Trans_Size,&NumOfWritten);
+          FT_Status = FT_Write(FT_Handle,TXD_Buffer, Trans_Size, &NumOfWritten);
      }
-     if(FT_Status!=FT_OK)  return false;
+     if(FT_Status!=FT_OK) return false;
      return true;
 }
 //---------------------------------------------------------------------------

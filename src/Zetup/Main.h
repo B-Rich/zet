@@ -199,16 +199,17 @@ __published:	// IDE-managed Components
     TLabel *Label30;
     TButton *LoadBiosButton1;
     TStaticText *StaticText3;
-    TLabel *Label31;
     TStaticText *StaticText4;
     TLabel *Label39;
     TStaticText *StaticText5;
     TButton *LoadAtoFlashButton1;
-    TLabel *Label40;
     TLabel *Label41;
     TControlBar *ControlBar1;
     TToolBar *ToolBar1;
     TComboBox *DevComboBox1;
+    TCheckBox *BiosROMCheckBox1;
+    TCheckBox *IMGFileCheckBox1;
+    TStatusBar *StatusBar1;
    void __fastcall FormClose(TObject *Sender, TCloseAction &Action);
    void __fastcall Button2Click(TObject *Sender);
    void __fastcall Button5Click(TObject *Sender);
@@ -260,6 +261,8 @@ private:	// User declarations
 
 
 public:		// User declarations
+
+    AnsiString AppPath;
 
     int PS2_times;
     bool USB_is_Open;
