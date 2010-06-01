@@ -20,8 +20,8 @@ void __fastcall TForm4::Button1Click(TObject *Sender)
    Form1->PS2_REC->Suspend();
    Form1->USB1.Reset_Device(0);
    int i;
-   Form1->Sdram_Multi->ItemIndex=0;
-   Form1->Flash_Multi->ItemIndex=0;
+   Form1->Sdram_Multi->ItemIndex = 0;
+   Form1->Flash_Multi->ItemIndex = 0;
    Form1->Button13Click(this);
 
    //---------------------------------------------------

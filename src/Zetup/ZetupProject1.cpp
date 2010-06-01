@@ -3,7 +3,6 @@
 #include <vcl.h>
 #pragma hdrstop
 //---------------------------------------------------------------------------
-USEFORM("Test_Page.cpp", Form4);
 USEFORM("About.cpp", AboutBox);
 USEFORM("Main.cpp", Form1);
 //---------------------------------------------------------------------------
@@ -13,8 +12,8 @@ WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     {
          Application->Initialize();
          Application->Title = "ZET Setup";
+         Application->HelpFile = "C:\\Dev1\\DOS\\Zet\\Setup\\Zetup.hlp";
          Application->CreateForm(__classid(TForm1), &Form1);
-         Application->CreateForm(__classid(TForm4), &Form4);
          Application->CreateForm(__classid(TAboutBox), &AboutBox);
          Application->Run();
     }

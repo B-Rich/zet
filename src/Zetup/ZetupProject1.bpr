@@ -4,10 +4,10 @@
   <MACROS>
     <VERSION value="BCB.06.00"/>
     <PROJECT value="ZetupProject1.exe"/>
-    <OBJFILES value="ZetupProject1.obj Test_Page.obj About.obj Main.obj PS2_Thread.obj"/>
+    <OBJFILES value="ZetupProject1.obj About.obj Main.obj PS2_Thread.obj"/>
     <RESFILES value="ZetupProject1.res"/>
     <DEFFILE value=""/>
-    <RESDEPEN value="$(RESFILES) Test_Page.dfm About.dfm Main.dfm"/>
+    <RESDEPEN value="$(RESFILES) About.dfm Main.dfm"/>
     <LIBFILES value=""/>
     <LIBRARIES value="vclx.lib rtl.lib vcl.lib"/>
     <SPARELIBS value="vcl.lib rtl.lib vclx.lib"/>
@@ -51,7 +51,6 @@
   <FILELIST>
       <FILE FILENAME="ZetupProject1.res" FORMNAME="" UNITNAME="ZetupProject1.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="ZetupProject1.cpp" FORMNAME="" UNITNAME="ZetupProject1" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="Test_Page.cpp" FORMNAME="Form4" UNITNAME="Test_Page" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="About.cpp" FORMNAME="AboutBox" UNITNAME="About" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="Main.cpp" FORMNAME="Form1" UNITNAME="Main" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="PS2_Thread.cpp" FORMNAME="" UNITNAME="PS2_Thread" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
@@ -61,14 +60,14 @@
 
   <IDEOPTIONS>
 [Version Info]
-IncludeVerInfo=0
+IncludeVerInfo=1
 AutoIncBuild=0
 MajorVer=1
 MinorVer=0
 Release=0
-Build=0
+Build=1
 Debug=0
-PreRelease=0
+PreRelease=1
 Special=0
 Private=0
 DLL=0
@@ -76,14 +75,14 @@ Locale=1033
 CodePage=1252
 
 [Version Info Keys]
-CompanyName=
-FileDescription=
-FileVersion=1.0.0.0
-InternalName=
-LegalCopyright=
-LegalTrademarks=
-OriginalFilename=
-ProductName=
+CompanyName=Donnaware International LLP
+FileDescription=Zetup Program
+FileVersion=1.0.0.1
+InternalName=Zetup 
+LegalCopyright=Zetup 
+LegalTrademarks=Zetup 
+OriginalFilename=Zetup 
+ProductName=Zetup 
 ProductVersion=1.0.0.0
 Comments=
 

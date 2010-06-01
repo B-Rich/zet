@@ -105,30 +105,27 @@ void __fastcall TForm1::FormClose(TObject *Sender, TCloseAction &Action)
 void __fastcall TForm1::Show_All_Button(bool Show)
 {
    // Enable / Disable All Button
-   Button1->Enabled=Show;
-   Button2->Enabled=Show;
-   Button3->Enabled=Show;
-   Button4->Enabled=Show;
-   Button5->Enabled=Show;
-   Button6->Enabled=Show;
-   Button7->Enabled=Show;
-   Button8->Enabled=Show;
-   Button9->Enabled=Show;
-   Button10->Enabled=Show;
-   Button11->Enabled=Show;
-   Button12->Enabled=Show;
-   Button13->Enabled=Show;
-   Button14->Enabled=Show;
-   Button15->Enabled=Show;
-   Button16->Enabled=Show;
-   Button17->Enabled=Show;
-   Button18->Enabled=Show;
-   CopyToSDCardButton1->Enabled=Show;
-   CopyFromSDCardButton1->Enabled=Show;
-   Default_IMG->Enabled=Show;
-   Cursor_EN->Enabled=Show;
-   ScrollBar1->Enabled=Show;
-   ScrollBar2->Enabled=Show;
+   SetValuesButton1->Enabled        = Show;
+   FlashChipEraseButton1->Enabled   = Show;
+   FlashRdWordButton1->Enabled      = Show;
+   FlashWrWordButton1->Enabled      = Show;
+   FlashWrFileButton1->Enabled      = Show;
+   FlashRdFileButton1->Enabled      = Show;
+   SDRAMWrWordButton1->Enabled      = Show;
+   SDRAMRdWordButton1->Enabled      = Show;
+   SDRAMWrFileButton1->Enabled      = Show;
+   SDRAMRdFileButton1->Enabled      = Show;
+   ConfigPortsButton1->Enabled      = Show;
+   SRAMWrFileButton1->Enabled       = Show;
+   SRAMWrWordButton1->Enabled       = Show;
+   SRAMRdWordButton1->Enabled       = Show;
+   SRAMRdFileButton1->Enabled       = Show;
+   CopyToSDCardButton1->Enabled     = Show;
+   CopyFromSDCardButton1->Enabled   = Show;
+   Default_IMG->Enabled             = Show;
+   Cursor_EN->Enabled               = Show;
+   ScrollBar1->Enabled              = Show;
+   ScrollBar2->Enabled              = Show;
 }
 
 //---------------------------------------------------------------------------
@@ -157,17 +154,8 @@ void __fastcall TForm1::About1Click(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TForm1::Help1Click(TObject *Sender)
 {
-    ShowMessage("You are beyond help");
-}
-//---------------------------------------------------------------------------
-void __fastcall TForm1::Button8Click(TObject *Sender)
-{
-   Memo1->Clear();  // Clear PS2 Text Windows
-}
-//---------------------------------------------------------------------------
-void __fastcall TForm1::Button14Click(TObject *Sender)
-{
-    Form4->Visible = true;   // Board Test
+//    Application->HelpCommand(HELP_CONTENTS, 0);         // Show Hep Screen Here..
+    Application->HelpCommand(HELP_CONTEXT, 2000);         // Show Hep Screen Here..
 }
 //---------------------------------------------------------------------------
 void __fastcall TForm1::TabSheet1Show(TObject *Sender)
@@ -186,8 +174,10 @@ void __fastcall TForm1::TabSheet2Show(TObject *Sender)
     }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button2Click(TObject *Sender)
+void __fastcall TForm1::SetValuesButton1Click(TObject *Sender)
 {
+//    PS2_REC->Suspend();
+
     char x[8];
     x[0] = WRITE;
     x[1] = LED;               // Send LED Value To FPGA
@@ -199,14 +189,25 @@ void __fastcall TForm1::Button2Click(TObject *Sender)
     x[6] = (char(D8->Checked)<<7)+(char(D7->Checked)<<6)+(char(D6->Checked)<<5)+(char(D5->Checked)<<4)+
            (char(D4->Checked)<<3)+(char(D3->Checked)<<2)+(char(D2->Checked)<<1)+(char(D1->Checked));
     x[7] = DISPLAY;
-//    PS2_REC->Suspend();
+
     USB1.Reset_Device(0);
     USB1.Write_Data(x,8,0,true);
+
+    x[0] = WRITE;
+    x[1] = SEG7;      // Send 7-SEG Value To FPGA
+    x[2] = 0x00;
+    x[3] = 0x00;
+    x[4] = 0x00;
+    x[5] = (DIG_4->ItemIndex<<4)+DIG_3->ItemIndex;
+    x[6] = (DIG_2->ItemIndex<<4)+DIG_1->ItemIndex;
+    x[7] = DISPLAY;
+    USB1.Reset_Device(0);
+    USB1.Write_Data(x,8,0,true);
+
 //    PS2_REC->Resume();
-    Button1Click(this);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button5Click(TObject *Sender)
+void __fastcall TForm1::FlashWrWordButton1Click(TObject *Sender)
 {
     char x[8];
     x[0] = WRITE;        // Flash Random Write
@@ -221,7 +222,7 @@ void __fastcall TForm1::Button5Click(TObject *Sender)
     USB1.Write_Data(x,8,0,true);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button4Click(TObject *Sender)
+void __fastcall TForm1::FlashRdWordButton1Click(TObject *Sender)
 {
     char x[8];
     //-----------------------------------
@@ -265,7 +266,7 @@ void __fastcall TForm1::Button4Click(TObject *Sender)
     USB1.Write_Data(x,8,0,true);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button3Click(TObject *Sender)
+void __fastcall TForm1::FlashChipEraseButton1Click(TObject *Sender)
 {
     Screen->Cursor=crHourGlass;     // Erase Flash
     Panel1->Visible=true;           // Show Busy Panel
@@ -295,7 +296,7 @@ void __fastcall TForm1::Button3Click(TObject *Sender)
     }
     Form1->iFL_DATA->Text = "00";
     while((HexToInt(Form1->iFL_DATA->Text)!= 255) && wait < 600) {    // Max Wait 60 Sec...
-        Form1->Button4->Click();
+        Form1->FlashRdWordButton1->Click();
         Application->ProcessMessages();
         Sleep(100);
         wait++;
@@ -307,7 +308,7 @@ void __fastcall TForm1::Button3Click(TObject *Sender)
     Screen->Cursor=crArrow;
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button6Click(TObject *Sender)
+void __fastcall TForm1::FlashWrFileButton1Click(TObject *Sender)
 {
    if(OpenDialog1->Execute()) {           // Write File To Flash
       char x[8];
@@ -364,7 +365,7 @@ void __fastcall TForm1::Button6Click(TObject *Sender)
    }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button7Click(TObject *Sender)
+void __fastcall TForm1::FlashRdFileButton1Click(TObject *Sender)
 {
    if(SaveDialog1->Execute())  {       // Load Flash Content to File
       char x[8];
@@ -461,7 +462,7 @@ void __fastcall TForm1::Button7Click(TObject *Sender)
    }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button9Click(TObject *Sender)
+void __fastcall TForm1::SDRAMWrWordButton1Click(TObject *Sender)
 {
     char x[8];
     x[0] = WRITE;
@@ -476,7 +477,7 @@ void __fastcall TForm1::Button9Click(TObject *Sender)
     USB1.Write_Data(x,8,0,true);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button10Click(TObject *Sender)
+void __fastcall TForm1::SDRAMRdWordButton1Click(TObject *Sender)
 {
     char x[8];
     x[0] = SETUP;           // T-Rex TXD Output Select to SDRAM
@@ -516,7 +517,7 @@ void __fastcall TForm1::Button10Click(TObject *Sender)
     USB1.Write_Data(x,8,0,true);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button11Click(TObject *Sender)
+void __fastcall TForm1::SDRAMWrFileButton1Click(TObject *Sender)
 {
    if(OpenDialog2->Execute()) {   // Write File To Sdram
       char x[8];
@@ -572,7 +573,7 @@ void __fastcall TForm1::Button11Click(TObject *Sender)
    }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button12Click(TObject *Sender)
+void __fastcall TForm1::SDRAMRdFileButton1Click(TObject *Sender)
 {
    int t1,t2;
    
@@ -665,7 +666,7 @@ void __fastcall TForm1::Button12Click(TObject *Sender)
    }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button13Click(TObject *Sender)
+void __fastcall TForm1::ConfigPortsButton1Click(TObject *Sender)
 {
     char x[8];
     x[0] = WRITE;        // ToDo : Send External IO Value To FPGA
@@ -694,7 +695,7 @@ void __fastcall TForm1::Button13Click(TObject *Sender)
     USB1.Write_Data(x,8,0,true);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button16Click(TObject *Sender)
+void __fastcall TForm1::SRAMWrWordButton1Click(TObject *Sender)
 {
     char x[8];
     x[0] = WRITE;
@@ -709,7 +710,7 @@ void __fastcall TForm1::Button16Click(TObject *Sender)
     USB1.Write_Data(x,8,0,true);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button17Click(TObject *Sender)
+void __fastcall TForm1::SRAMRdWordButton1Click(TObject *Sender)
 {
     char x[8];
     //-----------------------------------
@@ -768,7 +769,7 @@ void __fastcall TForm1::CheckBox6Click(TObject *Sender)
     }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button15Click(TObject *Sender)
+void __fastcall TForm1::SRAMWrFileButton1Click(TObject *Sender)
 {
    if(OpenDialog3->Execute()) {
       char x[8];
@@ -821,7 +822,7 @@ void __fastcall TForm1::Button15Click(TObject *Sender)
    }
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button18Click(TObject *Sender)
+void __fastcall TForm1::SRAMRdFileButton1Click(TObject *Sender)
 {
    if(SaveDialog3->Execute()) {        // Load Sram Content to File
       char x[8];
@@ -1143,23 +1144,6 @@ int __fastcall TForm1::File_HexToAsc(String File_Input,String File_Output,int Fi
     return 1;
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::Button1Click(TObject *Sender)
-{
-    char x[8];
-    x[0] = WRITE;
-    x[1] = SEG7;      // Send 7-SEG Value To FPGA
-    x[2] = 0x00;
-    x[3] = 0x00;
-    x[4] = 0x00;
-    x[5] = (DIG_4->ItemIndex<<4)+DIG_3->ItemIndex;
-    x[6] = (DIG_2->ItemIndex<<4)+DIG_1->ItemIndex;
-    x[7] = DISPLAY;
-//    PS2_REC->Suspend();
-    USB1.Reset_Device(0);
-    USB1.Write_Data(x,8,0,true);
-//    PS2_REC->Resume();
-}
-//---------------------------------------------------------------------------
 int __fastcall TForm1::HexToInt(AnsiString strHex)
 {
   return StrToInt64("0x"+strHex);
@@ -1256,8 +1240,16 @@ void __fastcall TForm1::ConfigKotkuButton1Click(TObject *Sender)
         CloseUSBPort1->Click();
         Sleep(250);
     }
-    StatusBar1->SimpleText = "Launched ZET Configurator";
-    ShellExecute(NULL,NULL,"quartus_pgm","-cUSB-Blaster -mJTAG --o=P;Kotku.sof",NULL,SW_SHOWNORMAL);
+    AnsiString SOFile = "Kotku.sof";
+    AnsiString Config = "-cUSB-Blaster -mJTAG --o=P;";
+    if(!SOFCheckBox1->Checked) {
+        if(OpenDialog6->Execute()) {
+            SOFile = OpenDialog6->FileName;
+        }
+    }
+    AnsiString CfgString = Config + SOFile;
+    StatusBar1->SimpleText = "Launching ZET Configurator";
+    ShellExecute(NULL,NULL,"quartus_pgm",CfgString.c_str(),NULL,SW_SHOWNORMAL);
     StatusBar1->SimpleText = "Configurator Launched";
 }
 //---------------------------------------------------------------------------
@@ -1284,7 +1276,7 @@ void __fastcall TForm1::EraseFlashButton1Click(TObject *Sender)
 {
     if(AutoOpenUSB(Sender)) {
         StatusBar1->SimpleText = "Erasing Flash Chip";
-        Button3->Click();
+        FlashChipEraseButton1->Click();
         StatusBar1->SimpleText = "Flash Chip Erasure completed";
     }
     else  StatusBar1->SimpleText = "Open USB Port Failed";
@@ -1420,6 +1412,10 @@ void __fastcall TForm1::LoadAtoFlashButton1Click(TObject *Sender)
 
 }
 //---------------------------------------------------------------------------
+
+
+
+
 
 
 
