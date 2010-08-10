@@ -987,7 +987,7 @@ int15_handler32_ret:    pop     es                      ;; Restore
                         pop     ds                      ;; Restore
                         cli                             ;; Enale interrupts
                         iret                            ;; Return from Interrupt
-                     
+
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 ;; - INT1Ah - INT 1Ah Time-of-day Service Entry Point
@@ -999,8 +999,6 @@ int1a_handler:          push    ds                      ;; Save all registers th
                         push    bp                      ;; Save Base Pointer
                         push    si                      ;; Save segment index
                         push    di                      ;; Save data index
-                        mov     ax, 0f000h              ;; Bios data segment
-                        mov     ds, ax                  ;; set the data seg to the bios                        
                         push    dx                      ;; for the C program to receive
                         push    cx                      ;; for the C program to receive
                         push    ax                      ;; Pass the user command
@@ -1014,8 +1012,7 @@ int1a_handler:          push    ds                      ;; Save all registers th
                         pop     bx                      ;; routines returns with the Zero Flag
                         pop     ds                      ;; Set correctly
                         iret            ;; IRET Instruction for Dummy Interrupt Handler
-
-
+                        
 ;;--------------------------------------------------------------------------
 ;; INT 1C Dummy Handler routing
 ;;--------------------------------------------------------------------------
@@ -1099,7 +1096,7 @@ MSG1:                   db      BIOS_COPYRIGHT_STRING
                                 org     (0fff5h - startofrom)   ;; ASCII Date ROM was built - 8 characters in MM/DD/YY
 MSG2:                   db      BIOS_BUILD_DATE
                                 org     (0fffeh -startofrom)    ;; Put the 
-;;SYS_MODEL_ID                    equ     0FCh                    ;; System Model ID 
+;;SYS_MODEL_ID                  equ     0FCh                    ;; System Model ID 
                                 db      SYS_MODEL_ID            ;; here
                                 db      0
 
