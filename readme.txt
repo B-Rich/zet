@@ -11,14 +11,15 @@ To build the system for the Altera DE1 board, just open the file
 As a result, you will have a file named "kotku.sof", which is the conf-
 iguration stream for the FPGA.
 
+
+I am only pushing changes to make things simpler. For full zet go to the
+zet master (see the little joke there, almost like zen master, Zeus). 
+
 Explanation of directories
 --------------------------
-bin/        - Some scripts to prepare ROMs, download microcode, etc...
-doc/        - Documentation stub
-boards/     - Different boards supported (implementation dependent files)
-cores/      - Different cores for the SOC PC system
-cores/zet/  - Zet processor RTL code
-src/        - Source files for some commands used to transform ROMs
-src/bios/     - ROM BIOS and VIDEO BIOS implementation
-src/zetbios/  - Zet specific Bios for DE1
-tests/        - 8086 test benches (exactly the same as in the web)
+cores/          - cores i have made changes to
+cores/PS2/      - mouse and keyboard dirvers
+cores/uart16450 - COM port driver
+src/            - Source files for some commands used to transform ROMs
+src/zetbios/    - Zet specific Bios for DE1
+
