@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Wed Jun 30 22:24:06 2010
+Quartus II Version : 8.1 Build 163 10/28/2008 SJ Web Edition
+Revision Name : kotku
+Top-level Entity Name : kotku
+Family : Cyclone III
+Total logic elements : 8,513
+    Total combinational functions : 8,513
+    Dedicated logic registers : 3,400
+Total registers : 3400
+Total pins : 156
+Total virtual pins : 0
+Total memory bits : 314,116
+Embedded Multiplier 9-bit elements : 2
+Total PLLs : 1
