@@ -1,6 +1,22 @@
 /*
  *  Read memory interface for VGA
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
  */
+
 module read_iface (
     // Wishbone common signals
     input         wb_clk_i,
@@ -50,31 +66,42 @@ module read_iface (
 
   assign wbm_adr_o = { plane, offset };
   assign wbs_ack_o = (plane==2'b11 && wbm_ack_i);
-  assign offset    = memory_mapping1 ? { 1'b0, wbs_adr_i[14:1] } : wbs_adr_i[15:1];
-  assign wbs_dat_o = read_mode ? dat_o1 : dat_o0; 
-  assign dat_o0    = (read_map_select==2'b11) ? wbm_dat_i : latch[read_map_select];
+  assign offset    = memory_mapping1 ? { 1'b0, wbs_adr_i[14:1] }
+                                     : wbs_adr_i[15:1];
+  assign wbs_dat_o = read_mode ? dat_o1 : dat_o0;
+  assign dat_o0    = (read_map_select==2'b11) ? wbm_dat_i
+                                              : latch[read_map_select];
   assign dat_o1    = ~(out_l0 | out_l1 | out_l2 | out_l3);
 
-  assign out_l0 = (latch[0] ^ { 16{color_compare[0]} }) & { 16{color_dont_care[0]} };
-  assign out_l1 = (latch[1] ^ { 16{color_compare[1]} }) & { 16{color_dont_care[1]} };
-  assign out_l2 = (latch[2] ^ { 16{color_compare[2]} }) & { 16{color_dont_care[2]} };
-  assign out_l3 = (wbm_dat_i ^ { 16{color_compare[3]} }) & { 16{color_dont_care[3]} };
+  assign out_l0 = (latch[0] ^ { 16{color_compare[0]} })
+                            & { 16{color_dont_care[0]} };
+  assign out_l1 = (latch[1] ^ { 16{color_compare[1]} })
+                            & { 16{color_dont_care[1]} };
+  assign out_l2 = (latch[2] ^ { 16{color_compare[2]} })
+                            & { 16{color_dont_care[2]} };
+  assign out_l3 = (wbm_dat_i ^ { 16{color_compare[3]} })
+                            & { 16{color_dont_care[3]} };
 
   assign cont = wbm_ack_i && wbs_stb_i;
 
   // Behaviour
+  // latch_sel
   always @(posedge wb_clk_i)
-    latch_sel <= wb_rst_i ? 1'b0 : (wbs_stb_i ? wbs_sel_i[1] : latch_sel);
+    latch_sel <= wb_rst_i ? 1'b0
+      : (wbs_stb_i ? wbs_sel_i[1] : latch_sel);
 
+  // wbm_stb_o
   always @(posedge wb_clk_i)
     wbm_stb_o <= wb_rst_i ? 1'b0 : (wbm_stb_o ? ~wbs_ack_o : wbs_stb_i);
 
+  // plane
   always @(posedge wb_clk_i)
     plane <= wb_rst_i ? 2'b00 : (cont ? (plane + 2'b01) : plane);
 
   // Latch load
   always @(posedge wb_clk_i)
-    if(wb_rst_i) begin
+    if (wb_rst_i)
+      begin
         latch[0] <= 8'h0;
         latch[1] <= 8'h0;
         latch[2] <= 8'h0;

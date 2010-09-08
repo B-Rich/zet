@@ -1,6 +1,22 @@
-// ----------------------------------------------------------------------------
-// LCD controller for VGA
-// ----------------------------------------------------------------------------
+/*
+ *  LCD controller for VGA
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 module lcd (
     input clk,              // 25 Mhz clock
     input rst,
@@ -108,9 +124,10 @@ module lcd (
     .clk (clk),
     .rst (rst),
 
-    .csr_adr_o    (csr_tm_adr_o),	    	// CSR slave interface for reading
-    .csr_dat_i    (csr_dat_i),
-    .csr_stb_o    (csr_tm_stb_o),
+    // CSR slave interface for reading
+    .csr_adr_o (csr_tm_adr_o),
+    .csr_dat_i (csr_dat_i),
+    .csr_stb_o (csr_tm_stb_o),
 
     .h_count      (h_count),
     .v_count      (v_count),
@@ -118,10 +135,10 @@ module lcd (
     .video_on_h_i (video_on_h_i),
     .video_on_h_o (video_on_h_tm),
 
-    .cur_start    (cur_start),
-    .cur_end      (cur_end),
-    .vcursor      (vcursor),
-    .hcursor      (hcursor),
+    .cur_start  (cur_start),
+    .cur_end    (cur_end),
+    .vcursor    (vcursor),
+    .hcursor    (hcursor),
 
     .attr         (attr_tm),
     .horiz_sync_o (horiz_sync_tm)
@@ -131,7 +148,8 @@ module lcd (
     .clk (clk),
     .rst (rst),
 
-    .csr_adr_o (csr_wm_adr_o),		    // CSR slave interface for reading
+    // CSR slave interface for reading
+    .csr_adr_o (csr_wm_adr_o),
     .csr_dat_i (csr_dat_i),
     .csr_stb_o (csr_wm_stb_o),
 
@@ -152,7 +170,8 @@ module lcd (
     .clk (clk),
     .rst (rst),
 
-    .csr_adr_o (csr_gm_adr_o),		    // CSR slave interface for reading
+    // CSR slave interface for reading
+    .csr_adr_o (csr_gm_adr_o),
     .csr_dat_i (csr_dat_i),
     .csr_stb_o (csr_gm_stb_o),
 
@@ -179,7 +198,7 @@ module lcd (
   );
 
   dac_regs dr (
-    .clk   (clk),
+    .clk (clk),
 
     .index (index),
     .red   (red),
@@ -211,21 +230,25 @@ module lcd (
 
   assign video_on_h    = video_on_h_p[1];
 
-  assign csr_adr_o = graphics_alpha ? (shift_reg1 ? csr_gm_adr_o : csr_wm_adr_o) : { 1'b0, csr_tm_adr_o };
+  assign csr_adr_o = graphics_alpha ?
+    (shift_reg1 ? csr_gm_adr_o : csr_wm_adr_o) : { 1'b0, csr_tm_adr_o };
 
-  assign csr_stb_o_tmp = graphics_alpha ? (shift_reg1 ? csr_gm_stb_o : csr_wm_stb_o) : csr_tm_stb_o;
+  assign csr_stb_o_tmp = graphics_alpha ?
+    (shift_reg1 ? csr_gm_stb_o : csr_wm_stb_o) : csr_tm_stb_o;
   assign csr_stb_o     = csr_stb_o_tmp & (video_on_h_i | video_on_h) & video_on_v;
 
   assign v_retrace   = !video_on_v;
   assign vh_retrace  = v_retrace | !video_on_h;
 
   // index_gm
-  always @(posedge clk) index_gm <= rst ? 8'h0 : color;
+  always @(posedge clk)
+    index_gm <= rst ? 8'h0 : color;
 
   // Sync generation & timing process
   // Generate horizontal and vertical timing signals for video signal
   always @(posedge clk)
-    if(rst) begin
+    if (rst)
+      begin
         h_count      <= 10'b0;
         horiz_sync_i <= 1'b1;
         v_count      <= 10'b0;
@@ -233,39 +256,47 @@ module lcd (
         video_on_h_i <= 1'b1;
         video_on_v   <= 1'b1;
       end
-    else begin
+    else
+      begin
         h_count      <= (h_count==hor_scan_end) ? 10'b0 : h_count + 10'b1;
-        horiz_sync_i <= horiz_sync_i ? (h_count[9:3]!=st_hor_retr) : (h_count[7:3]==end_hor_retr);
-        v_count      <= (v_count==ver_scan_end && h_count==hor_scan_end) ? 10'b0 : ((h_count==hor_scan_end) ? v_count + 10'b1 : v_count);
-        vert_sync    <= vert_sync ? (v_count!=ver_sync_beg) : (v_count[3:0]==ver_sync_end);
+        horiz_sync_i <= horiz_sync_i ? (h_count[9:3]!=st_hor_retr)
+                                     : (h_count[7:3]==end_hor_retr);
+        v_count      <= (v_count==ver_scan_end && h_count==hor_scan_end) ? 10'b0
+                      : ((h_count==hor_scan_end) ? v_count + 10'b1 : v_count);
+        vert_sync    <= vert_sync ? (v_count!=ver_sync_beg)
+                                  : (v_count[3:0]==ver_sync_end);
 
-        video_on_h_i <= (h_count==hor_scan_end) ? 1'b1 : ((h_count==hor_disp_end) ? 1'b0 : video_on_h_i);
-        video_on_v   <= (v_count==10'h0) ? 1'b1 : ((v_count==ver_disp_end) ? 1'b0 : video_on_v);
+        video_on_h_i <= (h_count==hor_scan_end) ? 1'b1
+                      : ((h_count==hor_disp_end) ? 1'b0 : video_on_h_i);
+        video_on_v   <= (v_count==10'h0) ? 1'b1
+                      : ((v_count==ver_disp_end) ? 1'b0 : video_on_v);
       end
 
   // Horiz sync
   always @(posedge clk)
-    { horiz_sync, horiz_sync_p } <= rst ? 3'b0 : { horiz_sync_p[1:0], graphics_alpha ?
+    { horiz_sync, horiz_sync_p } <= rst ? 3'b0
+       : { horiz_sync_p[1:0], graphics_alpha ?
          (shift_reg1 ? horiz_sync_gm : horiz_sync_wm) : horiz_sync_tm };
 
   // Video_on pipe
   always @(posedge clk)
     video_on_h_p <= rst ? 2'b0 : { video_on_h_p[0],
-      graphics_alpha ? (shift_reg1 ? video_on_h_gm : video_on_h_wm) : video_on_h_tm };
+      graphics_alpha ? (shift_reg1 ? video_on_h_gm : video_on_h_wm)
+                     : video_on_h_tm };
 
   // Colour signals
   always @(posedge clk)
-    if(rst) begin
+    if (rst)
+      begin
         vga_red_o     <= 4'b0;
         vga_green_o   <= 4'b0;
         vga_blue_o    <= 4'b0;
       end
-    else begin
+    else
+      begin
         vga_blue_o  <= video_on ? blue[5:2] : 4'h0;
         vga_green_o <= video_on ? green[5:2] : 4'h0;
         vga_red_o   <= video_on ? red[5:2] : 4'h0;
       end
 
-// ----------------------------------------------------------------------------
 endmodule
-// ----------------------------------------------------------------------------

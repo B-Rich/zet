@@ -1,4 +1,0 @@
-Warning (10268): Verilog HDL information at WB_PS2.v(199): always construct contains both blocking and non-blocking assignments
-Warning (10268): Verilog HDL information at hpdmc_mgmt.v(82): always construct contains both blocking and non-blocking assignments
-Info (10281): Verilog HDL Declaration information at hpdmc_mgmt.v(36): object "read" differs only in case from object "READ" in the same scope
-Info (10281): Verilog HDL Declaration information at hpdmc_mgmt.v(37): object "write" differs only in case from object "WRITE" in the same scope

@@ -1,6 +1,22 @@
 /*
  *  Write memory interface for VGA
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
  */
+
 module write_iface (
     // Wishbone common signals
     input wb_clk_i,
@@ -85,7 +101,7 @@ module write_iface (
   wire [15:0] new_val1;
   wire [15:0] new_val2;
   wire [15:0] new_val3;
-
+/*
   wire [ 7:0] wr2_d0_0;
   wire [ 7:0] wr2_d0_1;
   wire [ 7:0] wr2_d0_2;
@@ -95,7 +111,7 @@ module write_iface (
   wire [ 7:0] wr2_d1_1;
   wire [ 7:0] wr2_d1_2;
   wire [ 7:0] wr2_d1_3;
-
+*/
   wire [15:0] val0_write0, val0_write1, val0_write2, val0_write3;
   wire [15:0] val1_write0, val1_write1, val1_write2, val1_write3;
   wire [15:0] val0_or0, val0_or1, val0_or2, val0_or3;
@@ -161,15 +177,23 @@ module write_iface (
   assign no_set2 = raster_op[1] ? lb2 : 16'h0;
   assign no_set3 = raster_op[1] ? lb3 : 16'h0;
 
-  assign no_en0 = raster_op[1] ? (raster_op[0] ? xlb0 : olb0) : (raster_op[0] ? alb0 : dat_mask);
-  assign no_en1 = raster_op[1] ? (raster_op[0] ? xlb1 : olb1) : (raster_op[0] ? alb1 : dat_mask);
-  assign no_en2 = raster_op[1] ? (raster_op[0] ? xlb2 : olb2) : (raster_op[0] ? alb2 : dat_mask);
-  assign no_en3 = raster_op[1] ? (raster_op[0] ? xlb3 : olb3) : (raster_op[0] ? alb3 : dat_mask);
+  assign no_en0 = raster_op[1] ? (raster_op[0] ? xlb0 : olb0)
+                               : (raster_op[0] ? alb0 : dat_mask);
+  assign no_en1 = raster_op[1] ? (raster_op[0] ? xlb1 : olb1)
+                               : (raster_op[0] ? alb1 : dat_mask);
+  assign no_en2 = raster_op[1] ? (raster_op[0] ? xlb2 : olb2)
+                               : (raster_op[0] ? alb2 : dat_mask);
+  assign no_en3 = raster_op[1] ? (raster_op[0] ? xlb3 : olb3)
+                               : (raster_op[0] ? alb3 : dat_mask);
 
-  assign val0_or0 = enable_set_reset[0] ? (set_reset[0] ? set0 : no_set0) : no_en0;
-  assign val0_or1 = enable_set_reset[1] ? (set_reset[1] ? set1 : no_set1) : no_en1;
-  assign val0_or2 = enable_set_reset[2] ? (set_reset[2] ? set2 : no_set2) : no_en2;
-  assign val0_or3 = enable_set_reset[3] ? (set_reset[3] ? set3 : no_set3) : no_en3;
+  assign val0_or0 = enable_set_reset[0] ?
+    (set_reset[0] ? set0 : no_set0) : no_en0;
+  assign val0_or1 = enable_set_reset[1] ?
+    (set_reset[1] ? set1 : no_set1) : no_en1;
+  assign val0_or2 = enable_set_reset[2] ?
+    (set_reset[2] ? set2 : no_set2) : no_en2;
+  assign val0_or3 = enable_set_reset[3] ?
+    (set_reset[3] ? set3 : no_set3) : no_en3;
 
   assign val0_write0 = new_val0 | val0_or0;
   assign val0_write1 = new_val1 | val0_or1;
@@ -177,16 +201,21 @@ module write_iface (
   assign val0_write3 = new_val3 | val0_or3;
 
   // write mode 2
+/*
   assign wr2_d0_0 = raster_op[1] ? lb0[7:0] : 8'h0;
   assign wr2_d0_1 = raster_op[1] ? lb1[7:0] : 8'h0;
   assign wr2_d0_2 = raster_op[1] ? lb2[7:0] : 8'h0;
   assign wr2_d0_3 = raster_op[1] ? lb3[7:0] : 8'h0;
 
-  assign wr2_d1_0 = raster_op[0] ? (raster_op[1] ? nlb0[7:0] : lb0[7:0]) : bitmask;
-  assign wr2_d1_1 = raster_op[0] ? (raster_op[1] ? nlb1[7:0] : lb1[7:0]) : bitmask;
-  assign wr2_d1_2 = raster_op[0] ? (raster_op[1] ? nlb2[7:0] : lb2[7:0]) : bitmask;
-  assign wr2_d1_3 = raster_op[0] ? (raster_op[1] ? nlb3[7:0] : lb3[7:0]) : bitmask;
-/*
+  assign wr2_d1_0 = raster_op[0] ? (raster_op[1] ? nlb0[7:0] : lb0[7:0])
+                                 : bitmask;
+  assign wr2_d1_1 = raster_op[0] ? (raster_op[1] ? nlb1[7:0] : lb1[7:0])
+                                 : bitmask;
+  assign wr2_d1_2 = raster_op[0] ? (raster_op[1] ? nlb2[7:0] : lb2[7:0])
+                                 : bitmask;
+  assign wr2_d1_3 = raster_op[0] ? (raster_op[1] ? nlb3[7:0] : lb3[7:0])
+                                 : bitmask;
+
   assign val1_or0[ 7:0] = wbs_dat_i[ 0] ? wr2_d1_0 : wr2_d0_0;
   assign val1_or1[ 7:0] = wbs_dat_i[ 1] ? wr2_d1_1 : wr2_d0_1;
   assign val1_or2[ 7:0] = wbs_dat_i[ 2] ? wr2_d1_2 : wr2_d0_2;
@@ -212,18 +241,25 @@ module write_iface (
 
   // Final write
 
-  assign final_wr0 = write_mode[1] ? val1_write0 : (write_mode[0] ? latch0_16 : val0_write0);
-  assign final_wr1 = write_mode[1] ? val1_write1 : (write_mode[0] ? latch1_16 : val0_write1);
-  assign final_wr2 = write_mode[1] ? val1_write2 : (write_mode[0] ? latch2_16 : val0_write2);
-  assign final_wr3 = write_mode[1] ? val1_write3 : (write_mode[0] ? latch3_16 : val0_write3);
+  assign final_wr0 = write_mode[1] ? val1_write0
+                   : (write_mode[0] ? latch0_16 : val0_write0);
+  assign final_wr1 = write_mode[1] ? val1_write1
+                   : (write_mode[0] ? latch1_16 : val0_write1);
+  assign final_wr2 = write_mode[1] ? val1_write2
+                   : (write_mode[0] ? latch2_16 : val0_write2);
+  assign final_wr3 = write_mode[1] ? val1_write3
+                   : (write_mode[0] ? latch3_16 : val0_write3);
 
-  assign offset = memory_mapping1 ? { 1'b0, wbs_adr_i[14:1] } : wbs_adr_i[15:1];
+  assign offset = memory_mapping1 ? { 1'b0, wbs_adr_i[14:1] }
+                                  : wbs_adr_i[15:1];
 
   assign wbm_adr_o = { plane, offset };
   assign wbs_ack_o = (plane==2'b11 && cont);
-  assign wbm_dat_o = plane[1] ? (plane[0] ? final_wr3 : final_wr2) : (plane[0] ? final_wr1 : final_wr0);
+  assign wbm_dat_o = plane[1] ? (plane[0] ? final_wr3 : final_wr2)
+                              : (plane[0] ? final_wr1 : final_wr0);
 
-  assign write_en = plane[1] ? (plane[0] ? map_mask[3] : map_mask[2]) : (plane[0] ? map_mask[1] : map_mask[0]);
+  assign write_en = plane[1] ? (plane[0] ? map_mask[3] : map_mask[2])
+                             : (plane[0] ? map_mask[1] : map_mask[0]);
 
   assign wbm_sel_o = wbs_sel_i;
   assign cont      = (wbm_ack_i | !write_en) & wbs_stb_i;

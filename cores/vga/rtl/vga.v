@@ -1,9 +1,26 @@
-// ----------------------------------------------------------------------------
-//  VGA top level file
-// ----------------------------------------------------------------------------
+/*
+ *  VGA top level file
+ *  Copyright (C) 2010  Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *
+ *  This file is part of the Zet processor. This processor is free
+ *  hardware; you can redistribute it and/or modify it under the terms of
+ *  the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3, or (at your option) any later version.
+ *
+ *  Zet is distrubuted in the hope that it will be useful, but WITHOUT
+ *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+ *  License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Zet; see the file COPYING. If not, see
+ *  <http://www.gnu.org/licenses/>.
+ */
+
 module vga (
+    // Wishbone signals
+    input         wb_clk_i,     // 25 Mhz VDU clock
     input         wb_rst_i,
-    input         wb_clk_i,     	
     input  [15:0] wb_dat_i,
     output [15:0] wb_dat_o,
     input  [16:1] wb_adr_i,
@@ -14,8 +31,6 @@ module vga (
     input         wb_cyc_i,
     output        wb_ack_o,
 
-	input		  vga_clk,		// 25 Mhz VDU clock
-
     // VGA pad signals
     output [ 3:0] vga_red_o,
     output [ 3:0] vga_green_o,
@@ -23,37 +38,37 @@ module vga (
     output        horiz_sync,
     output        vert_sync,
 
-	output 	[17:1] wbm_adr_o,	// Wishbone master to Video RAM
-	output  [15:0] wbm_dat_o,	// This interface is for control
-	input 	[15:0] wbm_dat_i,
-	output	[ 1:0] wbm_sel_o,
-	output         wbm_we_o,
-	output		   wbm_stb_o,
-	output		   wbm_cyc_o,
-	input		   wbm_ack_i,
-	
-	output [17:1] v_wbm_adr_o,	// Wishbone master to Video RAM
-	output [15:0] v_wbm_dat_o,	// THis interface is for video frame reading
-	input  [15:0] v_wbm_dat_i,  
-	output [ 1:0] v_wbm_sel_o,
-    output        v_wbm_stb_o,
-    output        v_wbm_cyc_o,
-	output        v_wbm_we_o,
-    input         v_wbm_ack_i
-	
+    // SRAM pad signals
+    output [17:0] sram_addr_,
+    inout  [15:0] sram_data_,
+    output        sram_we_n_,
+    output        sram_oe_n_,
+    output        sram_ce_n_,
+    output [ 1:0] sram_bw_n_
   );
+
+
+  // Registers and nets
+  //
+  // csr address
+  reg  [17:1] csr_adr_i;
+  reg         csr_stb_i;
+
   // Config wires
   wire [15:0] conf_wb_dat_o;
   wire        conf_wb_ack_o;
-  wire        stb;
 
   // Mem wires
   wire [15:0] mem_wb_dat_o;
   wire        mem_wb_ack_o;
 
   // LCD wires
+  wire [17:1] csr_adr_o;
+  wire [15:0] csr_dat_i;
+  wire        csr_stb_o;
   wire        v_retrace;
   wire        vh_retrace;
+  wire        w_vert_sync;
 
   // VGA configuration registers
   wire        shift_reg1;
@@ -71,6 +86,24 @@ module vga (
   wire [ 1:0] read_map_select;
   wire [ 3:0] color_compare;
   wire [ 3:0] color_dont_care;
+
+  // Wishbone master to SRAM
+  wire [17:1] wbm_adr_o;
+  wire [ 1:0] wbm_sel_o;
+  wire        wbm_we_o;
+  wire [15:0] wbm_dat_o;
+  wire [15:0] wbm_dat_i;
+  wire        wbm_stb_o;
+  wire        wbm_ack_i;
+
+  // CSR master wires
+  wire [17:1] csrm_adr_o;
+  wire [ 1:0] csrm_sel_o;
+  wire        csrm_we_o;
+  wire [15:0] csrm_dat_o;
+  wire [15:0] csrm_dat_i;
+
+  wire        stb;
 
   // CRT wires
   wire [ 5:0] cur_start;
@@ -103,6 +136,7 @@ module vga (
   wire [7:0] dac_write_data;
 
   // Module instances
+  //
   config_iface config_if (
     .wb_clk_i (wb_clk_i),
     .wb_rst_i (wb_rst_i),
@@ -162,14 +196,8 @@ module vga (
     .vh_retrace (vh_retrace)
   );
 
-  /*
-  reg [2:0] vgadiv;
-  always @(posedge wb_clk_i) vgadiv <= vgadiv + 3'd1;
-  wire vgaclk = vgadiv[2];
-  */
-  
   lcd lcd0 (
-    .clk (vga_clk),
+    .clk (wb_clk_i),
     .rst (wb_rst_i),
 
     .shift_reg1     (shift_reg1),
@@ -196,7 +224,7 @@ module vga (
     .vga_green_o (vga_green_o),
     .vga_blue_o  (vga_blue_o),
     .horiz_sync  (horiz_sync),
-    .vert_sync   (vert_sync),
+    .vert_sync   (w_vert_sync),
 
     .cur_start  (cur_start),
     .cur_end    (cur_end),
@@ -235,7 +263,7 @@ module vga (
     .wbm_we_o  (wbm_we_o),
     .wbm_dat_o (wbm_dat_o),
     .wbm_dat_i (wbm_dat_i),
-    .wbm_stb_o (wbm_stb_o), 
+    .wbm_stb_o (wbm_stb_o),
     .wbm_ack_i (wbm_ack_i),
 
     .chain_four       (chain_four),
@@ -252,32 +280,59 @@ module vga (
     .color_dont_care  (color_dont_care)
   );
 
-  // csr address
-  reg  [17:1] csr_adr_i;
-  reg         csr_stb_i;
-  wire [17:1] csr_adr_o;
-  wire [15:0] csr_dat_i;
-  wire        csr_stb_o; 
+  mem_arbitrer arbitrer (
+    .clk_i (wb_clk_i),
+    .rst_i (wb_rst_i),
 
-  assign v_wbm_adr_o = csr_adr_i;	// Wishbone master to Video RAM
-  assign v_wbm_dat_o = 15'hXXXX;	// THis interface is for video frame reading only
-  assign csr_dat_i   = v_wbm_dat_i; // THis interface is for video frame reading only
-  assign v_wbm_sel_o = 2'b11;		// This interface is always 16 bits wide
-  assign v_wbm_stb_o = csr_stb_i;	// Strobe signals are the same
-  assign v_wbm_cyc_o = 1'b1;		// Cycle 
-  assign v_wbm_we_o  = 1'b0;		// This is a read only interface
-  	  // v_wbm_ack_i does not matter, video keeps going no matter what
-  
+    .wb_adr_i (wbm_adr_o),
+    .wb_sel_i (wbm_sel_o),
+    .wb_we_i  (wbm_we_o),
+    .wb_dat_i (wbm_dat_o),
+    .wb_dat_o (wbm_dat_i),
+    .wb_stb_i (wbm_stb_o),
+    .wb_ack_o (wbm_ack_i),
+
+    .csr_adr_i (csr_adr_i),
+    .csr_dat_o (csr_dat_i),
+    .csr_stb_i (csr_stb_i),
+
+    .csrm_adr_o (csrm_adr_o),
+    .csrm_sel_o (csrm_sel_o),
+    .csrm_we_o  (csrm_we_o),
+    .csrm_dat_o (csrm_dat_o),
+    .csrm_dat_i (csrm_dat_i)
+  );
+
+  csr_sram sram (
+    .sys_clk (wb_clk_i),
+
+    .csr_adr_i (csrm_adr_o),
+    .csr_sel_i (csrm_sel_o),
+    .csr_we_i  (csrm_we_o),
+    .csr_dat_i (csrm_dat_o),
+    .csr_dat_o (csrm_dat_i),
+
+    .sram_addr_ (sram_addr_),
+    .sram_data_ (sram_data_),
+    .sram_we_n_ (sram_we_n_),
+    .sram_oe_n_ (sram_oe_n_),
+    .sram_ce_n_ (sram_ce_n_),
+    .sram_bw_n_ (sram_bw_n_)
+  );
+
   // Continous assignments
   assign wb_dat_o  = wb_tga_i ? conf_wb_dat_o : mem_wb_dat_o;
   assign wb_ack_o  = wb_tga_i ? conf_wb_ack_o : mem_wb_ack_o;
   assign stb       = wb_stb_i & wb_cyc_i;
-  assign wbm_cyc_o = 1'b1;
+  assign vert_sync = ~graphics_alpha ^ w_vert_sync;
 
   // Behaviour
-  always @(posedge wb_clk_i) csr_adr_i <= wb_rst_i ? 17'h0 : csr_adr_o + start_addr[15:1];
-  always @(posedge wb_clk_i) csr_stb_i <= wb_rst_i ? 1'b0 : csr_stb_o;
+  // csr_adr_i
+  always @(posedge wb_clk_i)
+    csr_adr_i <= wb_rst_i ? 17'h0 : csr_adr_o + start_addr[15:1];
 
-// ----------------------------------------------------------------------------
+  // csr_stb_i
+  always @(posedge wb_clk_i)
+    csr_stb_i <= wb_rst_i ? 1'b0 : csr_stb_o;
+
 endmodule
-// ----------------------------------------------------------------------------

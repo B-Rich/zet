@@ -1,6 +1,8 @@
 // --------------------------------------------------------------------
+// --------------------------------------------------------------------
 // Module:      WB_Serial.v
 // Description: Wishbone Compatible RS232 core.                          
+// --------------------------------------------------------------------
 // --------------------------------------------------------------------
 module WB_Serial(
     input             	wb_clk_i,		// Clock Input
@@ -37,9 +39,7 @@ always @(posedge wb_clk_i or posedge wb_rst_i) begin		// Synchrounous
 end
 
 // --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// This section is a simple 8250 Emulator that front ends the PS2 Mouse
-// --------------------------------------------------------------------
+// This section is a simple 8250 Emulator that front ends the UART
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
@@ -137,7 +137,7 @@ wire OR    = rx_over;	                 	// Overrun Error, hard coded off
 reg  rx_rden;								// Receive data enable
 reg  DR;			                     	// Data Ready
 reg  THRE;      			             	// Transmitter Holding Register Empty
-wire [7:0] LSTAT = {1'b0,TSRE,THRE,BI, FE,PE,OR,DR};
+wire [7:0] LSTAT = {1'b0,TSRE,THRE,BI,FE,PE,OR,DR};
 
 // --------------------------------------------------------------------
 //  UART Line Status Behavior
@@ -208,8 +208,8 @@ reg  [7:0] input_data;         // Transmit register
 reg  [3:0] ier;                // Interrupt enable register
 reg  [7:0] lcr;                // Line Control register
 reg  [7:0] mcr;                // Modem Control register
-reg  [7:0] dll ;               // Data latch register low
-reg  [7:0] dlh ;               // Data latch register high
+reg  [7:0] dll;                // Data latch register low
+reg  [7:0] dlh;                // Data latch register high
 
 // --------------------------------------------------------------------
 // UART Register behavior
@@ -277,42 +277,87 @@ wire    to_error;               // Indicates a transmit error occured
 wire    tx_done = ~tx_busy;     // Signal command finished sending
 wire    tx_busy;                // Signal transmitter is busy
 
-async_receiver RX(.clk(wb_clk_i), .RxD(rs232_rx), .RxD_data_ready(rx_drdy), .RxD_data(output_data), .RxD_idle(rx_idle) );
+async_receiver    RX(.clk(wb_clk_i), .Baud8Tick(Baud8Tick), .RxD(rs232_rx), .RxD_data_ready(rx_drdy), .RxD_data(output_data), .RxD_idle(rx_idle) );
+async_transmitter TX(.clk(wb_clk_i), .Baud1Tick(Baud1Tick), .TxD(rs232_tx), .TxD_start(tx_send), .TxD_data(input_data), .TxD_busy(tx_busy));
 
-async_transmitter TX(.clk(wb_clk_i), .TxD(rs232_tx), .TxD_start(tx_send), .TxD_data(input_data), .TxD_busy(tx_busy));
 
+// --------------------------------------------------------------------
+// Baud Clock Generator
+// --------------------------------------------------------------------
+wire [18:0] Baudiv    = {3'b000,dlh,dll};     
+wire 		Baud1Tick = BaudAcc1[18];
+wire 		Baud8Tick = BaudAcc8[15];
+reg  [18:0] BaudAcc1;
+reg  [15:0] BaudAcc8;
+wire [18:0] BaudInc =  19'd2416/Baudiv;
+always @(posedge wb_clk_i) BaudAcc1 <= BaudAcc1[17:0] + BaudInc;
+always @(posedge wb_clk_i) BaudAcc8 <= BaudAcc8[14:0] + BaudInc;
+  
 // --------------------------------------------------------------------
 endmodule
 // --------------------------------------------------------------------
 
 
 // --------------------------------------------------------------------
+//  1.8432Mhz Baud Clock Generator:
+//  This module generates the standard 1.8432Mhz Baud Clock. Using this clock
+//  The Baud Rate Generator below can then derive all the standard 
+//  Bauds. Make the accumulator 1 more bit for carry out than what is
+//  Needed. Example: Main Clock =  12.5Mhz =    12,500,000 Hence
+//  1024/151 = 6.78, => 12,500,000 / 6.78 =    1,843,261.72  , .003% error, Good !
+//  so the accumulator should be 11 bits (log2(1024) +1
+//  
+// --------------------------------------------------------------------
+//  Baud Rate Generator:
+//  Once we have our little 1.8432Mhz Baud Clock, deriving the bauds is
+//  simple simon. Just divide by 16 to get the 1x baud for transmitting 
+//  and divide by 2 to get the 8x oversampling clock for receiving.
+//
+// Baud Clock = 1.8432Mhz	
+// Divisor    = 16
+// 
+//   Baud   Divsr %Error
+// ------   ----- -----
+//     50	2304  0.000%
+//     75	1536  0.000%
+//    110	1047  0.026%
+//    150	 768  0.000%
+//    300	 384  0.000%
+//    600	 192  0.000%
+//   1200	  96  0.000%
+//   2400	  48  0.000%
+//   4800	  24  0.000%
+//   7200     16  0.000%
+//   9600	  12  0.000%
+//  14400      8  0.000%
+//  19200	   6  0.000%
+//  28800      4  0.000%
+//  38400	   3  0.000%
+//  57600	   2  0.000%
+// 115200	   1  0.000%
+//  
+// --------------------------------------------------------------------
+
+
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
 // RS-232 RX module
 // --------------------------------------------------------------------
-module async_receiver(clk, RxD, RxD_data_ready, RxD_data, RxD_endofpacket, RxD_idle);
-input clk, RxD;
-output RxD_data_ready;  // onc clock pulse when RxD_data is valid
-output [7:0] RxD_data;
-
-parameter ClkFrequency = 12500000; // 12.5MHz
-parameter Baud = 115200;
+// --------------------------------------------------------------------
+module async_receiver(clk, Baud8Tick, RxD, RxD_data_ready, RxD_data, RxD_endofpacket, RxD_idle);
+input 			 clk;
+input 			 RxD;
+input     		 Baud8Tick;			// Desired baud rate
+output     [7:0] RxD_data;
+output 			 RxD_data_ready;  	// on clock pulse when RxD_data is valid
 
 // We also detect if a gap occurs in the received stream of characters whuich can be useful if 
 // multiple characters are sent in burst so that multiple characters can be treated as a "packet"
 output RxD_endofpacket;  	// one clock pulse, when no more data is received (RxD_idle is going high)
 output RxD_idle;  			// no data is being received
 
-// Baud generator (we use 8 times oversampling)
-parameter Baud8 = Baud*8;
-parameter Baud8GeneratorAccWidth = 16;
-wire [Baud8GeneratorAccWidth:0] Baud8GeneratorInc = ((Baud8<<(Baud8GeneratorAccWidth-7))+(ClkFrequency>>8))/(ClkFrequency>>7);
-reg [Baud8GeneratorAccWidth:0] Baud8GeneratorAcc;
-always @(posedge clk) Baud8GeneratorAcc <= Baud8GeneratorAcc[Baud8GeneratorAccWidth-1:0] + Baud8GeneratorInc;
-wire Baud8Tick = Baud8GeneratorAcc[Baud8GeneratorAccWidth];
-
-reg [1:0] RxD_sync_inv;
+reg [1:0] RxD_sync_inv;	// we invert RxD, so that the idle becomes "0", to prevent a phantom character to be received at startup
 always @(posedge clk) if(Baud8Tick) RxD_sync_inv <= {RxD_sync_inv[0], ~RxD};
-// we invert RxD, so that the idle becomes "0", to prevent a phantom character to be received at startup
 
 reg [1:0] RxD_cnt_inv;
 reg RxD_bit_inv;
@@ -322,7 +367,6 @@ if(Baud8Tick) begin
 	if( RxD_sync_inv[1] && RxD_cnt_inv!=2'b11) RxD_cnt_inv <= RxD_cnt_inv + 2'h1;
 	else 
 	if(~RxD_sync_inv[1] && RxD_cnt_inv!=2'b00) RxD_cnt_inv <= RxD_cnt_inv - 2'h1;
-
 	if(RxD_cnt_inv==2'b00) RxD_bit_inv <= 1'b0;
 	else
 	if(RxD_cnt_inv==2'b11) RxD_bit_inv <= 1'b1;
@@ -336,25 +380,24 @@ reg [3:0] bit_spacing;
 wire next_bit = (bit_spacing==4'd10);
 
 always @(posedge clk)
-if(state==0)
-	bit_spacing <= 4'b0000;
+if(state==0)bit_spacing <= 4'b0000;
 else
 if(Baud8Tick) bit_spacing <= {bit_spacing[2:0] + 4'b0001} | {bit_spacing[3], 3'b000};
 
 always @(posedge clk)
 if(Baud8Tick)
 case(state)
-	4'b0000: if(RxD_bit_inv) state <= 4'b1000;  // start bit found?
-	4'b1000: if(next_bit) state <= 4'b1001;  // bit 0
-	4'b1001: if(next_bit) state <= 4'b1010;  // bit 1
-	4'b1010: if(next_bit) state <= 4'b1011;  // bit 2
-	4'b1011: if(next_bit) state <= 4'b1100;  // bit 3
-	4'b1100: if(next_bit) state <= 4'b1101;  // bit 4
-	4'b1101: if(next_bit) state <= 4'b1110;  // bit 5
-	4'b1110: if(next_bit) state <= 4'b1111;  // bit 6
-	4'b1111: if(next_bit) state <= 4'b0001;  // bit 7
-	4'b0001: if(next_bit) state <= 4'b0000;  // stop bit
-	default: state <= 4'b0000;
+	4'b0000: if(RxD_bit_inv)state <= 4'b1000;  // start bit found?
+	4'b1000: if(next_bit)	state <= 4'b1001;  // bit 0
+	4'b1001: if(next_bit)	state <= 4'b1010;  // bit 1
+	4'b1010: if(next_bit)	state <= 4'b1011;  // bit 2
+	4'b1011: if(next_bit)	state <= 4'b1100;  // bit 3
+	4'b1100: if(next_bit)	state <= 4'b1101;  // bit 4
+	4'b1101: if(next_bit)	state <= 4'b1110;  // bit 5
+	4'b1110: if(next_bit)	state <= 4'b1111;  // bit 6
+	4'b1111: if(next_bit)	state <= 4'b0001;  // bit 7
+	4'b0001: if(next_bit)	state <= 4'b0000;  // stop bit
+	default: 				state <= 4'b0000;
 endcase
 
 reg [7:0] RxD_data;
@@ -373,40 +416,30 @@ always @(posedge clk) if (state!=0) gap_count<=5'h00; else if(Baud8Tick & ~gap_c
 assign RxD_idle = gap_count[4];
 reg RxD_endofpacket; always @(posedge clk) RxD_endofpacket <= Baud8Tick & (gap_count==5'h0F);
 
+// --------------------------------------------------------------------
 endmodule
 // --------------------------------------------------------------------
 
 
 // --------------------------------------------------------------------
+// --------------------------------------------------------------------
 // RS-232 TX module
 // --------------------------------------------------------------------
-//`define DEBUG   // in DEBUG mode, we output one bit per clock cycle (useful for faster simulations)
-module async_transmitter(clk, TxD_start, TxD_data, TxD, TxD_busy);
-input clk, TxD_start;
-input [7:0] TxD_data;
-output TxD, TxD_busy;
-
-parameter ClkFrequency = 12500000;	// 12.5MHz
-parameter Baud = 115200;
-parameter RegisterInputData = 1;	// in RegisterInputData mode, the input doesn't have to stay valid while the character is been transmitted
-
-// Baud generator
-parameter BaudGeneratorAccWidth = 16;
-reg [BaudGeneratorAccWidth:0] BaudGeneratorAcc;
-`ifdef DEBUG
-	wire [BaudGeneratorAccWidth:0] BaudGeneratorInc = 17'h10000;
-`else
-	wire [BaudGeneratorAccWidth:0] BaudGeneratorInc = ((Baud<<(BaudGeneratorAccWidth-4))+(ClkFrequency>>5))/(ClkFrequency>>4);
-`endif
-
-wire BaudTick = BaudGeneratorAcc[BaudGeneratorAccWidth];
-wire TxD_busy;
-always @(posedge clk) if(TxD_busy) BaudGeneratorAcc <= BaudGeneratorAcc[BaudGeneratorAccWidth-1:0] + BaudGeneratorInc;
+// --------------------------------------------------------------------
+module async_transmitter(clk, Baud1Tick, TxD_start, TxD_data, TxD, TxD_busy);
+input 			 clk;
+input 			 TxD_start;
+input     		 Baud1Tick;					 // Desired baud rate
+input      [7:0] TxD_data;
+output 			 TxD;
+output 			 TxD_busy;
 
 // Transmitter state machine
+parameter RegisterInputData = 1;	// in RegisterInputData mode, the input doesn't have to stay valid while the character is been transmitted
 reg [3:0] state;
-wire TxD_ready = (state==0);
-assign TxD_busy = ~TxD_ready;
+wire  TxD_ready = (state==0);
+wire  TxD_busy  = ~TxD_ready;
+wire  BaudTick  = TxD_busy ? Baud1Tick : 1'b0;
 
 reg [7:0] TxD_dataReg;
 always @(posedge clk) if(TxD_ready & TxD_start) TxD_dataReg <= TxD_data;
@@ -430,8 +463,7 @@ case(state)
 	default: if(BaudTick) state <= 4'b0000;
 endcase
 
-// Output mux
-reg muxbit;
+reg muxbit;			// Output mux
 always @( * )
 case(state[2:0])
 	3'd0: muxbit <= TxD_dataD[0];
@@ -444,43 +476,12 @@ case(state[2:0])
 	3'd7: muxbit <= TxD_dataD[7];
 endcase
 
-// Put together the start, data and stop bits
-reg TxD;
+reg TxD;	// Put together the start, data and stop bits
 always @(posedge clk) TxD <= (state<4) | (state[3] & muxbit);  // register the output to make it glitch free
 
+// --------------------------------------------------------------------
 endmodule
 // --------------------------------------------------------------------
-
-
-// --------------------------------------------------------------------
-//  Phase accumulator clock:
-//    Fo = Fc * N / 2^bits
-//    here N: 154619 and bits: 26
-// --------------------------------------------------------------------
-module clk_rs232 #(
-    parameter bits  = 26,    // counter bits
-    parameter value = 154619 // phase counter
-  ) (
-    input  clk_i,
-    input  rst_i,
-    output clk_o,
-    output rst_o
-  );
-
-  reg [bits-1:0] cnt;  		// Registers
-  reg [     2:0] init;
-
-  assign clk_o = cnt[bits-1];
-  assign rst_o = init[2];
-
-  always @(posedge clk_i)	cnt <= rst_i ? 0 : cnt + value;
-  always @(posedge clk_i)	init[0] <= rst_i ? 1'b1 : (clk_o ? 1'b0 : init[0]);
-  always @(posedge clk_o)	 init[2:1] <= init[0] ? 2'b11 : init[1:0];
-
-endmodule
-// --------------------------------------------------------------------
-
-
 
 // --------------------------------------------------------------------
 // End of WB Serial Modules

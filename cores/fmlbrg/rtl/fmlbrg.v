@@ -1,3 +1,21 @@
+/*
+ * Wishbone to FML 8x16 bridge
+ * Copyright (C) 2007, 2008, 2009 Sebastien Bourdeauducq
+ * adjusted to FML 8x16 by Zeus Gomez Marmolejo <zeus@aluzina.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 module fmlbrg #(
     parameter fml_depth      = 23,
     parameter cache_depth    = 9   // 512 byte cache
@@ -71,7 +89,8 @@ end
 reg index_load;
 reg [cache_depth-1-4:0] index_r;
 always @(posedge sys_clk) begin
-  if(index_load) index_r <= index;
+  if(index_load)
+    index_r <= index;
 end
 
 assign tagmem_a = index;
@@ -112,22 +131,28 @@ fmlbrg_datamem #(
   .a(datamem_a),
   .we(datamem_we),
   .di(datamem_di),
-  .do(datamem_do)
+  .dout(datamem_do)
 );
 
 reg [2:0] bcounter;
 reg [2:0] bcounter_next;
 always @(posedge sys_clk) begin
-  if(sys_rst) bcounter <= 3'd0;
-  else        bcounter <= bcounter_next;
+  if(sys_rst)
+    bcounter <= 3'd0;
+  else begin
+    bcounter <= bcounter_next;
+  end
 end
 
 reg bcounter_load;
 reg bcounter_en;
 always @(*) begin
-  if(bcounter_load)    bcounter_next <= offset;
-  else if(bcounter_en) bcounter_next <= bcounter + 3'd1;
-  else                 bcounter_next <= bcounter;
+  if(bcounter_load)
+    bcounter_next <= offset;
+  else if(bcounter_en)
+    bcounter_next <= bcounter + 3'd1;
+  else
+    bcounter_next <= bcounter;
 end
 
 assign datamem_a = { index_load ? index : index_r, bcounter_next };
@@ -135,13 +160,16 @@ assign datamem_a = { index_load ? index : index_r, bcounter_next };
 reg datamem_we_wb;
 reg datamem_we_fml;
 
-assign datamem_we = ({2{datamem_we_fml}} & 2'b11) |({2{datamem_we_wb}} & wb_sel_i);
+assign datamem_we = ({2{datamem_we_fml}} & 2'b11)
+  |({2{datamem_we_wb}} & wb_sel_i);
 
 always @(*) begin
   datamem_di = fml_di;
   if(datamem_we_wb) begin
-    if(wb_sel_i[0]) datamem_di[7:0] = wb_dat_i[7:0];
-    if(wb_sel_i[1]) datamem_di[15:8] = wb_dat_i[15:8];
+    if(wb_sel_i[0])
+      datamem_di[7:0] = wb_dat_i[7:0];
+    if(wb_sel_i[1])
+      datamem_di[15:8] = wb_dat_i[15:8];
   end
 end
 
@@ -150,43 +178,48 @@ assign fml_do = datamem_do;
 assign fml_sel = 2'b11;
 
 /* FSM */
+
 reg [fml_depth-cache_depth-1:0] tag_r;
-always @(posedge sys_clk) tag_r = tag;
+always @(posedge sys_clk)
+  tag_r = tag;
 assign cache_hit = do_valid & (do_tag == tag_r);
 
 reg [4:0] state;
 reg [4:0] next_state;
 
-parameter IDLE      = 5'd0;
-parameter TEST_HIT  = 5'd1;
-parameter WRITE_HIT = 5'd2;
+  localparam [4:0]
+    IDLE      = 5'd0,
+    TEST_HIT  = 5'd1,
+    WRITE_HIT = 5'd2,
 
-parameter EVICT  = 5'd3;
-parameter EVICT2 = 5'd4;
-parameter EVICT3 = 5'd5;
-parameter EVICT4 = 5'd6;
-parameter EVICT5 = 5'd7;
-parameter EVICT6 = 5'd8;
-parameter EVICT7 = 5'd9;
-parameter EVICT8 = 5'd10;
+    EVICT  = 5'd3,
+    EVICT2 = 5'd4,
+    EVICT3 = 5'd5,
+    EVICT4 = 5'd6,
+    EVICT5 = 5'd7,
+    EVICT6 = 5'd8,
+    EVICT7 = 5'd9,
+    EVICT8 = 5'd10,
 
-parameter REFILL      = 5'd11;
-parameter REFILL_WAIT = 5'd12;
-parameter REFILL1     = 5'd13;
-parameter REFILL2     = 5'd14;
-parameter REFILL3     = 5'd15;
-parameter REFILL4     = 5'd16;
-parameter REFILL5     = 5'd17;
-parameter REFILL6     = 5'd18;
-parameter REFILL7     = 5'd19;
-parameter REFILL8     = 5'd20;
+    REFILL      = 5'd11,
+    REFILL_WAIT = 5'd12,
+    REFILL1     = 5'd13,
+    REFILL2     = 5'd14,
+    REFILL3     = 5'd15,
+    REFILL4     = 5'd16,
+    REFILL5     = 5'd17,
+    REFILL6     = 5'd18,
+    REFILL7     = 5'd19,
+    REFILL8     = 5'd20,
 
-parameter TEST_INVALIDATE = 5'd21;
-parameter INVALIDATE      = 5'd22;
+    TEST_INVALIDATE = 5'd21,
+    INVALIDATE      = 5'd22;
 
 always @(posedge sys_clk) begin
-  if(sys_rst) state = IDLE;
-  else begin     //$display("state: %d -> %d", state, next_state);
+  if(sys_rst)
+    state = IDLE;
+  else begin
+    //$display("state: %d -> %d", state, next_state);
     state = next_state;
   end
 end
@@ -215,8 +248,10 @@ always @(*) begin
     IDLE: begin
       bcounter_load = 1'b1;
       if(wb_cyc_i & wb_stb_i) begin
-        if(wb_tga_i)  next_state = TEST_INVALIDATE;
-        else          next_state = TEST_HIT;
+        if(wb_tga_i)
+          next_state = TEST_INVALIDATE;
+        else
+          next_state = TEST_HIT;
       end
     end
     TEST_HIT: begin
@@ -228,8 +263,10 @@ always @(*) begin
           next_state = IDLE;
         end
       end else begin
-        if(do_dirty) next_state = EVICT;
-        else         next_state = REFILL;
+        if(do_dirty)
+          next_state = EVICT;
+        else
+          next_state = REFILL;
       end
     end
     WRITE_HIT: begin
@@ -281,15 +318,19 @@ always @(*) begin
     end
     EVICT8: begin
       bcounter_en = 1'b1;
-      if(wb_tga_i)  next_state = INVALIDATE;
-      else          next_state = REFILL;
+      if(wb_tga_i)
+        next_state = INVALIDATE;
+      else
+        next_state = REFILL;
     end
   
     REFILL: begin
       /* Write the tag first. This will also set the FML address. */
       di_valid = 1'b1;
-      if(wb_we_i)   di_dirty = 1'b1;
-      else          di_dirty = 1'b0;
+      if(wb_we_i)
+        di_dirty = 1'b1;
+      else
+        di_dirty = 1'b0;
       tagmem_we = 1'b1;
       next_state = REFILL_WAIT;
     end
@@ -302,8 +343,10 @@ always @(*) begin
        * datamem_we_wb, WB has priority
        */
       datamem_we_fml = 1'b1;
-      if(wb_we_i) datamem_we_wb = 1'b1;
-      if(fml_ack) next_state = REFILL2;
+      if(wb_we_i)
+        datamem_we_wb = 1'b1;
+      if(fml_ack)
+        next_state = REFILL2;
     end
     REFILL2: begin
       /*
@@ -361,8 +404,10 @@ always @(*) begin
     end
   
     TEST_INVALIDATE: begin
-      if(do_dirty) next_state = EVICT;
-      else         next_state = INVALIDATE;
+      if(do_dirty)
+        next_state = EVICT;
+      else
+        next_state = INVALIDATE;
     end
     INVALIDATE: begin
       di_valid = 1'b0;

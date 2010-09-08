@@ -18,6 +18,8 @@ module WB_PS2(
 	output             wb_tgk_o,         // Interrupt request
 	output             wb_tgm_o,         // Interrupt request
    
+    output reg   [7:0] port61h,			 // chasis Speaker port
+	
 	inout              PS2_KBD_CLK,      // PS2 Keyboard Clock, Bidirectional
 	inout              PS2_KBD_DAT,      // PS2 Keyboard Data, Bidirectional
 	inout              PS2_MSE_CLK,      // PS2 Mouse Clock, Bidirectional
@@ -31,7 +33,7 @@ module WB_PS2(
 // --------------------------------------------------------------------
 wire   [7:0] dat_i       =  wb_sel_i[0] ? wb_dat_i[7:0]  : wb_dat_i[15:8]; // 8 to 16 bit WB
 assign       wb_dat_o    =  wb_sel_i[0] ? {8'h00, dat_o} : {dat_o, 8'h00}; // 8 to 16 bit WB
-wire   [2:0] wb_ps2_addr = {wb_adr_i,   wb_sel_i[1]};	// Computer UART Address
+wire   [2:0] wb_ps2_addr = {wb_adr_i,   wb_sel_i[1]};	// Compute Address
 wire         wb_ack_i    =  wb_stb_i &  wb_cyc_i;		// Immediate ack
 assign       wb_ack_o    =  wb_ack_i;
 wire         write_i     =  wb_ack_i &  wb_we_i;		// WISHBONE write access, Singal to send
@@ -156,6 +158,11 @@ wire        PS_XLAT = PS_CNTL[6];	// 0: Translation disabled - Data appears at i
 
 `define PS2_DAT_REG		3'b000		// 0x60 - RW Transmit / Receive register
 `define PS2_CMD_REG		3'b100		// 0x64 - RW - Status / command register
+`define PS2_SPK_REG		3'b001		// 0x61 - RW - chasis speaker register
+
+wire        SPK_SEL  = (wb_ps2_addr == `PS2_SPK_REG);
+wire        SPK_wr   = SPK_SEL && write_i;
+wire        SPK_rd   = SPK_SEL && read_i;
 
 wire        DAT_SEL  = (wb_ps2_addr == `PS2_DAT_REG);
 wire        DAT_wr   = DAT_SEL && write_i;
@@ -172,7 +179,8 @@ wire		CMD_mit  = CMD_wr  && (dat_i == `PS2_CMD_A9);	// User mouse interface test
 // --------------------------------------------------------------------
 // Command Behavior
 // --------------------------------------------------------------------
-wire [7:0]  dat_o    = DAT_SEL    ? r_dat_o   : PS_STAT;	// Select register
+wire [7:0]  dat_o    = SPK_SEL    ? port61h   : d_dat_o;	// Select register
+wire [7:0]  d_dat_o  = DAT_SEL    ? r_dat_o   : PS_STAT;	// Select register
 wire [7:0]	r_dat_o  = cnt_r_flag ? PS_CNTL   : t_dat_o;	// return control or data 
 wire [7:0]	t_dat_o  = cmd_r_test ? ps_tst_o  : i_dat_o;	// return control or data 
 wire [7:0]	i_dat_o  = cmd_r_mint ? ps_mit_o  : p_dat_o;	// return control or data 
@@ -200,6 +208,7 @@ always @(posedge wb_clk_i) begin		// Synchrounous
 		cmd_w_msnd  <= 1'b0;				// Reset the flag
 		cmd_r_test  <= 1'b0;				// Reset the flag
 		cmd_r_mint  <= 1'b0;				// Reset the flag
+		port61h     <= 8'b0;				// Initialize chasis speaker
     end									
     else
 		if(CMD_rdc) begin
@@ -222,7 +231,6 @@ always @(posedge wb_clk_i) begin		// Synchrounous
 		if(CMD_mit) begin
 			cmd_r_mint <= 1'b1;		// signal next read from 0x60 is test info
 		end
-
     else
 		if(DAT_rd) begin
 			if(cnt_r_flag) cnt_r_flag <= 1'b0;		// Reset the flag
@@ -235,6 +243,10 @@ always @(posedge wb_clk_i) begin		// Synchrounous
 				PS_CNTL		<= dat_i;				// User requested to write control info
 				cnt_w_flag	<= 1'b0;				// Reset the flag
 			end
+		end
+	else
+		if(SPK_wr) begin
+			port61h <= dat_i;	// user wrote to chasis speaker register
 		end
 	
 	if(cmd_w_msnd && MSE_DONE) cmd_w_msnd <= 1'b0;		// Reset the flag

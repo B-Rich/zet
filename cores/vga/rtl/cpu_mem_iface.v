@@ -168,16 +168,19 @@ module cpu_mem_iface (
   assign rd_wbm_ack_i = !wbs_we_i & wbm_ack_i & !chain_four;
   assign wr_wbm_ack_i = wbs_we_i & wbm_ack_i & !chain_four;
 
-  assign wbs_ack_o = chain_four ? wbs_ack_o_c : (wbs_we_i ? wr_wbs_ack_o : rd_wbs_ack_o);
+  assign wbs_ack_o = chain_four ? wbs_ack_o_c
+                   : (wbs_we_i ? wr_wbs_ack_o : rd_wbs_ack_o);
   assign wbs_dat_o = chain_four ? wbs_dat_o_c : rd_wbs_dat_o;
-  assign wbm_adr_o = chain_four ? wbm_adr_o_c : (wbs_we_i ? wr_wbm_adr_o : rd_wbm_adr_o);
-  assign wbm_stb_o = chain_four ? wbm_stb_o_c : (wbs_we_i ? wr_wbm_stb_o : rd_wbm_stb_o);
+  assign wbm_adr_o = chain_four ? wbm_adr_o_c
+                   : (wbs_we_i ? wr_wbm_adr_o : rd_wbm_adr_o);
+  assign wbm_stb_o = chain_four ? wbm_stb_o_c
+                   : (wbs_we_i ? wr_wbm_stb_o : rd_wbm_stb_o);
   assign wbm_sel_o = chain_four ? wbm_sel_o_c : wr_wbm_sel_o;
   assign wbm_dat_o = chain_four ? wbm_dat_o_c : wr_wbm_dat_o;
 
-  assign wbm_we_o  = chain_four & wbm_we_o_c | !chain_four & wbs_we_i;
+  assign wbm_we_o  = chain_four & wbm_we_o_c
+                   | !chain_four & wbs_we_i;
 
   assign wbs_stb_i_c = chain_four & wbs_stb_i;
   assign wbm_ack_i_c = chain_four & wbm_ack_i;
-  
 endmodule

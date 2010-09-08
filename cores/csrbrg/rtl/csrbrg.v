@@ -20,19 +20,19 @@ module csrbrg(
 	input sys_rst,
 	
 	/* WB */
-	input      [ 3:1] wb_adr_i,
-	input      [15:0] wb_dat_i,
+	input [3:1] wb_adr_i,
+	input [15:0] wb_dat_i,
 	output reg [15:0] wb_dat_o,
-	input 			  wb_cyc_i,
-	input 			  wb_stb_i,
-	input 			  wb_we_i,
-	output reg 		  wb_ack_o,
+	input wb_cyc_i,
+	input wb_stb_i,
+	input wb_we_i,
+	output reg wb_ack_o,
 	
 	/* CSR */
-	output reg [ 2:0] csr_a,
-	output reg        csr_we,
+	output reg [2:0] csr_a,
+	output reg csr_we,
 	output reg [15:0] csr_do,
-	input      [15:0] csr_di
+	input [15:0] csr_di
 );
 
 /* Datapath: WB <- CSR */
@@ -59,20 +59,27 @@ parameter DELAYACK2	= 2'd2;
 parameter ACK		= 2'd3;
 
 always @(posedge sys_clk) begin
-	if(sys_rst) state <= IDLE;
-	else		state <= next_state;
+	if(sys_rst)
+		state <= IDLE;
+	else
+		state <= next_state;
 end
 
 always @(*) begin
-	next_state  = state;
-	wb_ack_o    = 1'b0;
+	next_state = state;
+	
+	wb_ack_o = 1'b0;
 	next_csr_we = 1'b0;
+	
 	case(state)
 		IDLE: begin
-			if(wb_cyc_i & wb_stb_i) begin					/* We have a request for us */
+			if(wb_cyc_i & wb_stb_i) begin
+				/* We have a request for us */
 				next_csr_we = wb_we_i;
-				if(wb_we_i) next_state = ACK;
-				else		next_state = DELAYACK1;
+				if(wb_we_i)
+					next_state = ACK;
+				else
+					next_state = DELAYACK1;
 			end
 		end
 		DELAYACK1: next_state = DELAYACK2;

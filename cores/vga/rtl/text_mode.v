@@ -109,16 +109,20 @@ module text_mode (
 
   assign cursor_on1 = cursor_on_h && cursor_on_v;
 
+  // Behaviour
   // Address generation
   always @(posedge clk)
-    if(rst) begin
+    if (rst)
+      begin
         col_addr  <= 7'h0;
         row_addr  <= 5'h0;
         ver_addr  <= 7'h0;
         hor_addr  <= 7'h0;
         csr_adr_o <= 16'h0;
       end
-    else begin				        // h_count[2:0] == 001
+    else
+      begin
+        // h_count[2:0] == 001
         col_addr  <= h_count[9:3];
         row_addr  <= v_count[8:4];
 
@@ -134,11 +138,13 @@ module text_mode (
 
   // cursor
   always @(posedge clk)
-    if(rst) begin
+    if (rst)
+      begin
         cursor_on_v <= 1'b0;
         cursor_on_h <= 1'b0;
       end
-    else begin
+    else
+      begin
         cursor_on_h <= (h_count[9:3] == hcursor[6:0]);
         cursor_on_v <= (v_count[8:4] == vcursor[4:0])
                     && ({2'b00, v_count[3:0]} >= cur_start)
