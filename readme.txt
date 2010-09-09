@@ -16,7 +16,7 @@ vdu text only vga driver. This is because the DE0 does not have SRAM for graphic
 Eventually we will get the video to work using the SDRAM.
 
 The \boards\de0-shadow\ version is a special version that runs the shadow
-bios. This is a work in progress and not completed. 
+bios. This is now completed, it also includes the pwm audio module.
 
 For it to work, you have to use the special bios
 that is listed under \src\shadowbios\.

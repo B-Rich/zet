@@ -1098,54 +1098,52 @@ a_delay:                loop    a_delay         ; Loop until 50 goes to zero
                         mov     ss, ax          ; set stack segment to 0
 
 ;;--------------------------------------------------------------------------
-;; Copy Shadow BIOS from SPI Flash into SDRAM after SDRAM has been initialized
+;; Copy Shadow BIOS from Flash into SDRAM after SDRAM has been initialized
 ;;---------------------------------------------------------------------------
-SPIFLASH_PORT           equ     0x0238                  ;; SPI Flash RAM port
-
+FLASH_PORT              equ     0x0238                  ;; Flash RAM port
 VGABIOSSEGMENT          equ     0xC000                  ;; VGA BIOS Segment
-VGABIOSLENGTH           equ     0x8000                  ;; Length of VGA Bios
+VGABIOSLENGTH           equ     0x4000                  ;; Length of VGA Bios in Words
 ROMBIOSSEGMENT          equ     0xF000                  ;; ROM BIOS Segment
-ROMBIOSLENGTH           equ     0xFF00                  ;; Copy up to this ROM
+ROMBIOSLENGTH           equ     0x7F80                  ;; Copy up to this ROM in Words
 
 ;;--------------------------------------------------------------------------
-shadowcopy:             mov     dx, SPIFLASH_PORT       ;; Set DX reg to SPI FLASH IO port
-                        mov     ax, VGABIOSSEGMENT      ;; Load with the segment of the vga bios rom area
+shadowcopy:             mov     ax, VGABIOSSEGMENT      ;; Load with the segment of the vga bios rom area
                         mov     es, ax                  ;; BIOS area segment
-                        xor     bx, bx                  ;; Bios starts at offset address 0
+                        xor     bp, bp                  ;; Bios starts at offset address 0
                         mov     cx, VGABIOSLENGTH       ;; VGA Bios is <32K long
-                        mov     ax, 0x0003              ;; Starting Read Commad and /CS
-                        out     dx, ax                  ;; brings /CS low and loads MSB address byte
-                        xor     al, al                  ;; MSB address byte is 0x00
-                        out     dx, al                  ;; Load MSB address byte
-                        out     dx, al                  ;; Load 2nd address byte
-                        out     dx, al                  ;; Load LSB address byte
-vgabios1:               in      al, dx                  ;; Get input byte into al register
-                        mov     byte ptr es:[bx], al    ;; Save that byte to next place in RAM
-                        inc     bx                      ;; Increment to next address location
-                        loop    vgabios1                ;; Loop until vga bios is loaded up
-                        mov     ax, 0FFFFh              ;; NOP plus make /CS high
-                        out     dx, ax                  ;; brings /CS low and loads MSB address byte
+                        mov     dx, FLASH_PORT+4        ;; Set DX reg to FLASH IO port
+                        mov     ax, 0x0000              ;; Load MSB address
+                        out     dx, ax                  ;; Save MSB address word
+                        mov     bx, 0x0000              ;; Bios starts at offset address 0
+                        call    biosloop                ;; Call bios IO loop
+                        
 ;;--------------------------------------------------------------------------
                         mov     ax, ROMBIOSSEGMENT      ;; Load with the segment of the extra bios rom area
                         mov     es, ax                  ;; BIOS area segment
-                        xor     bx, bx                  ;; Bios starts at offset address 0
-                        mov     cx, ROMBIOSLENGTH       ;; Bios is 64K long - Showdow rom
-                        mov     ax, 0x0003              ;; Starting Read Commad and /CS
-                        out     dx, ax                  ;; brings /CS low and loads MSB address byte
-                        mov     ax, 0x01                ;; MSB address byte is 0x01
-                        out     dx, al                  ;; Load MSB address byte
-                        xor     al, al                  ;; low bytes of flash address are 0x00
-                        out     dx, al                  ;; and loads 2nd address byte
-                        out     dx, al                  ;; and loads 3rd address byte
-extrabios1:             in      al, dx                  ;; Get input byte into al register
-                        mov     byte ptr es:[bx], al    ;; Save that byte to next place in RAM
-                        inc     bx                      ;; Increment to next
-                        loop    extrabios1              ;; Loop until vga bios is loaded up
-                        mov     ax, 0FFFFh              ;; NOP plus make /CS high
-                        out     dx, ax                  ;; brings /CS low and loads MSB address byte
-;;--------------------------------------------------------------------------
+                        xor     bp, bp                  ;; Bios starts at offset address 0
+                        mov     cx, ROMBIOSLENGTH       ;; Bios is 64K long - Showdow rom len
+                        mov     dx, FLASH_PORT+4        ;; Set DX reg to FLASH IO port
+                        mov     ax, 0x0000              ;; Load start address
+                        out     dx, ax                  ;; Save MSB address word
+                        mov     bx, 0x8000              ;; Bios starts at offset address 0x8000
+                        call    biosloop                ;; Call bios IO loop
                       
                         jmp     far ptr post            ;; Continue with regular POST
+
+;;--------------------------------------------------------------------------
+biosloop:               mov     ax, bx                  ;; Put bx into ax 
+                        mov     dx, FLASH_PORT+2        ;; Set DX reg to FLASH IO port
+                        out     dx, ax                  ;; Save LSB address word
+                        mov     dx, FLASH_PORT          ;; Set DX reg to FLASH IO port
+                        in      ax, dx                  ;; Get input word into ax register
+                        mov     word ptr es:[bp], ax    ;; Save that word to next place in RAM
+                        inc     bp                      ;; Increment to next address location
+                        inc     bp                      ;; Increment to next address location
+                        inc     bx                      ;; Increment to next flash address location
+                        loop    biosloop                ;; Loop until bios is loaded up
+                        ret                             ;; Return
+;;--------------------------------------------------------------------------
+
                      
 ;;---------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
