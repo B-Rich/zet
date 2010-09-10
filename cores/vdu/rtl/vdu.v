@@ -378,11 +378,9 @@ endmodule
 // --------------------------------------------------------------------
 // Module:      char_rom.v
 // Description: Video Character Generator Module
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
+// The following is to get rid of the warning about not initializing the ROM
 // altera message_off 10030
-//  get rid of the warning about
-//  not initializing the ROM
+// --------------------------------------------------------------------
 // --------------------------------------------------------------------
 module char_rom (
     input             clk,

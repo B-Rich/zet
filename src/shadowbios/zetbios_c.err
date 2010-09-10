@@ -1,0 +1,9 @@
+zetbios_c.h(315): Warning! W107: Missing return value for function 'inb'
+zetbios_c.h(338): Warning! W107: Missing return value for function 'inw'
+zetbios_c.h(371): Warning! W107: Missing return value for function 'read_byte'
+zetbios_c.h(385): Warning! W107: Missing return value for function 'read_word'
+zetbios_c.c(18): Warning! W107: Missing return value for function 'get_CS'
+zetbios_c.c(19): Warning! W107: Missing return value for function 'get_SS'
+zetbios_c.c(1537): Warning! W202: Symbol 'mouse_flags_1' has been defined, but not referenced
+zetbios_c.c(1537): Warning! W202: Symbol 'try' has been defined, but not referenced
+zetbios_c.c(1806): Warning! W202: Symbol 'panic_msg_keyb_buffer_full' has been defined, but not referenced

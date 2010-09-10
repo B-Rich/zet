@@ -770,13 +770,12 @@ int16_key_found:        mov     bx, 0f000h              ;; Otherwise, just check
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 MOUSE_PORT              equ     0x0060                  ;; Bus Mouse port
-;MOUSE_PORT             equ     0x0238                  ;; Bus Mouse port
 
 ;;--------------------------------------------------------------------------
 int0B_handler:          sti                             ;; Disable interupt
-;                        int     0x74                    ;; Vector to official mouse interrupt
-;                        cli                             ;; Enable interupts
-;                        iret                            ;; Return from interrupt
+                        int     0x74                    ;; Vector to official mouse interrupt
+                        cli                             ;; Enable interupts
+                        iret                            ;; Return from interrupt
 ;;--------------------------------------------------------------------------
 int74_handler:          sti                             ;; Disable interupt
                         PUSHALL                         ;; same as push ax cx dx bx bp si di (or pusha on 286)

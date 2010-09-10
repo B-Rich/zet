@@ -128,7 +128,7 @@ module wb_switch #(
     output        s6_stb_o,
     input         s6_ack_i,
 
-    // Slave 7 interface 
+    // Slave 7 interface
     input  [15:0] s7_dat_i,
     output [15:0] s7_dat_o,
     output [20:1] s7_adr_o,
@@ -138,7 +138,7 @@ module wb_switch #(
     output        s7_stb_o,
     input         s7_ack_i,
 
-    // Slave 8 interface - - masked default
+    // Slave 8 interface - masked default
     input  [15:0] s8_dat_i,
     output [15:0] s8_dat_o,
     output [20:1] s8_adr_o,
@@ -147,7 +147,7 @@ module wb_switch #(
     output        s8_cyc_o,
     output        s8_stb_o,
     input         s8_ack_i,
-    
+
     // Slave 9 interface - default
     input  [15:0] s9_dat_i,
     output [15:0] s9_dat_o,
@@ -157,7 +157,6 @@ module wb_switch #(
     output        s9_cyc_o,
     output        s9_stb_o,
     input         s9_ack_i
-    
   );
 
   // address + byte select + data
@@ -190,8 +189,7 @@ module wb_switch #(
     |({16{slave_sel[6]}} & s6_dat_i)
     |({16{slave_sel[7]}} & s7_dat_i)
     |({16{slave_sel[8]}} & s8_dat_i)
-    |({16{slave_sel[9]}} & s9_dat_i)
-    ;
+    |({16{slave_sel[9]}} & s9_dat_i);
 
   assign slave_sel[0] = ((m_adr_i & s0_mask_1) == s0_addr_1)
                       | ((m_adr_i & s0_mask_2) == s0_addr_2)
@@ -206,9 +204,8 @@ module wb_switch #(
   assign slave_sel[5] = ((m_adr_i & s5_mask_1) == s5_addr_1);
   assign slave_sel[6] = ((m_adr_i & s6_mask_1) == s6_addr_1);
   assign slave_sel[7] = ((m_adr_i & s7_mask_1) == s7_addr_1);
-  
-  assign slave_sel[8] = (((m_adr_i & s8_mask_1)== s8_addr_1)
-                      | (( m_adr_i & s8_mask_2)== s8_addr_2))
+  assign slave_sel[8] = (((m_adr_i & s8_mask_1) == s8_addr_1)
+                      | ((m_adr_i & s8_mask_2) == s8_addr_2))
                       & ~(|slave_sel[7:0]);
 
   assign slave_sel[9] = ~(|slave_sel[8:0]);
