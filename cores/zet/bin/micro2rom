@@ -17,6 +17,10 @@
       exit(1);
     }
 
+<<<<<<< HEAD
+=======
+  $str = "";
+>>>>>>> zetbranch/master
   while(!feof($f1)) $str .= fread($f1, 1024);
   fclose($f1);
 
@@ -71,6 +75,10 @@
   printf ("%d micro instructions\n", $i);
 
   $micro_data_width++; // we include also the last bit
+<<<<<<< HEAD
+=======
+  $str_zero = "";
+>>>>>>> zetbranch/master
   for ($k=0; $k<$micro_data_width; $k++) $str_zero .= "0";
   while ($i++ < pow(2, $j)) fwrite($fm, $str_zero . "\n");
   fclose($fm);
