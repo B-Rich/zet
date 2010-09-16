@@ -15,7 +15,7 @@ The \boards\de0-vdu\ is the same as the DE1 implementation except that it uses t
 vdu text only vga driver. This is because the DE0 does not have SRAM for graphics.
 Eventually we will get the video to work using the SDRAM.
 
-The \boards\de0-shadow\ version is a special version that runs the shadow
+The \boards\de0-par\ version is a special version that runs the shadow
 bios. This is now completed, it also includes the pwm audio module.
 
 For it to work, you have to use the special bios
@@ -27,7 +27,7 @@ Explanation of directories
 -----------------------------------------------------------------------------------
 \boards\              - different board implementations
 \boards\de0-vdu\      - De0 using vdu text vga driver (no graphics on DE0)
-\boards\de0-shadow\   - same as above with shadow bios
+\boards\de0-par\      - same as above with shadow bios for parallel flash
 
 \src\                 - Source files for some commands used to transform ROMs
 \src\zetbios\         - Zet specific Bios for DE1 & DE0 

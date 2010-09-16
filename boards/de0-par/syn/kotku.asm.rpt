@@ -1,5 +1,5 @@
 Assembler report for kotku
-Thu Sep 09 01:17:02 2010
+Sun Sep 12 00:33:08 2010
 Quartus II Version 10.0 Build 218 06/27/2010 SJ Web Edition
 
 
@@ -10,8 +10,8 @@ Quartus II Version 10.0 Build 218 06/27/2010 SJ Web Edition
   2. Assembler Summary
   3. Assembler Settings
   4. Assembler Generated Files
-  5. Assembler Device Options: C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.sof
-  6. Assembler Device Options: C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.pof
+  5. Assembler Device Options: C:/Dev1/DOS/Zet/rtl-de0/boards/de0-par/syn/kotku.sof
+  6. Assembler Device Options: C:/Dev1/DOS/Zet/rtl-de0/boards/de0-par/syn/kotku.pof
   7. Assembler Messages
 
 
@@ -38,7 +38,7 @@ applicable agreement for further details.
 +---------------------------------------------------------------+
 ; Assembler Summary                                             ;
 +-----------------------+---------------------------------------+
-; Assembler Status      ; Successful - Thu Sep 09 01:17:02 2010 ;
+; Assembler Status      ; Successful - Sun Sep 12 00:33:08 2010 ;
 ; Revision Name         ; kotku                                 ;
 ; Top-level Entity Name ; kotku                                 ;
 ; Family                ; Cyclone III                           ;
@@ -78,37 +78,37 @@ applicable agreement for further details.
 +-----------------------------------------------------------------------------+----------+---------------+
 
 
-+----------------------------------------------------------+
-; Assembler Generated Files                                ;
-+----------------------------------------------------------+
-; File Name                                                ;
-+----------------------------------------------------------+
-; C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.sof ;
-; C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.pof ;
-+----------------------------------------------------------+
++------------------------------------------------------+
+; Assembler Generated Files                            ;
++------------------------------------------------------+
+; File Name                                            ;
++------------------------------------------------------+
+; C:/Dev1/DOS/Zet/rtl-de0/boards/de0-par/syn/kotku.sof ;
+; C:/Dev1/DOS/Zet/rtl-de0/boards/de0-par/syn/kotku.pof ;
++------------------------------------------------------+
 
 
-+------------------------------------------------------------------------------------+
-; Assembler Device Options: C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.sof ;
-+----------------+-------------------------------------------------------------------+
-; Option         ; Setting                                                           ;
-+----------------+-------------------------------------------------------------------+
-; Device         ; EP3C16F484C6                                                      ;
-; JTAG usercode  ; 0xFFFFFFFF                                                        ;
-; Checksum       ; 0x006A96F7                                                        ;
-+----------------+-------------------------------------------------------------------+
++--------------------------------------------------------------------------------+
+; Assembler Device Options: C:/Dev1/DOS/Zet/rtl-de0/boards/de0-par/syn/kotku.sof ;
++----------------+---------------------------------------------------------------+
+; Option         ; Setting                                                       ;
++----------------+---------------------------------------------------------------+
+; Device         ; EP3C16F484C6                                                  ;
+; JTAG usercode  ; 0xFFFFFFFF                                                    ;
+; Checksum       ; 0x00598F9F                                                    ;
++----------------+---------------------------------------------------------------+
 
 
-+------------------------------------------------------------------------------------+
-; Assembler Device Options: C:/Dev1/DOS/Zet/zeus/zet/boards/de0-shadow/syn/kotku.pof ;
-+--------------------+---------------------------------------------------------------+
-; Option             ; Setting                                                       ;
-+--------------------+---------------------------------------------------------------+
-; Device             ; EPCS4                                                         ;
-; JTAG usercode      ; 0x00000000                                                    ;
-; Checksum           ; 0x0545B094                                                    ;
-; Compression Ratio  ; 2                                                             ;
-+--------------------+---------------------------------------------------------------+
++--------------------------------------------------------------------------------+
+; Assembler Device Options: C:/Dev1/DOS/Zet/rtl-de0/boards/de0-par/syn/kotku.pof ;
++--------------------+-----------------------------------------------------------+
+; Option             ; Setting                                                   ;
++--------------------+-----------------------------------------------------------+
+; Device             ; EPCS4                                                     ;
+; JTAG usercode      ; 0x00000000                                                ;
+; Checksum           ; 0x054DFE38                                                ;
+; Compression Ratio  ; 2                                                         ;
++--------------------+-----------------------------------------------------------+
 
 
 +--------------------+
@@ -117,14 +117,14 @@ applicable agreement for further details.
 Info: *******************************************************************
 Info: Running Quartus II Assembler
     Info: Version 10.0 Build 218 06/27/2010 SJ Web Edition
-    Info: Processing started: Thu Sep 09 01:16:58 2010
+    Info: Processing started: Sun Sep 12 00:33:05 2010
 Info: Command: quartus_asm --read_settings_files=off --write_settings_files=off kotku -c kotku
 Info: Writing out detailed assembly data for power analysis
 Info: Assembler is generating device programming files
 Info: Quartus II Assembler was successful. 0 errors, 0 warnings
-    Info: Peak virtual memory: 236 megabytes
-    Info: Processing ended: Thu Sep 09 01:17:02 2010
-    Info: Elapsed time: 00:00:04
-    Info: Total CPU time (on all processors): 00:00:03
+    Info: Peak virtual memory: 259 megabytes
+    Info: Processing ended: Sun Sep 12 00:33:08 2010
+    Info: Elapsed time: 00:00:03
+    Info: Total CPU time (on all processors): 00:00:02
 
 
