@@ -31,7 +31,7 @@ Explanation of directories
 
 \src\                 - Source files for some commands used to transform ROMs
 \src\zetbios\         - Zet specific Bios for DE1 & DE0 
-\src\shadowbios\      - Special shadow bios
+\src\DE0\             - Shadow BIOS for DE0
 
 \cores\               - cores i have made changes to
 \cores\audio\         - my pwm audio core
