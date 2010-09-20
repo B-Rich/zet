@@ -1,0 +1,25 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for dBase III Plus (Ashton-Tate)	;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+
+BEGIN	leftb, midb, rightb, leftm, rightm, upm, downm, 200, 50
+;
+; The three buttons
+; NOTE: with 2-button mouse, "midb" means both buttons,
+;
+leftb:	TYPE ENTER
+midb:	TYPE "Assist", ENTER	; To get back in the assist mode
+rightb:	TYPE ESC
+;
+; The movements
+;
+leftm:	TYPE 0,75	; Left arrow (extended 75)
+
+rightm:	TYPE 0,77	; Right arrow (extended 77)
+
+upm:	TYPE 0,72	; Up arrow (extended 72)
+
+downm:	TYPE 0,80	; Down arrow (extended 80)

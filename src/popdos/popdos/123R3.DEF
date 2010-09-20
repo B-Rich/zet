@@ -1,0 +1,40 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Lotus 1-2-3 v. 3.0         	;
+;	Copyright (C) 1989 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+
+;	ษออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+;	บ         Using the mouse with LOTUS 1-2-3 Rel 3.0     บ
+;	วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+;	บ  LEFT  button   ณ  Middle button    ณ  RIGHT button  บ
+;	บ       =         ณ        =          ณ       =        บ
+;	บ     [ENTER]     ณ       "/"         ณ    [ESC] key   บ
+;	บ                 ณ Lotus Command Lineณ                บ
+;	วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+;	บ  Lft&Mid Btns   ณ  Mid&Rght Btns    ณ  Lft&Rght Btns บ
+;	บ       =         ณ        =          ณ       =        บ
+;	บ  Retrieve File  ณ   Print Range     ณ   Save File    บ
+;	วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+;	บ             ALL Buttons  = Fast QUIT                 บ
+;	ศออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+BEGIN LeftB, MidB, RightB, LeftM, RightM, UpM, DownM, 50, 100
+
+CHORDS LMB, LRB, MRB, ALLB
+
+LeftB:	TYPE ENTER
+MidB:	TYPE "/"
+RightB:	TYPE ESC
+
+LMB:	TYPE "/fr"	; File Retrieve
+LRB:	TYPE "/fs"	; File Save
+MRB:	TYPE "/ppr."	; Print Range
+AllB: 	Type "/qy"      ; Fast Quit
+
+LeftM:	TYPE 0, 75	; 0, 75 is Left Arrow Key
+RightM:	TYPE 0, 77	; 0, 77 is Right Arrow Key
+UpM:	TYPE 0, 72	; 0, 72 is Up Arrow Key
+DownM:	TYPE 0, 80	; 0, 80 is Down Arrow Key
+

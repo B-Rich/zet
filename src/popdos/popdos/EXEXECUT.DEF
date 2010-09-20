@@ -1,0 +1,18 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EXEXECUT				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN LeftB, MidB, RightB
+;
+
+LeftB:		EXECUTE TDIR, TRETURN
+MidB:		EXECUTE TDIR, TSPACE, TA, TRETURN
+RightB:		EXECUTE TDIR, TSPACE, TB, TRETURN
+
+TDIR:		TYPE "DIR"
+TSPACE:		TYPE " "
+TA:		TYPE "A:"
+TB:		TYPE "B:"
+TRETURN:	TYPE ENTER

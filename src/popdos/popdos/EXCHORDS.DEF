@@ -1,0 +1,16 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EXCHORDS				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+BEGIN 
+CHORDS LMB, LRB, MRB, ALLB
+
+; 3 stands for CTRL-C, canceling the input
+
+LMB:	TYPE "Left and Middle Buttons Pressed", 3
+LRB:	TYPE "Left and Right Buttons Pressed", 3
+MRB:	TYPE "Middle and Right Buttons Pressed", 3
+ALLB:	TYPE "All Three Buttons Pressed", 3

@@ -1,0 +1,50 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Turbo Basic ver 1.0 (Borland Intl.);
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+; The menu is designed to be simple to use and straight forward in concept.
+;
+; The LEFT Mouse Button is the ----> ENTER  or  RETURN KEY 
+; The MIDDLE Mouse Button is the --> F1  HELP KEY 
+; The RIGHT Mouse Button is the ---> ESCAPE KEY
+; 
+; In the EDIT MODE the BOTTOM FUNCTION KEYS are now defined with, "MULTIPLE 
+; or COMBINATION CLICKING of the Mouse buttons as follows:
+; LEFT AND MIDDLE BUTTONS for the --> F5 "ZOOM MODE" to clear windows.
+; LEFT AND RIGHT BUTTONS for the ---> F6 "NEXT MODE" move to the next window.
+; MIDDLE AND RIGHT BUTTONS for the -> F7 "GOTO MODE" goto menu file commands.
+; ALL MOUSE BUTTONS for the --------> ALT-X  command to EXIT TURBO BASIC.
+;
+BEGIN LeftB, MidB, RightB, LeftM, RightM, UpM, DownM, 50, 30
+;
+;NOTE: with 2-button mouse, "MidB" means both buttons,
+;      and CHORDS are disabled
+;
+CHORDS LMB, LRB, MRB, ALLB;
+LeftB:	TYPE ENTER
+MidB:	TYPE 0,59	; F1 "HELP"
+RightB:	TYPE ESC
+;
+LeftM:	TYPE 0,75	; 0,75 is Left Arrow Key
+RightM:	TYPE 0,77	; 0,77 is Right Arrow Key
+UpM:	TYPE 0,72	; 0,72 is Up Arrow Key
+DownM:	TYPE 0,80	; 0,80 is Down Arrow Key
+;
+LMB:    TYPE 0,63       ; F5 "ZOOM" COMMAND
+LRB:    TYPE 0,64       ; F6 "NEXT" COMMAND
+MRB:    EXECUTE GOTOM   ; F7 "GOTO" COMMAND
+ALLB:   TYPE 0,45       ; ALT-X "EXIT" COMMAND
+;
+GOTOM:  MENU ,1,5,15
+        OPTION "     SAVE      ", S
+        OPTION "     NEW       ", N
+        OPTION "  BEGIN BLOCK  ", BB
+        OPTION "   END BLOCK   ", EB
+        MEND
+;
+S:      TYPE 0,62       ; F2 "SAVE" COMMAND
+N:      TYPE 0,61       ; F3 "NEW"  COMMAND
+BB:     TYPE 0,65       ; F7 "BEGIN BLOCK" COMMAND
+EB:     TYPE 0,66       ; F8 "END BLOCK" COMMAND

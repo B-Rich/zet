@@ -1,0 +1,21 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for QUATTRO v 1.0 (BORLAND Corp)       ;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN LeftB, MidB, RightB, LeftM, RightM, UpM, DownM, 50, 50
+;
+;NOTE: with 2-button mouse, "MidB" means both buttons,
+;      and CHORDS are disabled
+;
+LeftB:	TYPE ENTER    ;ENTER Key
+MidB:	TYPE 47       ;"/" PULL DOWN MENUS
+RightB:	TYPE ESC      ;ESCAPE Key
+ 
+
+LeftM:	TYPE 0, 75    ;Left  arrow movement 	
+RightM:	TYPE 0, 77    ;Right arrow movement 	
+UpM:	TYPE 0, 72    ;Up    arrow movement 	
+DownM:	TYPE 0, 80    ;Down  arrow movement 
+	 

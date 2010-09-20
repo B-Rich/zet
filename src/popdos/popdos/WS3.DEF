@@ -1,0 +1,87 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Wordstar 4.0			;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;	
+BEGIN lfbtn,mdbtn,rtbtn,leftm,rightm,upm,downm,8,16
+;
+;NOTE: with 2-button mouse, "mdbtn" means both buttons
+;
+
+; Left Button 
+; In edit mode: Carriage Return
+; In no-file / Ctrl mode: do nothing
+
+lfbtn:   MATCH 1,1,,"^",nothing,chkcolon 	;Check for '^' 
+chkcolon: MATCH 1,11,,":",CR,nothing		;Check for ':' after drive letter
+
+; Right Button 
+; In no-file mode: do nothing
+; else ESC
+
+rtbtn: MATCH 1,1,," ",nothing,ESC
+
+; Middle Button
+; In edit mode: popup menu
+; In no-file / Ctrl mode: do nothing
+
+mdbtn:  MATCH 1,1,,"^",NOTHING,showmenu    
+showmenu:MATCH 1,11,,":",men,NOTHING
+
+men:	MENU ,1,5
+          OPTION "Start Selection",ss
+	  OPTION "End Selection",es
+	  OPTION "Copy",copy
+	  OPTION "Move",move
+	  OPTION "Delete",delete
+	  OPTION "Save",save
+	  OPTION "Abandon",abandon
+	  OPTION "Help",help
+	MEND
+	
+; Left movement
+; In edit mode: ^S (Left char)
+; In no-file / Ctrl mode : nothing
+
+leftm: MATCH 1,11,,":",lchkmode,nothing          
+lchkmode: MATCH 1,1,,"^",nothing,leftchar   
+   
+; Right movement
+; In edit mode: ^D (Right char)
+; In no-file / Ctrl mode : nothing
+
+rightm: MATCH 1,11,,":",rchkmode,nothing          
+rchkmode: MATCH 1,1,,"^",nothing,rightchar              
+
+; Up movement
+; In edit mode: ^E (Up char)
+; In no-file / Ctrl mode : nothing
+
+upm: MATCH 1,11,,":",uchkmode,nothing          
+uchkmode: MATCH 1,1,,"^",nothing,upchar       
+
+; Down movement
+; In edit mode: ^X (Down char)
+; In no-file / Ctrl mode : nothing
+
+downm: MATCH 1,11,,":",dchkmode,nothing       
+dchkmode: MATCH 1,1,,"^",nothing,downchar               
+
+CR: TYPE ENTER
+ESC: TYPE 27                 ;Escape
+NOTHING: NOTHING
+
+ss: TYPE 11,"B"			; Ctrl KB
+es: TYPE 11,"K"			; Ctrl KK
+copy: TYPE 11,"C"		; Ctrl KC
+move: TYPE 11,"V"		; Ctrl KV
+delete: TYPE 11,"Y"		; Ctrl KY
+save: TYPE 11,"X"		; Ctrl KX
+abandon: TYPE 11,"Q"		; Ctrl KQ
+help: TYPE 10			; Ctrl J
+leftchar: TYPE 19		; Ctrl S
+rightchar: TYPE 4		; Ctrl D
+upchar: TYPE 5			; Ctrl E
+downchar: TYPE 24		; Ctrl X

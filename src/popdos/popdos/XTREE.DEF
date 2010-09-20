@@ -1,0 +1,64 @@
+;-----------------------------------------------------------------------;
+;									;
+;	XTREE.DEF: Menu File for XTREE					;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+; In this mouse interface, the buttons are assigned as follows:
+;
+;	LEFT:	ENTER
+;		Y when prompted for Y/N
+;	MIDDLE:	T
+;	RIGHT:	U
+;		N when prompted for Y/N
+;
+;	Chords (more than one button at a time)
+;		Left-Middle to VIEW a file if in FILE mode OR
+;			    to CHANGE VOLUMN NAME if in DIR mode
+;		Left-Right is F3 (Cancel)
+;		Middle-Right is F3 (Cancel)
+;		Left-Middle-Right is F1 (Quit)
+;
+BEGIN	leftb, midb, rightb, leftm, rightm, upm, downm, 50, 8
+;
+;NOTE: with 2-button mouse, "midb" means both buttons,
+;      and CHORDS are disabled
+;
+CHORDS	lmb, lrb, mrb, allb
+
+;
+; The three buttons
+;
+leftb:	MATCH 25,1,,"delete",typey,leftb1
+leftb1:	MATCH 25,1,,"confirm",typey,leftb2
+leftb2:	MATCH 25,1,,"automatic",typey,leftb3
+leftb3:	MATCH 25,1,," Quit",typey,typecr
+typecr:	TYPE ENTER
+typey:	TYPE "Y"
+
+midb:	TYPE "T"
+
+rightb:		MATCH 25,1,,"delete",typen,rightb1
+rightb1:	MATCH 25,1,,"confirm",typen,rightb2
+rightb2:	MATCH 25,1,,"automatic",typen,rightb3
+rightb3:	MATCH 25,1,," Quit",typen,typeu
+typeu:	TYPE "U"
+typen:	TYPE "N"
+
+;
+; The movements
+;
+leftm:	TYPE 0,75	; Left arrow (extended 75)
+rightm:	TYPE 0,77	; Right arrow (extended 77)
+upm:	TYPE 0,72	; Up arrow (extended 72)
+downm:	TYPE 0,80	; Down arrow (extended 80)
+
+;
+; The chords
+;
+lmb:	TYPE "V"	; To view a file if in FILE mode 
+			; To change volumn name if in DIR mode 
+lrb:	TYPE 0,61	; F3 is CANCEL
+mrb:	TYPE 0,61	; F3 is CANCEL
+allb:	TYPE 0,59	; F1 is QUIT

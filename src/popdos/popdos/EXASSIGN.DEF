@@ -1,0 +1,27 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EXASSIGN				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN Menu1
+
+Menu1:	MENU "EXASSIGN.MNU", 5, 20, NORMAL
+	OPTION "Normal Mouse", NormalMouse
+	OPTION "Reverse Mouse", ReverseMouse
+	OPTION "Speedy", FastMouse
+	OPTION "Slow", SlowMouse
+	MEND
+	
+NormalMouse: ASSIGN Menu1, MidB, RightB, LeftM, RightM, UpM, DownM, 4, 8
+ReverseMouse: ASSIGN RightB, MidB, Menu1, RightM, LeftM, DownM, UpM, 4, 8
+FastMouse: ASSIGN ,,,,,,, 1, 1
+SlowMouse: ASSIGN ,,,,,,, 500, 500
+
+MidB:	TYPE ENTER
+RightB:	TYPE ESC
+
+LeftM:	TYPE 0, 75	; 0, 75 is Left Arrow Key
+RightM:	TYPE 0, 77	; 0, 77 is Right Arrow Key
+UpM:	TYPE 0, 72	; 0, 72 is Up Arrow Key
+DownM:	TYPE 0, 80	; 0, 80 is Down Arrow Key

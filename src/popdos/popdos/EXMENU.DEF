@@ -1,0 +1,20 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EXMENU				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN menu1, menu1, menu1
+;
+
+menu1: MENU "title", 8, 30, BOLD
+	OPTION "DIR - LIST DIRECTORY", dir
+	OPTION "PRINT file(s)", print
+	OPTION "CHKDSK - check disk", chkdsk
+	OPTION "RENAME file", rename
+	MEND
+
+dir:	TYPE "DIR", ENTER
+print:	TYPE "PRINT"
+chkdsk:	TYPE "CHKDSK", ENTER
+rename:	TYPE "RENAME"

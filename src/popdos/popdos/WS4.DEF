@@ -1,0 +1,135 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Wordstar Rel. 4.0			;
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+
+; How To Prepare This Menu Program:
+
+;    1.	Compile this menu file under \MOUSE directory by typing
+;	"NEWMENU WS".
+	    	
+;    2.	Re-compile CLICK.SRC by typing "NEWCLICK".
+
+
+; What This Menu Program Does:
+	
+;   - Moving the mouse around is equivalent as using the arrow keys
+;   - The Left Button is programmed to be the RETURN key
+;   - The Right Button is programmed to be the Ctrl-U key
+;   - The Middle Button is programmed to always display the PopUp menu
+     
+; For 3-button mouse only (chords usage):
+     
+;   - Left & Middle buttons are programmed to be the PgUp key
+;   - Middle & Right buttons are programmed to be the PgDn key
+;   - Left & Right buttons are programmed for saving the current file
+;   - Left, Mid and Right buttons are programmed for getting on-line help
+
+
+begin	leftb, midb, rightb, leftm, rightm, upm, downm, 20, 20
+chords	lmb, lrb, mrb, allb
+
+;-----------------------------------------------------------------------
+; Cursor movements not allowed in Opening Menu
+
+leftm:	match 2, 29,, "O P E N", nop, cleft
+cleft:	type	0, 75
+
+rightm:	match 2, 29,, "O P E N", nop, cright
+cright:	type	0, 77
+
+upm:	match 2, 29,, "O P E N", nop, cup
+cup:	type	0, 72
+
+downm:	match 2, 29,, "O P E N", nop, cdown
+cdown:	type	0, 80
+
+;-----------------------------------------------------------------------
+; Pop-Up menu starts here
+
+midb:	match 2, 29,,"O P E N", openmn, editmn
+
+openmn:	menu	"Open Menu ", 2, 67, bold
+	option	"Edit      ", edcmd
+	option	"컴컴컴컴컴", nop
+	option	"Print     ", prncmd
+	option	"컴컴컴컴컴", nop
+	option	"Quit      ", qucmd
+	mend
+	
+editmn:	menu	"Edit Menu ", 2, 67, bold
+	option	"File      ", flmnu
+	option	"컴컴컴컴컴", nop
+	option	"Block     ", blmnu
+	option	"컴컴컴컴컴", nop
+	option	"Misc.     ", mscmnu
+	mend
+	
+flmnu:	menu	"File Menu ", 2, 67, bold
+	option	"Done      ", dncmd
+	option	"Abandon   ", abcmd
+	option	"컴컴컴컴컴", nop
+	option	"Spell it! ", splcmd
+	option	"컴컴컴컴컴", nop
+	option	"Edit      ", editmn
+	mend
+	
+blmnu:	menu	"Block Menu", 2, 67, bold
+	option	"Begin     ", begcmd
+	option	"End       ", endcmd
+	option	"컴컴컴컴컴", nop
+	option	"Copy      ", cpcmd
+	option	"Move      ", mvcmd
+	option	"Remove    ", rmcmd
+	option	"Read      ", rdcmd
+	option	"Write     ", wrcmd
+	option	"컴컴컴컴컴", nop
+	option	"Edit      ", editmn
+	mend
+	
+mscmnu:	menu	"Misc. Menu", 2, 67, bold
+	option	"Top    Doc", topcmd
+	option	"Bottom Doc", botcmd
+	option	"컴컴컴컴컴", nop
+	option	"Previous  ", prvcmd
+	option	"Next scrn ", nxtcmd
+	option	"컴컴컴컴컴", nop
+	option	"Help      ", hlpcmd
+	option	"컴컴컴컴컴", nop
+	option	"Edit      ", editmn
+	mend
+
+;-----------------------------------------------------------------------
+; Detail commands
+
+nop:	type	""
+leftb:	type	enter
+rightb:	type	21		;^U
+lmb:	type	0, 73		;PgUp
+lrb:	type	11, "S"		;^KS
+mrb:	type	0, 81		;PgDn
+allb:	type	10		;^J
+
+edcmd:	type	"D"
+prncmd:	type	"P"
+qucmd:	type	"X"
+
+dncmd:	type	11, "D"		;^KD
+abcmd:	type	11, "Q"		;^KQ
+splcmd:	type	17, "N"		;^QN
+
+begcmd:	type	11, "B"		;^KB
+endcmd:	type	11, "K"		;^KK
+cpcmd:	type	11, "C"		;^KC
+mvcmd:	type	11, "V"		;^KV
+rmcmd:	type	11, "Y"		;^KY
+rdcmd:	type	11, "R"		;^KR
+wrcmd:	type	11, "W"		;^KW
+
+topcmd:	type	17, "R"		;^QR
+botcmd:	type	17, "C"		;^QC
+prvcmd:	type	0, 73		;PgUp
+nxtcmd:	type	0, 81		;PgDn
+hlpcmd:	type	10		;^J

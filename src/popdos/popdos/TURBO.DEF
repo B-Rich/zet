@@ -1,0 +1,87 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Turbo Pascal 4.0			;
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+
+begin	LeftB, MidB, RightB, LeftM, RightM, UpM, DownM, 35, 30
+
+; NOTE: with 2-button mouse, "MidB" means both buttons,
+
+LeftB:	type	enter	; Return key
+RightB:	type	esc	; Escape key
+
+LeftM:	type	0, 75	; Left Arrow
+RightM:	type	0, 77	; Right Arrow
+UpM:	type	0, 72	; Up Arrow
+DownM:	type	0, 80	; Down Arrow
+
+MidB:	menu	"Turbo 4.0", 1, 62, bold
+	option	"Make         ", Make
+	option	"Save         ", Save
+	option	"Load         ", Load
+	option	"Screen       ", Screen
+	option	"Zoom         ", Zoom
+	option	"Turbo Menu   ", Turbo
+	option	"-------------", NOP
+	option	"Block        ", Block
+	option	"Find/Replace ", Find
+	option	"Miscellaneous", Misc
+	option	"Quit         ", Quit
+	mend
+	
+Make:	type	0, 67	; F9
+Save:	type	0, 60	; F2
+Load:	type	0, 61	; F3
+Screen:	type	0, 64	; F6
+Zoom:	type	0, 63	; F5
+Turbo:	type	0, 68	; F10
+Quit:	type	0, 45	; Alt-X
+
+Block:	menu	"Block Menu", 2, 67, bold
+	option	"Begin     ", BBegin
+	option	"End       ", BEnd
+	option	"Hide/Disp.", BDisplay
+	option	"Copy      ", BCopy
+	option	"Move      ", BMove
+	option	"Delete    ", BDelete
+	option	"Read      ", BRead
+	option	"Write     ", BWrite
+	option	"----------", NOP
+	mend
+	
+Find:	menu	"Find Menu ", 2, 67, bold
+	option	"Find      ", FFind
+	option	"Replace   ", FReplace
+	option	"----------", NOP
+	mend
+	
+Misc:	menu	"Misc. Menu", 2, 67, bold
+	option	"Beginning ", MBegin
+	option	"Goto  End ", MEnd
+	option	"----------", NOP
+	option	"Del. Line ", MDelLn
+	option	"Del. Eoln ", MDelEoln
+	option	"Del. Word ", MDelWord
+	mend
+	
+NOP:	type	""	; NOP - do nothing
+
+BBegin:	  type	11, "b"	; ^KB
+BEnd:	  type	11, "k"	; ^KK
+BDisplay: type	11, "h"	; ^KH
+BCopy:	  type	11, "c"	; ^KC
+BMove:	  type	11, "v"	; ^KV
+BDelete:  type	11, "y"	; ^KY
+BRead:	  type	11, "r"	; ^KR
+BWrite:	  type	11, "w"	; ^KW
+
+FFind:	  type	17, "f"	; ^QF
+FReplace: type	17, "a"	; ^QA
+
+MBegin:	  type	17, "r"	; ^QR
+MEnd:	  type	17, "c"	; ^QC
+MDelLn:	  type	25	; ^Y
+MDelEoln: type	17, "y"	; ^QY
+MDelWord: type	20	; ^T

@@ -1,0 +1,94 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for SuperCalc 3			;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN	leftb, midb, rightb, leftm, rightm, upm, downm, 16, 16
+;
+;NOTE: with 2-button mouse, "midb" means both buttons,
+;      and CHORDS are disabled
+;
+CHORDS	back, back, back, back
+
+leftb:	MATCH 23, 1, , "Width:", slash, noslashl
+midb:	MATCH 23, 1, , "Width:", slash, noslashm
+rightb:	MATCH 23, 1, , "Width:", slash, noslashr
+
+noslashl: MATCH 23, 1, , "Enter A,B", menuabc, noenterl
+noslashm: MATCH 23, 1, , "Enter A,B", menuilm, noenterm
+noslashr: MATCH 23, 1, , "Enter A,B", edit, noenterr
+
+noenterl: MATCH 23, 1, , "EXIT", yes, none
+noenterm: EXECUTE noenterr
+noenterr: MATCH 23, 1, , "EXIT", back, none
+
+yes: TYPE "Y"
+
+slash:	TYPE "/"
+edit:	TYPE "E", 13
+none:	NOTHING
+
+
+back:	TYPE BACKSP
+
+leftm:	TYPE 0,75	; Left arrow (extended 75)
+
+rightm:	TYPE 0,77	; Right arrow (extended 77)
+
+upm:	TYPE 0,72	; Up arrow (extended 72)
+
+downm:	TYPE 0,80	; Down arrow (extended 80)
+
+menuabc:	MENU ,1,50,INVERSE
+		OPTION "...", menuilm
+		OPTION "Arrange", a
+		OPTION "Blank", b
+		OPTION "Copy", c
+		OPTION "Data Mgt", slashd
+		OPTION "Delete", d
+		OPTION "Edit", e
+		OPTION "Execute", x
+		OPTION "Format", f
+		OPTION "Global", g
+		OPTION "Insert", i
+		OPTION "Load", l
+		MEND
+
+menuilm:	MENU ,1,50,INVERSE
+		OPTION "...", menuabc
+		OPTION "Move", m
+		OPTION "Output", o
+		OPTION "Protect", p
+		OPTION "Quit", q
+		OPTION "Replicate", r
+		OPTION "Save", s
+		OPTION "Title", t
+		OPTION "Unprotect", u
+		OPTION "View", v
+		OPTION "Window", w
+		OPTION "Zap", z
+		MEND
+
+a:	TYPE "a"
+b:	TYPE "b"
+c:	TYPE "c"
+slashd:	TYPE "/d"
+d:	TYPE "d"
+e:	TYPE "e"
+x:	TYPE "x"
+f:	TYPE "f"
+g:	TYPE "g"
+i:	TYPE "i"
+l:	TYPE "l"
+m:	TYPE "m"
+o:	TYPE "o"
+p:	TYPE "p"
+q:	TYPE "q"
+r:	TYPE "r"
+s:	TYPE "s"
+t:	TYPE "t"
+u:	TYPE "u"
+v:	TYPE "v"
+w:	TYPE "w"
+z:	TYPE "z"

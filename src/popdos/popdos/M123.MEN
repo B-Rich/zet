@@ -1,0 +1,55 @@
+Menu for READY mode:
+(Save |
+ Retrieve |
+ Home |
+ End_Home |
+ Sum_Column |
+ Sum_Line |
+ Print_Range |
+ Worksheet_Fmt |
+ Column_Width |
+ Insert_Row |
+ Insert_Column |
+ Days |
+ Months |
+ Transpose_HV |
+ Transpose_VH |
+ Erase_Right |
+ Erase_Down |
+ Center_Label |
+ Today |
+ Fast_Quit 
+)
+
+(/FS |
+ /FR |
+ 071 |
+ 079 071 |
+ @SUM 40 072 . 079 072 41 13 |
+ @SUM 40 075 . 079 075 41 13 |
+ /ppr |
+ /wgf |
+ /wcs |
+ /wir 13 |
+ /wic 13 |
+ Mon 077 Tue 077 Wed 077 Thu 077 Fri 077 Sat 077 Sun 13 079 075|
+ Jan 077 Feb 077 Mar 077 Apr 077 May 077 Jun 077 Jul 077 Aug 077 Sep 077 Oct 077 Nov 077 Dec 13 079 075|
+ /rt 079 077 13 13 |
+ /rt 079 080 13 13 |
+ /re 079 077 13 |
+ /re 079 080 13 |
+ /rlc |
+ @NOW 13 /rfd 13 13 |
+ /qy 
+)
+Menu for other modes:
+(Return | Anchor  | Home     | End_Left | End_Right | End_Up   | End_Down  | End_Home  )
+(13     | .	  | 071      | 079 075  | 079 077   | 079 072  | 079 080   |  079 071 )
+
+Right Button is ESCAPE:
+(27)
+
+Plus & Minus Keys:
+(080 | 077)
+delete the above line if you want the regular plus and minus
+(+|-)

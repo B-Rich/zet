@@ -1,0 +1,17 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EXTYPE				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN LeftB, MidB, RightB
+;
+
+; This will call the TIME command without changing the time
+LeftB:	TYPE "TIME", ENTER, ENTER
+
+; This will call the DATE command without changing the date
+MidB:	TYPE "DATE", ENTER, ENTER
+
+; The VER DOS command gives you the DOS version number
+RightB:	TYPE "VER", ENTER

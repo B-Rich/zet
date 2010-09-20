@@ -1,0 +1,65 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for SuperCalc 4			;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+; When in the MENU mode, move the mouse cursor to the desired menu item,
+; press the left button, will select that option.
+;
+; Left Button:
+; 	In READY Mode: generate the '/'
+;	otherwise: generate <ENTER>
+; Middle Button: 
+;	customized menu
+; Right Button:
+;	ESC	(CANCEL)
+;
+BEGIN	leftb, midb, rightb, leftm, rightm, upm, downm, 16, 16
+
+;NOTE: with 2-button mouse, "midb" means both buttons
+
+leftb:	MATCH 25, 1, , "READY", slash, cr
+midb:	EXECUTE menu
+rightb:	TYPE ESC
+
+yes: TYPE "Y"
+
+slash:	TYPE "/"
+cr:	TYPE ENTER
+
+leftm:	TYPE 0,75	; Left arrow (extended 75)
+
+rightm:	TYPE 0,77	; Right arrow (extended 77)
+
+upm:	TYPE 0,72	; Up arrow (extended 72)
+
+downm:	TYPE 0,80	; Down arrow (extended 80)
+
+menu:	MENU ,1,30,INVERSE
+	OPTION "Home", home
+	OPTION "Edit", edit
+	OPTION "Days", days
+	OPTION "Months", months
+	OPTION "Insert Row", insR
+	OPTION "Insert Column", insC
+	OPTION "Load File", load
+	OPTION "Save File", save
+	OPTION "Fast_Quit", quit
+	MEND
+	
+home: TYPE 0,71
+edit: TYPE "/E"
+days: EXECUTE d1,d2
+d1: TYPE "Mon",0,77,"Tue",0,77,"Wed",0,77,"Thu",0,77,"Fri",0,77
+d2: TYPE "Sat",0,77,"Sun",0,77
+months: EXECUTE m1, m2, m3
+m1: TYPE "Jan",0,77,"Feb",0,77,"Mar",0,77,"Apr",0,77,"May",0,77
+m2: TYPE "Jun",0,77,"Jul",0,77,"Aug",0,77,"Sep",0,77,"Oct",0,77
+m3: TYPE "Nov",0,77,"Dec",0,77
+insR: TYPE "/IR",13
+insC: TYPE "/IC",13
+save: TYPE "/S",0,61
+load: TYPE "/L",0,61
+quit: TYPE "/QY",13

@@ -1,0 +1,143 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Symphony    			;
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+;
+
+BEGIN leftb, bothb, rightb, mousel, mouser, mouseu, moused, 50, 65
+
+leftb:		MATCH 1, 76, , "SHEET", tslash, tenter
+rightb:		MATCH 1, 76, , "SHEET", menu3, tesc
+
+bothb:		MATCH 1, 76, , "SHEET", menu1, mid1
+mid1:		MATCH 1, 76, , "POINT", menu2, nothing
+
+tenter:		TYPE ENTER
+tslash:		TYPE "/"
+tesc:		TYPE ESC
+
+helpmenu:	POPUP 3, 12, BOLD
+		TEXT "ษออออออออออออออออออออออออออออออออออออออออออออออออออออออป"
+		TEXT "บ            Using the mouse with Symphony             บ"
+		TEXT "วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ"
+		TEXT "บ  LEFT  button   ณ   BOTH  buttons   ณ  RIGHT button  บ"
+		TEXT "บ       =         ณ        =          ณ       =        บ"
+		TEXT "บ    Services     ณ 1st Menu if SHEET ณ     ESCAPE     บ"
+		TEXT "บ       or        ณ        or         ณ       or       บ"
+		TEXT "บ     RETURN      ณ 2nd Menu if POINT ณ    3rd Menu    บ"
+		TEXT "บ                 ณ                   ณ                บ"
+		TEXT "ศอออออออออออออออออฯอออออออออออออออออออฯออออออออออออออออผ"
+		SELECT 2, 14, 32
+		PEND
+
+
+;1st Menu
+
+menu1:	MENU ,3,40
+	OPTION "", nothing
+	OPTION "RETRIEVE WORKSHEET", retrieve
+	OPTION "SAVE WORKSHEET", save
+	OPTION "COPY", copy
+	OPTION "MOVE", move
+	OPTION "ERASE", erase
+	OPTION "SUM COLUMN", sumcol
+	OPTION "SUM LINE", sumline
+	OPTION "PRINT", print
+	OPTION "INSERT", insert
+	OPTION "DELETE", delete
+	OPTION "SYMPHONY HELP", lhelp
+	OPTION "QUIT (WORK ALREADY SAVED)", quitd
+	MEND
+
+retrieve:	TYPE 0, 67, "fr"
+save:		TYPE 0, 67, "fs"
+copy:           TYPE "/c"
+move:           TYPE "/m"
+erase:          TYPE "/e"
+home:		TYPE 0,71
+endhome:	TYPE 0,79, 0,71  
+sumcol:		TYPE "@SUM(", 0,72, ".", 0,79, 0,72,")", 13 
+sumline:	TYPE "@SUM(", 0,75, ".", 0,79, 0,75,")", 13 
+print:		TYPE 0, 67, "p"
+insert:         EXECUTE ins, rcgmenu
+delete:         EXECUTE del, rcgmenu
+ins:		TYPE "/i"
+del:    	TYPE "/d"
+delcol: 	TYPE "/dc"
+delglo:         TYPE "/dg"
+lhelp:		TYPE 0, 59 	; F1
+quitd:		TYPE 0,67, "EY"
+
+; end 1st Menu
+
+;2nd Menu
+
+menu2:	MENU ,10,30
+	OPTION "", nothing
+	OPTION "RETURN", return
+	OPTION "ANCHOR", anchor
+	OPTION "HOME", home
+	OPTION "PAGE UP", pageup
+	OPTION "PAGE DN", pagedn
+	OPTION "END UP", endup
+	OPTION "END DOWN", enddown
+	OPTION "END LEFT", endleft
+	OPTION "END RIGHT", endright
+	OPTION "END HOME", endhome
+	MEND
+	
+return:		TYPE ENTER
+anchor:		TYPE "."
+pageup:		TYPE 0,73
+pagedn:		TYPE 0,81
+endup:		TYPE 0,79, 0,72
+enddown:	TYPE 0,79, 0,80
+endleft:	TYPE 0,79, 0,75
+endright:	TYPE 0,79, 0,77
+
+;end 2nd Menu
+
+; 3rd Menu
+menu3:	MENU	,3,40
+	OPTION "", nothing
+	OPTION "HOME", home
+	OPTION "END HOME", endhome
+	OPTION "SYMPHONY MENU", tslash
+	OPTION "SYMPHONY HELP", lhelp
+	OPTION "MOUSE HELP", helpmenu
+	OPTION "QUIT & ASK", quitask
+		MEND
+
+quitask:   TYPE 0, 67, "E"
+
+;End 3rd Menu
+
+;row, column, global menu
+
+rcgmenu: MENU ,5,15
+         OPTION "ROW", typer
+         OPTION "COLUMN", typec
+         OPTION "GLOBAL/ROW", typegr
+         OPTION "GLOBAL/COLUMN", typegc
+         MEND
+         
+typer:          TYPE "r"
+typec:          TYPE "c"
+typegr:         TYPE "gr"
+typegc:         TYPE "gc"
+
+; end of rcgmenu
+
+mousel:	TYPE 0, 75
+mouser:	TYPE 0, 77
+mouseu:	MATCH 1, 77, , "MENU", nothing, up
+up:	TYPE 0, 72
+moused:	MATCH 1, 77, , "MENU", nothing, down
+down:	TYPE 0, 80
+
+nothing:	NOTHING
+
+; end of definition file

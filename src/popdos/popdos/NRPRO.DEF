@@ -1,0 +1,37 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Newsroom Pro (Bus mouse only)	;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;	 								;
+;-----------------------------------------------------------------------;
+
+; How To Prepare This Menu Program:
+
+;    1.	Re-install Newsroom Pro and choose the selection for 
+;	No Mouse/Keyboard based.
+	        
+;    2.	Modify the content of CLICK.SRC by replacing the entry
+;	"NRPRO 1200 150 5b" (which was originally placed for
+;	the serial mouse) with "NRPRO menu 3buttons"
+	    	
+;    3.	Re-compile CLICK.SRC by typing "NEWCLICK".
+
+; What This Menu Program Does:
+	    
+;    -  moving the mouse around is equivalent to hitting the arrow keys
+;    -  the left button of the mouse is the return key
+;    -  the middle button of the mouse is the Ctrl-L key
+;    -  the right button of the mouse is equivalent to the Escape key.
+
+
+BEGIN	leftb, midb, rightb, leftm, rightm, upm, downm, 30, 40
+
+leftb:	TYPE ENTER
+midb:	TYPE 12		; CTRL-L
+rightb:	TYPE ESC
+
+leftm:	TYPE 0,75	; Left arrow (extended 75)
+rightm:	TYPE 0,77	; Right arrow (extended 77)
+upm:	TYPE 0,72	; Up arrow (extended 72)
+downm:	TYPE 0,80	; Down arrow (extended 80)
+

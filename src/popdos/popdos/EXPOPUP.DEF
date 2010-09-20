@@ -1,0 +1,24 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EXPOPUP				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+BEGIN popup1, popup1, popup1
+
+popup1: POPUP 12, 20, NORMAL
+; WARNING: the following line is a comment
+;	      1234567890          1234567890          1234567890
+	TEXT "  DIR - LIST DIRECTORY   PRINT file(s)        "
+	TEXT "  CHKDSK - check disk    RENAME file          "
+	SELECT	1, 3, 20, dir
+	SELECT	1, 26, 13, print
+	SELECT	2, 3, 19, chkdsk
+	SELECT	2, 26, 11, rename
+	PEND
+
+dir:	TYPE "DIR", ENTER
+print:	TYPE "PRINT"
+chkdsk:	TYPE "CHKDSK", ENTER
+rename:	TYPE "RENAME"

@@ -1,0 +1,37 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EDLIN editor			;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN leftb, midb, rightb,,,,, 50, 200
+;
+;NOTE: with 2-button mouse, "midb" means both buttons,
+;      and CHORDS are disabled
+;
+CHORDS rightb, rightb, rightb, rightb
+
+leftb:	TYPE ENTER
+
+rightb:	TYPE ESC
+
+midb:	MENU , 1, 40
+	OPTION " "
+	OPTION "TOP", top
+	OPTION "Previous Page", prev
+	OPTION "Insert", insert
+	OPTION "End Insert", endinsert
+	OPTION "Save and Quit", finish
+	OPTION "Quit", quit
+	OPTION "Next Page", next
+	OPTION "Bottom", bottom
+	MEND
+
+top:	TYPE "1", ENTER, ENTER, "L", ENTER
+bottom:	TYPE "#", ENTER, "L", ENTER
+prev:	TYPE "-40P", ENTER
+next:	TYPE "P", ENTER
+insert:	TYPE "I", ENTER
+endinsert:	TYPE 0, 64, ENTER, "L", ENTER
+finish:	TYPE "E", ENTER
+quit:	TYPE "Q", ENTER

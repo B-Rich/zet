@@ -1,0 +1,58 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for FrameWork II			;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+;	Framework: we cannot have pop-up menus, because it is a graphic
+;	screen.  Instead, the mouse buttons are mapped to go through the
+;	Framework menu system.  As we cannot read the screen (MATCH),
+;	we change mode when the menu is called, hoping that the menus
+;	will be operated only with the mouse
+;
+BEGIN	leftb, midb, rightb, leftm, rightm, upm, downm, 20, 40
+;
+;NOTE: with 2-button mouse, "midb" means both buttons,
+;      and CHORDS are disabled
+;
+CHORDS	lmb, lrb, mrb, allb
+;
+; The three buttons
+;
+leftb:	EXECUTE CTRLE, MenuMode
+midb:	TYPE ENTER	; Opens a drawer
+rightb:	EXECUTE CTRLN, MenuMode
+
+CTRLE:	TYPE 5		; CTRL-E gets you to a pull-down menu
+
+CTRLN:	TYPE 14		; CTRL-N gets you to a pull-down menu
+
+MenuMode:	ASSIGN GoMM, GoMM, GoMM, leftm, rightm, upm, downm, 100, 40
+
+GoMM:	EXECUTE MEnter, NormalMode
+
+MEnter:	TYPE ENTER
+
+NormalMode:	ASSIGN leftb, midb, rightb, leftm, rightm, upm, downm, 20, 40
+;
+; The movements
+;
+leftm:	TYPE 0,75	; Left arrow (extended 75)
+
+rightm:	TYPE 0,77	; Right arrow (extended 77)
+
+upm:	TYPE 0,72	; Up arrow (extended 72)
+
+downm:	TYPE 0,80	; Down arrow (extended 80)
+
+;
+; The chords will be used to cancel operations, including the menu
+; Each one generates ESCAPE and makes sure that the normal mode is on
+;
+lmb:	EXECUTE MEsc, NormalMode
+lrb:	EXECUTE MEsc, NormalMode
+mrb:	EXECUTE MEsc, NormalMode
+allb:	EXECUTE MEsc, NormalMode
+
+MEsc:	TYPE ESC

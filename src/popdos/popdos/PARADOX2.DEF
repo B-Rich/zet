@@ -1,0 +1,133 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for PARADOX 2.0			;
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN LeftB, MidB, RightB, ChkLeft1, ChkRight1, ChkUp1, ChkDown1, 50, 100
+;
+;NOTE: with 2-button mouse, "MidB" means both buttons,
+;      and CHORDS are disabled
+;
+;
+; Up and down movement disabled except as follows:
+ChkUp1:      MATCH 1,1,,"Viewing", UpM, ChkUp2
+ChkDown1:    MATCH 1,1,,"Viewing",DownM, ChkDown2
+
+ChkUp2:      MATCH 1,68,INVERSE,"Sort",UpM,ChkUp3
+ChkDown2:    MATCH 1,68,INVERSE,"Sort",DownM,ChkDown3
+
+ChkUp3:      MATCH 1,10,,"decrease",UpM,ChkUp4
+ChkDown3:    MATCH 1,10,,"decrease",UpM,ChkDown4
+
+ChkUp4:      MATCH 1,1,,"Editing",UpM,ChkUp5
+ChkDown4:    MATCH 1,1,,"Editing",DownM,ChkDown5
+
+ChkUp5:      MATCH 1,1,,"Changing",UpM,ChkUp6
+ChkDown5:    MATCH 1,1,,"Changing",DownM,ChkDown6
+
+ChkUp6:      MATCH 1,1,,"Designing",UpM,ChkDown7
+ChkDown6:    MATCH 1,1,,"Designing",DownM,ChkDown7
+
+ChkUp7:      MATCH 1,1,,"Use -",UpM,ChkUp8
+ChkDown7:    MATCH 1,1,,"Use -",DownM,ChkDown8
+
+ChkUp8:      MATCH 1,1,,"Now",UpM,ChkUp9
+ChkDown8:    MATCH 1,1,,"Now",DownM,ChkDown9
+
+ChkUp9:      MATCH 1,1,,"Use ",UpM,ChkUp10
+ChkDown9:    MATCH 1,1,,"Use ",DownM,ChkDown10
+
+ChkUp10:     MATCH 1,1,,"Restruct",UpM,ChkUp11
+ChkDown10:   MATCH 1,1,,"Restruct",DownM,ChkDown11
+
+ChkUp11:     MATCH 1,1,,"DataEntry",UpM,ChkUp12
+ChkDown11:   MATCH 1,1,,"DataEntry",DownM,ChkDown12
+
+ChkUp12:     MATCH 1,1,,"CoEditing",UpM,ChkUp13
+ChkDown12:   MATCH 1,1,,"CoEditing",DownM,ChkDown13
+
+ChkUp13:     MATCH 1,1,,"Creating",UpM,ChkUp14
+ChkDown13:   MATCH 1,1,,"Creating",DownM,ChkDown14
+
+ChkUp14:     MATCH 1,1,,"๛ [F6]",UpM,Nothing
+ChkDown14:   MATCH 1,1,,"๛ [F6]",DownM,Nothing
+
+;
+; Left and right movement are active except as follows:
+
+ChkLeft1:    MATCH 1,68,INVERSE,"Sort",Nothing,ChkLeft2
+ChkRight1:   MATCH 1,68,INVERSE,"Sort",Nothing,ChkRight2
+
+ChkLeft2:    MATCH 1,10,,"decrease",Nothing,ChkLeft3
+ChkRight2:   MATCH 1,10,,"decrease",Nothing,ChkRight3
+
+ChkLeft3:    MATCH 1,1,,"Use ",Nothing,LeftM
+ChkRight3:   MATCH 1,1,,"Use ",Nothing,RightM
+
+LeftB:    TYPE ENTER
+MidB:     POPUP 5, 9, INVERSE
+;               123456789012345678901234567890123456789012345678901234567890
+          TEXT "ษออออออออออออออออออออออออออออออหออออออออออออออออออออออออออออออป"
+          TEXT "บ     F10 Menu                 บ     F2 Do-It!                บ"
+          TEXT "ฬออออออออออออออออออออออออออออออฮออออออออออออออออออออออออออออออน"
+          TEXT "บ     F3 Up Image              บ     F4 Down Image            บ"
+          TEXT "บ Alt+F3 Instant Script Record บ Alt+F4 Instant Script Play   บ"
+          TEXT "ฬออออออออออออออออออออออออออออออฮออออออออออออออออออออออออออออออน"
+          TEXT "บ     F5 Example               บ     F6 Check Mark            บ"
+          TEXT "บ Alt+F5 Field View            บ Alt+F6 Check Plus            บ"
+          TEXT "ฬออออออออออออออออออออออออออออออฮออออออออออออออออออออออออออออออน"
+          TEXT "บ     F7 Form Toggle           บ     F8 Clear Image           บ"
+          TEXT "บ Alt+F7 Instant Report        บ Alt+F8 Clear All             บ"
+          TEXT "ฬออออออออออออออออออออออออออออออฮออออออออออออออออออออออออออออออน"
+          TEXT "บ     F9 Edit                  บ     F1 Help                  บ"
+          TEXT "บ Alt+F9 Coedit                บ     Cancel This Menu         บ"
+          TEXT "ศออออออออออออออออออออออออออออออสออออออออออออออออออออออออออออออผ"
+      
+          SELECT 2, 2, 30, F10
+          SELECT 2, 33,30, F2
+          SELECT 4, 2, 30, F3
+          SELECT 4, 33,30, F4
+          SELECT 5, 2, 30, AltF3
+          SELECT 5, 33,30, AltF4
+          SELECT 7, 2, 30, F5
+          SELECT 7, 33,30, F6
+          SELECT 8, 2, 30, AltF5
+          SELECT 8, 33,30, AltF6
+          SELECT 10,2, 30, F7
+          SELECT 10,33,30, F8
+          SELECT 11,2, 30, AltF7
+          SELECT 11,33,30, AltF8
+          SELECT 13,2, 30, F9
+          SELECT 13,33,30, F1
+          SELECT 14,2, 30, AltF9
+          SELECT 14,33,30, Cancel
+          PEND
+          
+RightB:   TYPE ESC
+
+F1:    TYPE 0, 59
+F2:    TYPE 0, 60
+F3:    TYPE 0, 61
+F4:    TYPE 0, 62
+F5:    TYPE 0, 63
+F6:    TYPE 0, 64
+F7:    TYPE 0, 65
+F8:    TYPE 0, 66
+F9:    TYPE 0, 67
+F10:   TYPE 0, 68
+AltF3: TYPE 0, 106
+AltF4: TYPE 0, 107
+AltF5: TYPE 0, 108
+AltF6: TYPE 0, 109
+AltF7: TYPE 0, 110
+AltF8: TYPE 0, 111
+AltF9: TYPE 0, 112
+
+LeftM:    TYPE 0, 75	; 0, 75 is Left Arrow Key
+RightM:   TYPE 0, 77	; 0, 77 is Right Arrow Key
+UpM:      TYPE 0, 72	; 0, 72 is Up Arrow Key
+DownM:    TYPE 0, 80	; 0, 80 is Down Arrow Key
+
+Cancel:   NOTHING
+Nothing:  NOTHING

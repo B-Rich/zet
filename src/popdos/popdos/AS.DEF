@@ -1,0 +1,20 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for asKSam v 4.01 (Seaside Software)   ;
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN LeftB, MidB, RightB, LeftM, RightM, UpM, DownM, 60, 70
+;
+;NOTE: with 2-button mouse, "MidB" means both buttons,
+;      and CHORDS are disabled
+;
+;
+LeftB:	TYPE ENTER      ; ENTER Key
+MidB:	TYPE 0,59	; F1 "HELP" MODE
+RightB:	TYPE ESC        ; ESCAPE Key
+;
+LeftM:	TYPE 0,75	; 0, 75 is Left Arrow Key
+RightM:	TYPE 0,77	; 0, 77 is Right Arrow Key
+UpM:	TYPE 0,72	; 0, 72 is Up Arrow Key
+DownM:	TYPE 0,80	; 0, 80 is Down Arrow Key

@@ -1,0 +1,79 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for TURBO PROLOG			;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+; Default setting for TURBO PROLOG (Main menu)
+;
+
+begin LeftB, MiddleB, RightB, mousel, mouser, mouseu, moused, 10, 40
+;
+;NOTE: with 2-button mouse, "MiddleB" means both buttons
+;
+
+LeftB:	MATCH 2, 27, INVERSE, "", EditorMatch, LeftBNoMatch
+
+LeftBNoMatch:	TYPE 13		; CARRIAGE RETURN
+
+MiddleB:TYPE ESC
+RightB:	TYPE ESC
+
+mousel:	TYPE 0, 75		; Left arrow
+mouser:	TYPE 0, 77		; Right arrow
+mouseu:	TYPE 0, 72		; Up arrow
+moused:	TYPE 0, 80		; Down arrow
+
+;
+; Middle button pops up a specific menu 
+;
+
+EditorMatch:	EXECUTE Ed1, Ed2
+Ed1:	TYPE 13			; CARRIAGE RETURN
+Ed2:	ASSIGN EdLeftB, EdMidB, EdRightB
+
+EdLeftB:TYPE 13
+EdMidB: MENU "TURBO EDITOR COMMANDS",4,10
+	option "TOP OF FILE           ", tof
+	option "END OF FILE           ", eof
+	option "MARK BLOCK BEGIN      ", markbb
+	option "MARK BLOCK END        ", markbe
+	option "MOVE BLOCK            ", moveb
+	option "HIDE/DISPLAY BLOCK    ", hidedispb
+	option "DELETE BLOCK          ", delb
+	option "DELETE LINE           ", delline
+	option "DELETE TO END OF LINE ", deleol
+	option "FIND                  ", find
+	option "FIND & REPLACE        ", replace
+	option "READ FROM DISC        ", read
+	option "WRITE TO DISK         ", write
+	option "INSERT ON/OFF         ", insert
+	option "EXIT                  ", exit
+	option "CANCEL                "
+	mend
+
+tof:	TYPE 17,"r"	; CTRL Q R
+eof:	TYPE 17,"c"	; CTRL Q C
+markbb:	TYPE 11,"b"	; CTRL K B
+markbe:	TYPE 11,"k"	; CTRL K K
+moveb:	TYPE 11,"v"	; CTRL K V
+hidedispb:TYPE 11,"h"	; CTRL K H
+delb:	TYPE 11,"y"	; CTRL K Y
+delline:TYPE 25		; CTRL Y
+deleol:	TYPE 17,"y"	; CTRL Q Y
+find:	TYPE 17,"f"	; CTRL F
+replace:TYPE 17,"a"	; CTRL Q A
+read:	TYPE 11,"r"	; CTRL K R
+write:	TYPE 11,"w"	; CTRL K W
+insert:	TYPE  0,82	; INS
+exit:	TYPE 11,"d"	; CTRL K D
+
+EdRightB:EXECUTE EdRight1, EdRight2
+EdRight1:TYPE ESC
+
+;test if the editing window border is no more highlight, assume that the
+;window is not moved
+EdRight2:MATCH 1, 5, NORMAL, "", ExitEditorMatch
+
+ExitEditorMatch:ASSIGN leftb, middleb, rightb

@@ -1,0 +1,144 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for DOS Commands			;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN lfbtn,help,altc,lfmot,rtmot,upmot,dnmot
+
+lfbtn:	POPUP 1,1,120
+	TEXT "ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿"
+	TEXT "³  DIR - list directory  ³  PRINT file(s)            ³  Select_Disk           ³"
+	TEXT "³  CHKDSK - check disk   ³  RENAME file(s)           ³  Select_Printer        ³"
+	TEXT "³  CLS - clear screen    ³  TYPE file on screen      ³  Directory commands    ³"
+	TEXT "³  COPY file(s)          ³                           ³  System information    ³"
+	TEXT "³  DISKCOPY - copy disk  ³                           ³                        ³"
+	TEXT "³  DELETE file(s)        ³                           ³  H E L P               ³"
+	TEXT "ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ"
+	SELECT 2,3,22,dir
+	SELECT 3,3,22,chkdsk
+	SELECT 4,3,22,cls
+	SELECT 5,3,22,copy
+	SELECT 6,3,22,dskcopy
+	SELECT 7,3,22,delete
+
+	SELECT 2,28,24,print
+	SELECT 3,28,24,rename
+	SELECT 4,28,24,ctype
+	SELECT 5,28,24
+	SELECT 6,28,24
+	SELECT 7,28,24
+
+	SELECT 2,56,19,seldsk
+	SELECT 3,56,19,selprt
+	SELECT 4,56,19,subdir
+	SELECT 5,56,19,sinfo
+	SELECT 6,56,19
+	SELECT 7,56,19,help
+	PEND
+
+lfmot:	TYPE 0,75
+rtmot:	TYPE 0,77
+upmot:	TYPE 0,72
+dnmot:	TYPE 0,80
+
+dir:	EXECUTE tdir,drive
+chkdsk: EXECUTE tchkdsk,drive
+cls:	TYPE "CLS",13
+copy:	TYPE "COPY "
+print:	TYPE "PRINT "
+ctype:	TYPE "TYPE "
+delete: TYPE "DEL "
+rename:	TYPE "RENAME "
+dskcopy:EXECUTE dcopy,seldsk1,seldsk2	
+seldsk: EXECUTE drive
+selprt: EXECUTE pport
+subdir: EXECUTE csdir
+
+dcopy: TYPE "DISKCOPY "
+seldsk1:EXECUTE drive1
+seldsk2:EXECUTE drive2
+
+drive1:	MENU "Source drive",1,5
+	OPTION "A",da1
+	OPTION "B",db1
+	MEND
+
+da1: TYPE "A: "
+db1: TYPE "B: "
+	
+drive2:	MENU "Target drive",1,15
+	OPTION "A",da
+	OPTION "B",db
+	MEND
+
+help:	POPUP 1,1,120
+	TEXT "ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿"
+	TEXT "³                        LOGIMENU Setting  for MS-DOS                        ³"
+	TEXT "ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´"
+	TEXT "³ This sample setting is to be used while having the DOS prompt.             ³"
+	TEXT "³ Please note that you need to call LOGIMENU DOS when exiting from a mouse   ³"
+	TEXT "³ application.  Here is the meaning of the 3 buttons:                        ³"
+	TEXT "³         LEFT: Call the main menu; select an item by pressing any button.   ³"
+	TEXT "³       MIDDLE: Call this screen; cancel it by pressing any button.          ³"
+	TEXT "³        RIGHT: CTRL-C (will cancel the DOS command).                        ³"
+	TEXT "³ Any menu can be canceled by pressing two buttons at the same time.         ³"
+	TEXT "ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ"
+	SELECT 2,3,74
+	PEND
+
+tdir:	 TYPE "DIR "
+tchkdsk: TYPE "CHKDSK "
+
+drive:	MENU "Select drive",1,5
+	OPTION "Default",df
+	OPTION "A",da
+	OPTION "B",db
+	OPTION "C",dc
+	OPTION "D",dd
+	MEND
+
+da:	TYPE "A:",13
+db:	TYPE "B:",13
+dc:	TYPE "C:",13
+dd:	TYPE "D:",13
+df:	TYPE 13
+
+pport:	MENU "Select printer port.",1,5
+	OPTION "Cancel"
+	OPTION "Serial port COM1",ppa
+	OPTION "Serial port COM2",ppb
+	OPTION "Parallel port LPT1",ppp
+	MEND
+
+ppa:	TYPE "MODE LPT1:=COM1",13
+ppb:	TYPE "MODE LPT1:=COM2",13
+ppp:	TYPE "MODE LPT1:",13
+
+CSDIR:	MENU "Subdirectory commands",1,5
+	OPTION "Display current sub-directory",DCD
+	OPTION "Change directory",CDR
+	OPTION "Make directory",MDR
+	OPTION "Remove directory",RDR
+	MEND
+
+DCD:	TYPE "CD",13
+CDR:	TYPE "CHDIR "
+MDR:	TYPE "MKDIR "
+RDR:	TYPE "RMDIR "
+
+SINFO:	MENU "System information.",1,5,inverse
+	OPTION "MS-DOS version",VER
+	OPTION "BREAK status",BRK
+	OPTION "VERIFY status",VERIF
+	OPTION "VOLUME name",VOL
+	OPTION "All of above !",ALL
+	MEND
+
+VER:	TYPE "VER",13
+BRK:	TYPE "BREAK",13
+VERIF:	TYPE "VERIFY",13
+VOL:	TYPE "VOL",13
+ALL:	EXECUTE VER,BRK,VERIF,VOL
+
+altc:	TYPE 3

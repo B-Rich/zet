@@ -1,0 +1,280 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for WordPerfect 5.0	 		;
+;	Copyright (C) 1987, 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN lfbtn,mdbtn,rtbtn,leftm,rightm,upm,downm,40,40
+
+CHORDS ChordMenu,ChordMenu,ChordMenu,ChordMenu
+
+; Left Button: CR
+;
+lfbtn: Type ENTER
+;
+; Middle Button executes F2 if in the Search Mode, 
+; otherwise shows the menu for function keys
+; 
+; NOTE: with 2-button mouse, "mdbtn" means both buttons
+;
+mdbtn: MATCH 25,3,," Srch:",Fsearch,mdmenu
+
+;
+; Right Button works as F1 - CANCEL
+;
+rtbtn: EXECUTE cancel 
+
+mdmenu:	POPUP 1,20,NORMAL
+
+	  TEXT "ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿"
+	  TEXT "³F1 Cancel          ³F2 Search ->     ³F3 Help         ³"
+          TEXT "³@  Thesaurus       ³@  Replace       ³@  Reveal Codes ³"
+          TEXT "³  Setup           ³  Search <-     ³  Switch       ³"	
+	  TEXT "³›  Goto DOS        ³›  Spell         ³›  Screen       ³"
+	  TEXT "ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´"
+	  TEXT "³F4 ->Indent        ³F5 List Files    ³F6 Bold         ³"
+          TEXT "³@  Block           ³@  Mark Text     ³@  Flush Right  ³"
+          TEXT "³  ->Indent<-      ³  Date/Outline  ³  Center       ³"	
+	  TEXT "³›  Move            ³›  Text In/Out   ³›  Tab Align    ³"
+	  TEXT "ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´"
+	  TEXT "³F7 Exit            ³F8 Underline     ³F9 Merge R      ³"
+          TEXT "³@  Math/Columns    ³@  Style         ³@  Graphics     ³"
+          TEXT "³  Print           ³  Format        ³  Merge Codes  ³"
+          TEXT "³›  Footnote        ³›  Font          ³›  Merge/Sort   ³"
+	  TEXT "ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´"
+	  TEXT "³F10 Save           ³  GoTo           ³ Margin Release ³"
+          TEXT "³@   Macro          ³  Hard Page      ³ Soft Hyphen    ³"
+          TEXT "³   Retrieve       ³  Delete to EOL  ³ Word Left      ³"
+	  TEXT "³›   Macro Def      ³  Delete to EOP  ³ Word Right     ³" 
+	  TEXT "ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´"
+	  TEXT "³@ ALT+Fnct Key     ³ SHFT+Fnct Key  ³› CTRL+Fnct Key ³" 
+	  TEXT "ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ"
+
+; F1 - F3
+	  SELECT 2,2,18,cancel
+	  SELECT 3,2,18,thesaurus
+	  SELECT 4,2,18,setup
+	  SELECT 5,2,18,gotodos
+
+	  SELECT 2,22,17,Fsearch
+	  SELECT 3,22,17,replace
+	  SELECT 4,22,17,Bsearch
+	  SELECT 5,22,17,spell
+	  
+	  SELECT 2,40,15,help
+	  SELECT 3,40,15,recode
+	  SELECT 4,40,15,switch
+	  SELECT 5,40,15,screen
+
+; F4 - F6
+	  SELECT 7,2,18,indent
+	  SELECT 8,2,18,block
+	  SELECT 9,2,18,indent2
+	  SELECT 10,2,18,move
+
+	  SELECT 7,22,17,lsfile
+	  SELECT 8,22,17,mktext
+	  SELECT 9,22,17,date
+	  SELECT 10,22,17,textio
+	  
+	  SELECT 7,40,15,bold
+	  SELECT 8,40,15,flush
+          SELECT 9,40,15,center
+	  SELECT 10,40,15,tab
+
+; F7 - F9
+	  SELECT 12,2,18,exit
+	  SELECT 13,2,18,math
+	  SELECT 14,2,18,print
+	  SELECT 15,2,18,footnote
+
+	  SELECT 12,22,17,underline
+	  SELECT 13,22,17,style
+	  SELECT 14,22,17,format
+	  SELECT 15,22,17,font
+	  
+	  SELECT 12,40,15,mergeR
+	  SELECT 13,40,15,graphics
+          SELECT 14,40,15,mergeCd
+	  SELECT 15,40,15,mgsort
+
+; F10 - Options
+	  SELECT 17,2,18,save
+	  SELECT 18,2,18,macro
+          SELECT 19,2,18,retrieve
+	  SELECT 20,2,18,macrodef
+	 
+	  SELECT 17,22,17,goto
+	  SELECT 18,22,17,hardpage
+	  SELECT 19,22,17,del2eol
+	  SELECT 20,22,17,del2eop
+	  
+	  SELECT 17,40,15,relmargin
+	  SELECT 18,40,15,softhyphen
+	  SELECT 19,40,15,wordlft
+	  SELECT 20,40,15,wordrt
+	  
+	PEND
+
+	
+; Number Menu, activated by any mouse chord
+ChordMenu: POPUP 10,15,NORMAL
+
+           TEXT "ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»"
+           TEXT "º  Quick  Menu  º"
+           TEXT "ÌÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹"
+           TEXT "º  1    2    3  º"
+           TEXT "º  4    5    6  º"
+           TEXT "º  7    8    9  º"
+           TEXT "º Up    0    Dn º"
+           TEXT "º   Yes   No    º"
+           TEXT "ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼"
+           
+           SELECT 4,2,5,one
+           SELECT 4,7,5,two
+           SELECT 4,12,5,three
+           SELECT 5,2,5,four
+           SELECT 5,7,5,five
+           SELECT 5,12,5,six
+           SELECT 6,2,5,seven
+           SELECT 6,7,5,eight
+           SELECT 6,12,5,nine
+           SELECT 7,2,5,mouseu
+           SELECT 7,7,5,zero
+           SELECT 7,12,5,moused
+           SELECT 8,4,5,yes
+           SELECT 8,10,5,no
+           
+           PEND
+
+; To use the Mouse instead of cursor keys in Edit mode
+leftm:     MATCH 25,2,,":",mousel,toleft
+rightm:    MATCH 25,2,,":",mouser,toright
+upm:       MATCH 25,2,,":",mouseu,toup
+downm:     MATCH 25,2,,":",moused,todown
+
+; To use the Mouse instead of cursor keys in Typeover mode
+toleft:    MATCH 25,1,,"Typeover",mousel,rcleft
+toright:   MATCH 25,1,,"Typeover",mouser,rcright
+toup:      MATCH 25,1,,"Typeover",mouseu,rcup
+todown:    MATCH 25,1,,"Typeover",moused,rcdown
+
+; To use the Mouse instead of cursor keys in Reveal Codes mode
+rcleft:    MATCH 25,1,,"Press",mousel,nfleft
+rcright:   MATCH 25,1,,"Press",mouser,nfright
+rcup:      MATCH 25,1,,"Press",mouseu,nfup
+rcdown:    MATCH 25,1,,"Press",moused,nfdown
+
+; To use the Mouse instead of cursor keys with an unnamed file
+nfleft:    MATCH 25,1,,"          ",mousel,blleft
+nfright:   MATCH 25,1,,"          ",mouser,blright
+nfup:      MATCH 25,1,,"          ",mouseu,blup
+nfdown:    MATCH 25,1,,"          ",moused,bldown
+
+; To use the Mouse instead of cursor keys in Block mode
+blleft:    MATCH 25,1,,"Block",mousel,noleft
+blright:   MATCH 25,1,,"Block",mouser,noright
+blup:      MATCH 25,1,,"Block",mouseu,noup
+bldown:    MATCH 25,1,,"Block",moused,nodown
+
+; To use the Mouse instead of cursor keys in Display mode
+nomup:     MATCH 1,1,,"F",mouseu,noup
+nomdown:   MATCH 1,1,,"F",moused,nodown
+
+; To use the Mouse instead of cursor keys while viewing the Directory
+noleft:    MATCH 2,1,,"D",mousel,nothing
+noright:   MATCH 2,1,,"D",mouser,nothing
+noup:      MATCH 2,1,,"D",mouseu,nothing
+nodown:    MATCH 2,1,,"D",moused,nothing
+
+nothing:   NOTHING
+
+mousel:    TYPE 0, 75
+mouser:    TYPE 0, 77
+mouseu:    TYPE 0, 72
+moused:    TYPE 0, 80
+
+
+; F1 definitions
+cancel:	   TYPE 0,59	
+thesaurus: TYPE 0,104
+setup:	   TYPE 0,84
+gotodos:   TYPE 0,94
+
+; F2 definitions
+Fsearch:   TYPE 0,60
+replace:   TYPE 0,105
+Bsearch:   TYPE 0,85
+spell:     TYPE 0,95
+
+; F3 definitions
+help:      TYPE 0,61
+recode:    TYPE 0,106
+switch:    TYPE 0,86
+screen:    TYPE 0,96
+
+; F4 definitions
+indent:    TYPE 0,62
+block:     TYPE 0,107
+indent2:   TYPE 0,87
+move:      TYPE 0,97
+
+; F5 definitions
+lsfile:    TYPE 0,63
+mktext:    TYPE 0,108
+date:      TYPE 0,88
+textio:    TYPE 0,98
+
+; F6 definitions
+bold:      TYPE 0,64
+flush:     TYPE 0,109
+center:    TYPE 0,89
+tab:       TYPE 0,99
+
+; F7 definitions
+exit:      TYPE 0,65
+math:      TYPE 0,110
+print:     TYPE 0,90
+footnote:  TYPE 0,100
+
+; F8 definitions
+underline: TYPE 0,66
+style:     TYPE 0,111
+format:    TYPE 0,91
+font:      TYPE 0,101
+
+; F9 definitions
+mergeR:    TYPE 0,67
+graphics:  TYPE 0,112
+mergeCd:   TYPE 0,92
+mgsort:    TYPE 0,102
+
+; F10 definitions
+save:      TYPE 0,68
+macro:     TYPE 0,113
+retrieve:  TYPE 0,93
+macrodef:  TYPE 0,103
+
+; Options definitions
+yes:        TYPE "Y"
+no:         TYPE "N"
+goto:       TYPE 0, 119
+hardpage:   TYPE 10
+del2eol:    TYPE 0, 117
+del2eop:    TYPE 0, 118
+relmargin:  TYPE 0, 15
+softhyphen: TYPE 31
+wordlft:    TYPE 0, 115
+wordrt:     TYPE 0, 116
+
+;Number definitions
+one:       TYPE "1"
+two:       TYPE "2"
+three:     TYPE "3"
+four:      TYPE "4"
+five:      TYPE "5"
+six:       TYPE "6"
+seven:     TYPE "7"
+eight:     TYPE "8"
+nine:      TYPE "9"
+zero:      TYPE "0"

@@ -1,0 +1,59 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for KeyBoard				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+;
+; The BEGIN statement indicates labels to execute for each of the three
+; buttons, the four directions of movement, and indicates the sensitivity
+; of the mouse movements
+;
+
+BEGIN	leftb, midb, rightb, leftm, rightm, upm, downm, 4, 8
+;
+;NOTE: with 2-button mouse, "midb" means both buttons,
+;      and CHORDS are disabled
+;
+
+;
+; The CHORDS statement indicates labels to execute when each of the
+; four key combination is used:
+; Left + Middle, Left + Right, Middle + Right, All Three
+
+CHORDS	lmb, lrb, mrb, allb
+
+;
+; The TYPE statement indicates characters that will be sent to the
+; computer just as if they were typed from the keyboard.  The characters
+; should be one of ENTER, TAB, ESC, or BACKSP, a string of characters
+; enclosed between " ", or a decimal number indicating it's ASCII code
+; or extended ASCII code (preceding it with a zero).
+;
+
+;
+; The three buttons
+;
+leftb:	TYPE ENTER
+midb:	TYPE 3		; CTRL-C
+rightb:	TYPE ESC
+
+;
+; The movements
+;
+leftm:	TYPE 0,75	; Left arrow (extended 75)
+
+rightm:	TYPE 0,77	; Right arrow (extended 77)
+
+upm:	TYPE 0,72	; Up arrow (extended 72)
+
+downm:	TYPE 0,80	; Down arrow (extended 80)
+
+
+;
+; The chords
+;
+lmb:	TYPE 3		; Left + Middle is CTRL-C
+lrb:	TYPE 3		; Left + Right is CTRL-C
+mrb:	TYPE 3		; Middle + Right is CTRL-C
+allb:	TYPE 3		; All Buttons is CTRL-C

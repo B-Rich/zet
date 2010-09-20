@@ -1,0 +1,148 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Enable 2.0				;
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+
+begin	leftb, midb, rightb, leftm, rightm, upm, downm, 50, 60
+chords	lmb, lrb, mrb, allb
+
+midb:	match	5, 34,, "ENABLE", enbpop, sysmen
+enbpop:	popup	8, 2, bold
+;		 0        1         2         3         4         5         6         7         8
+;		 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+;		    ------------   ------------   ------------   ------------   ------------
+	text	"ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป"
+	text	"บ     [End]        Help [F1]       Profile       ฤฤฤฤฤฤฤฤฤฤ     Menu-Help    บ"
+	text	"ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ"
+	select	2,  4, 12, end
+	select	2, 19, 12, help
+	select	2, 34, 12, profmn
+	select	2, 49, 12, nop
+	select	2, 64, 12, about
+	pend
+
+sysmen:	match	3, 34,, "ENABLE", syspop, wpmen
+syspop:	popup	8, 2, bold
+;		 0        1         2         3         4         5         6         7         8
+;		 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+;		    ------------   ------------   ------------   ------------   ------------
+	text	"ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป"
+	text	"บ      Word          Sheet           Data         Telecomm       Sys-Menu    บ"
+	text	"ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ"
+	select	2,  4, 12, wpmn
+	select	2, 19, 12, ssmn
+	select	2, 34, 12, dbmn
+	select	2, 49, 12, tlmn
+	select	2, 64, 12, nop
+	pend
+	
+wpmen:	type	0, 68		; F10
+	
+profmn: menu	"Profile", 8, 33, bold
+	option	"Default     ", end
+	option	"Use Other   ", prfoth
+	option	"ฤฤฤฤฤฤฤฤฤฤฤฤ", enbpop
+	option	"Create/Chg  ", prfcrt
+	mend
+	
+wpmn:	menu	"Word", 8, 3, bold
+	option	"Create      ", wpcrt
+	option	"Revise      ", wpchg
+	option	"Print       ", wpprn
+	option	"ฤฤฤฤฤฤฤฤฤฤฤฤ", syspop
+	option	"Dictionary  ", wpdic
+	option	"Mail Merge  ", wpmm
+	mend
+
+ssmn:	menu	"Sheet", 8, 18, bold
+	option	"Create      ", sscrt
+	option	"Revise      ", sschg
+	option	"ฤฤฤฤฤฤฤฤฤฤฤฤ", syspop
+	option	"Print       ", ssprn
+	mend
+
+dbmn:	menu	"Data", 8, 33, bold
+	option	"Definition  ", dbcrt
+	option	"Input Form  ", dbinf
+	option	"Report Form ", dbrpf
+	option	"ฤฤฤฤฤฤฤฤฤฤฤฤ", syspop
+	option	"Data Entry  ", dbde
+	option	"Data Query  ", dbdq
+	option	"Reports     ", dbrg
+	mend
+
+tlmn:	menu	"Telecomm", 8, 48, bold
+	option	"Use Setup    ", tluse
+	option	"Connect      ", tlcon
+	option	"File Transfer", tltrn
+	option	"ฤฤฤฤฤฤฤฤฤฤฤฤฤ", syspop
+	option	"Run Setup    ", tlset
+	mend
+
+about:	popup	8, 2, bold
+	text	"ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป"
+	text	"บ     [End]        Help [F1]       Profile       ฤฤฤฤฤฤฤฤฤฤ     Help-Menu    บ"
+	text	"ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ"
+	text	"                                                                              "
+	text	"      Mouse  movements ฤฤฤฤฤฤ  [UP] [DOWN] [LEFT] [RIGHT]                     "
+	text	"      Left   button    ฤฤฤฤฤฤ  [RETURN]                                       "
+	text	"      Right  button    ฤฤฤฤฤฤ  [ESCAPE]                                       "
+	text	"      Middle button    ฤฤฤฤฤฤ  PopUp menu                                     "
+	text	"ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ"
+	text	"                                                                              "
+	text	"      Left   & Middle  ฤฤฤฤฤฤ  [PgUp]                                         "
+	text	"      Middle & Right   ฤฤฤฤฤฤ  [PgDn]                                         "
+	text	"      Left   & Right   ฤฤฤฤฤฤ  System Menu [F10]                              "
+	text	"      All      buttons ฤฤฤฤฤฤ  Help [F10]                                /js/ "
+	text	"ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ"
+	text	"                                                                              "
+	text	"   NOTE: Clicking on [ฤฤฤฤฤฤฤฤฤฤ] or button chord will cancel a menu choice   "
+	text	"ฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤ"
+	select	2, 64, 12, enbpop
+	pend
+
+;-----------------------------------------------------------------------;
+; Detail commands							;
+
+leftb:	type	enter
+rightb:	type	esc
+leftm:	type	0, 75		; left-arrow
+rightm:	type	0, 77		; right-arrow
+upm:	type	0, 72		; up-arrow
+downm:	type	0, 80		; down-arrow
+
+lmb:	type	0, 73		; PgUp
+lrb:	type	0, 68		; F10
+mrb:	type	0, 81		; PgDn
+allb:	type	0, 59		; F1
+
+nop:	type	""
+help:	type	0, 59		; F1
+end:	type	0, 79		; [End]
+
+prfoth: type	0, 59, "u", enter
+prfcrt: type	0, 59, "c", enter
+
+wpcrt:	type	"uwc"
+wpchg:	type	"uwr?", enter
+wpprn:	type	"uwp?", enter
+wpdic:	type	"uwd"
+wpmm:	type	"uwm"
+
+sscrt:	type	"usc"
+sschg:	type	"usr?", enter
+ssprn:	type	"usp?", enter
+
+dbcrt:	type	"uddd"
+dbinf:	type	"uddi"
+dbrpf:	type	"uddr"
+dbde:	type	"udb"
+dbdq:	type	"udi"
+dbrg:	type	"udr"
+
+tluse:	type	"utcu"
+tlcon:	type	"utcq"
+tltrn:	type	"utcf"
+tlset:	type	"uts"

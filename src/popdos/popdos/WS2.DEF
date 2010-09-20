@@ -1,0 +1,172 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for Wordstar 2000 Rel. 3.0		;
+;	Copyright (C) 1988 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+
+; What This Menu Program Does:
+	
+;   - Moving the mouse around is equivalent as using the arrow keys
+;   - The Left Button is programmed to be the RETURN key
+;   - The Right Button is programmed to be the ESCAPE key
+;   - The Middle Button is programmed to always display the PopUp menu
+     
+; For 3-button mouse only (chords usage):
+;   - Left & Middle buttons are programmed to be the PgUp key
+;   - Middle & Right buttons are programmed to be the PgDn key
+;   - Left & Right buttons are programmed for saving the current file
+;   - Left, Mid and Right buttons are programmed for getting on-line help
+;
+begin	leftb, midb, rightb, leftm, rightm, upm, downm, 12, 12
+chords	lmb, lrb, mrb, allb
+
+;-----------------------------------------------------------------------
+; Cursor movements not allowed in the Opening Menu
+
+leftm:	match 3, 45,, "M E N U", nop, cleft
+cleft:	type	0, 75
+
+rightm:	match 3, 45,, "M E N U", nop, cright
+cright:	type	0, 77
+
+upm:	match 3, 45,, "M E N U", nop, cup
+cup:	type	0, 72
+
+downm:	match 3, 45,, "M E N U", nop, cdown
+cdown:	type	0, 80
+
+;-----------------------------------------------------------------------
+; Pop-Up menu starts here
+
+midb:	match 3, 45,,"M E N U", openmn, editmn
+
+openmn:	popup	5, 2, inverse
+;      0	 1	   2	     3	       4	 5	   6	     7
+;      0123456789012345678901234567890123456789012345678901234567890123456789012345678
+ text  "ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป"
+ text  "บ                                                                            บ"
+ text  "บ      Edit / create         Print                     F1 Help               บ"
+ text  "บ                                                                            บ"
+ text  "บ      Speed write           Format design             Quit                  บ"
+ text  "บ                                                                            บ"
+ text  "ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน"
+ text  "บ                                                                            บ"
+ text  "บ      Copy                  Key macros                Directory / drive     บ"
+ text  "บ                                                                            บ"
+ text  "บ      Remove                List                      Go to DOS             บ"
+ text  "บ                                                                            บ"
+ text  "บ      Move / rename         Telecommunications        Cancel menu           บ"
+ text  "บ                                                                            บ"
+ text  "บ      Organize files        Additional features       Cancel menu           บ"
+ text  "บ                                                                            บ"
+ text  "ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ"
+ text  "                 Press left button after highlighting an option               "
+   	select  3,  7, 21, edcmd
+ 	select  3, 29, 21, prncmd
+ 	select  3, 55, 21, hlpcmd
+ 	select  5,  7, 21, spwcmd
+ 	select  5, 29, 21, fmtcmd
+ 	select  5, 55, 21, qucmd
+ 	select  9,  7, 21, cpycmd
+ 	select  9, 29, 21, kmcmd
+ 	select  9, 55, 21, dircmd
+ 	select 11,  7, 21, rmvcmd
+ 	select 11, 29, 21, lstcmd
+ 	select 11, 55, 21, doscmd
+ 	select 13,  7, 21, movcmd
+ 	select 13, 29, 21, telcmd
+ 	select 13, 55, 21, nop
+ 	select 15,  7, 21, orgcmd
+ 	select 15, 29, 21, addcmd
+ 	select 15, 55, 21, nop
+ 	pend
+
+editmn:	menu	"Edit Menu ", 2, 67, bold
+	option	"File      ", flmnu
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Block     ", blmnu
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Misc.     ", mscmnu
+	mend
+	
+flmnu:	menu	"File Menu ", 2, 67, bold
+	option	"Done      ", dncmd
+	option	"Abandon   ", abcmd
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Spell it! ", splcmd
+	option	"Thesaurus ", thscmd
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Edit      ", editmn
+	mend
+	
+blmnu:	menu	"Block Menu", 2, 67, bold
+	option	"Begin     ", begcmd
+	option	"End       ", endcmd
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Copy      ", cpcmd
+	option	"Move      ", mvcmd
+	option	"Remove    ", rmcmd
+	option	"Read      ", rdcmd
+	option	"Write     ", wrcmd
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Edit      ", editmn
+	mend
+	
+mscmnu:	menu	"Misc. Menu", 2, 67, bold
+	option	"Top    Doc", topcmd
+	option	"Bottom Doc", botcmd
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Previous  ", prvcmd
+	option	"Next scrn ", nxtcmd
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Help      ", hlpcmd
+	option	"ฤฤฤฤฤฤฤฤฤฤ", nop
+	option	"Edit      ", editmn
+	mend
+
+;-----------------------------------------------------------------------
+; Detail commands
+
+nop:	type	""
+leftb:	type	enter
+rightb:	type	esc
+lmb:	type	0, 73		;PgUp
+lrb:	type	17, "C"		;^QC
+mrb:	type	0, 81		;PgDn
+allb:	type	0, 59		;F1
+
+edcmd:	type	"E"		;Edit / create
+prncmd:	type	"P"		;Print
+spwcmd: type	"S"		;Speed write
+fmtcmd: type	"F"		;Format design
+qucmd:	type	"Q"		;Quit
+cpycmd: type	"C"		;Copy
+kmcmd:	type	"K"		;Key macros
+dircmd:	type	"D"		;Directory / drive
+rmvcmd:	type	"R"		;Remove
+lstcmd:	type	"L"		;List
+doscmd:	type	"G"		;Go to DOS
+movcmd:	type	"M"		;Move / rename
+telcmd:	type	"T"		;Telecommunications
+orgcmd:	type	"O"		;Organize files
+addcmd:	type	"A"		;Additional features
+
+dncmd:	type	17, "S"		;^QS
+abcmd:	type	17, "A"		;^QA
+splcmd:	type	15, "SW"	;^OSW
+thscmd:	type	15, "T"		;^OT
+
+begcmd:	type	2, "B"		;^BB
+endcmd:	type	2, "E"		;^BE
+cpcmd:	type	2, "C"		;^BC
+mvcmd:	type	2, "M"		;^BM
+rmcmd:	type	2, "R"		;^BR
+rdcmd:	type	2, "I"		;^BI
+wrcmd:	type	2, "W"		;^BW
+
+topcmd:	type	3, "B"		;^CB
+botcmd:	type	3, "E"		;^BE
+prvcmd:	type	0, 73		;PgUp
+nxtcmd:	type	0, 81		;PgDn
+hlpcmd:	type	0, 59		;F1

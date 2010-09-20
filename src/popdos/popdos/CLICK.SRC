@@ -1,0 +1,57 @@
+; This is the source file for CLICK which contains mouse settings and menu
+; instructions for various applications. You may add applications as you wish.
+; When you modify this file, make sure that you call NEWCLICK command
+; afterwards to produce a new CLICK.EXE
+;
+; All baud rate, report rate, and protocol parameters are relative to the  
+; Serial C7 Mouse. They do not apply to the BUS or Series/2 Mouse.
+
+Acad 9600		; AutoCAD (Autodesk)
+Acad2 1200 150 5b	; DataCAD (Micro Techture)
+AS menu 3buttons	; askSam 4.01 (Seaside Software)
+Dcad 1200 150 5b	; DataCAD version 3.00 (Micro Techture)
+Cad 1200 150 5b		; Cadvance (CalComp) or LaserCad (DSL Inc.)
+Cadd 1200 150 5b	; Generic CADD or LogiCadd
+Cadint 1200 150 5b	; EE-Designer (Visionics)
+DA 1200 150 5b		; Draw Applause 1.0 (Ashton-Tate)
+DBASE menu 3buttons	; dBase III Plus (Ashton-Tate)
+DFX 1200 150 5b		; Drafix (Foresight Resource Corp) - CAD
+Diskcopy 5b		; Diskcopy -- make sure mouse is off
+Dotplot 1200 150 5b	; DotPlot (Generic CADD)
+DrHalo 1200 150 5b	; DrHalo II (Media Cybernetics) - Paint program
+Drawasst 1200 150 5b	; IBM Drawing Assistant
+DRVRMRGR 1200 150 5b	; Ventura Publisher release 1.10
+DV 1200 150 5b		; DesqView (Quarterdeck Office Systems)
+DW4PG 1200 150 5b	; IBM Displaywrite 4
+Edlin menu 3buttons	; MS-DOS Edlin
+Enable menu 3buttons	; Enable 2.0
+Format 5b		; Format -- make sure mouse is off
+FW menu 3buttons	; Framework II (Ashton Tate)
+GEMVDI 1200 150 5b	; GEM (Digital Research) when configured for PC Mouse
+NRPRO 1200 150 5b	; Newsroom-Pro (Serial Mouse) (SPRINGBOARD Software)
+;NRPRO menu 3buttons	; Newsroom-Pro (BUS Mouse Interface)
+PARADOX2 menu 3buttons	; Paradox 2.0 (Borland)
+PCAD 1200 150 5b	; PCad
+Prolog menu 3buttons	; Turbo Prolog (Borland)
+Q menu 3buttons		; Quattro 1.0 (Borland)
+SC3 menu 3buttons	; Supercalc 3 (Computer Associates)
+SC4 menu 3buttons	; Supercalc 4 (Computer Associates)
+SKPLUS menu 3buttons	; SideKick Plus 1.0 (Non-resident mode)
+Symphony menu 3buttons	; Symphony (Lotus)
+TB menu 3buttons	; Turbo Basic 1.0 (Borland)
+TC menu 3buttons	; Turbo C 1.0 (Borland)
+Turbo menu 3buttons	; Turbo Pascal (Borland)
+TV 1200 150 5b		; TopView (IBM)
+;
+;  "VP" entry is conflicting between VP Planner and Ventura Publisher.
+;  Ventura Publisher 1.00 is taken care of by the GEMVDI entry.
+;  If you want to use VP Planner, remove the first semicolon from
+;  the following line and recompile this source file using NEWCLICK.
+;VP menu 3buttons	; VP-Planner (Paperback)
+;
+Word 2buttons		; Word (Microsoft)
+WP menu 3buttons	; Word Perfect (Satellite Software)
+WS menu	3buttons	; Word Star (MicroPro)
+WS2 menu 3buttons	; Wordstar 2000 3.0
+XTPRO menu 3buttons	; XTreePro 1.0 (Executive Systems)
+Xtree menu 3buttons	; XTREE (Executive Systems)

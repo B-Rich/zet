@@ -1,0 +1,57 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for VP-PLANNER (Spreadsheet only)	;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN leftb, middleb, rightb, mousel, mouser, mouseu, moused, 50, 100
+
+leftb:	TYPE ENTER
+rightb:	TYPE ESC
+;
+;NOTE: with 2-button mouse, "middleb" means both buttons
+;
+middleb:	MATCH 25, 76, , "READY", mmenu, mid1
+mid1:		MATCH 25, 76, , "POINT", anchor, helpmenu
+
+helpmenu:	POPUP 3, 12, BOLD
+		TEXT "ษออออออออออออออออออออออออออออออออออออออออออออออออออออออป"
+		TEXT "บ            Using the mouse with VP-PLANNER           บ"
+		TEXT "วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ"
+		TEXT "บ  LEFT  button   ณ  MIDDLE  button   ณ  RIGHT button  บ"
+		TEXT "บ       =         ณ        =          ณ       =        บ"
+		TEXT "บ     always      ณ   Menu if SHEET   ณ     always     บ"
+		TEXT "บ     RETURN      ณ        or         ณ     ESCAPE     บ"
+		TEXT "บ                 ณ  Anchor if POINT  ณ                บ"
+		TEXT "บ                 ณ        or         ณ                บ"
+		TEXT "บ                 ณ    Mouse help     ณ                บ"
+		TEXT "ศอออออออออออออออออฯอออออออออออออออออออฯออออออออออออออออผ"
+		SELECT 2, 13, 33
+		PEND
+
+
+mmenu:  TYPE "/"
+
+anchor:	TYPE "."
+
+mousel:		MATCH 22, 1, , " A", left1, left
+left1:		MATCH 24, 1, , " 2", left, left2
+left2:		MATCH 25, 76, , "POINT", left, nothing
+left:	TYPE 0, 75
+
+mouser:		MATCH 22, 1, , "IV", right1, right
+right1:		MATCH 24, 1, , " 2", right, right2
+right2:		MATCH 25, 76, , "POINT", right, nothing
+right:	TYPE 0, 77
+
+mouseu:		MATCH 24, 1, , " 2", nothing, up1
+up1:		MATCH 22, 3, , "1   ", up2, up
+up2:		MATCH 25, 76, , "POINT", up, nothing
+up:	TYPE 0, 72
+
+moused:		MATCH 24, 1, , " 2", nothing, down1
+down1:		MATCH 22, 3, , "9999", down2, down
+down2:		MATCH 25, 76, , "POINT", down, nothing
+down:	TYPE 0, 80
+
+nothing:	NOTHING

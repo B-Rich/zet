@@ -1,0 +1,33 @@
+;-----------------------------------------------------------------------;
+;									;
+;	LOGIMENU File definition for EXMATCH				;
+;	Copyright (C) 1987 LOGITECH, Inc.				;
+;									;
+;-----------------------------------------------------------------------;
+BEGIN CheckMatch
+
+CheckMatch:	MATCH 3, 1, , "ABCDE", Matching, Notmatching
+
+Matching:	POPUP 3, 30, NORMAL
+		TEXT "*****  ABCDE now appears  on this line  *****"
+		TEXT "*    Select:                                *"
+		TEXT "*                                           *"
+		TEXT "*      CLEAR SCREEN           CANCEL        *"
+		TEXT "*********************************************"
+		SELECT 4, 7, 14, ClearScreen
+		SELECT 4, 30, 8
+		PEND
+
+ClearScreen:	TYPE "CLS", ENTER
+
+Notmatching:	POPUP 3, 30, BOLD
+		TEXT "**** ABCDE does not appear  on this line ****"
+		TEXT "*   Select:                                 *"
+		TEXT "*                                           *"
+		TEXT "*     GET ABCDE TO APPEAR       CANCEL      *"
+		TEXT "*********************************************"
+		SELECT 4, 6, 21, GetString
+		SELECT 4, 32, 8
+		PEND
+
+GetString: TYPE "CLS", ENTER, "ECHO ABCDE", ENTER
